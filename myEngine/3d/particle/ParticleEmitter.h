@@ -88,6 +88,8 @@ class ParticleEmitter {
     Vector3 endRote_ = {};
     Vector3 rotateVelocityMin_;
     Vector3 rotateVelocityMax_;
+    Vector3 rotateStartMax_;
+    Vector3 rotateStartMin_;
     Vector3 allScaleMin_;
     Vector3 allScaleMax_;
 
@@ -95,6 +97,7 @@ class ParticleEmitter {
     bool isAllRamdomScale_ = false;
     bool isRandomColor_ = true;
     bool isRandomRotate_ = false;
+    bool isRotateVelocity_ = false;
     bool isVisible_;
     bool isBillBoard_ = true;
     bool isActive_ = false;
@@ -102,6 +105,7 @@ class ParticleEmitter {
     bool isSinMove_ = false;
     bool isFaceDirection_ = false;
     bool isAuto_ = false;
+    bool isEndScale_ = false;
 
     std::unique_ptr<ParticleManager> Manager_;
     std::unique_ptr<DataHandler> datas_;

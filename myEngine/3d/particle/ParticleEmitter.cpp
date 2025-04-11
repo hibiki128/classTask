@@ -31,12 +31,14 @@ void ParticleEmitter::Update() {
     // 発生頻度に基づいてパーティクルを発生させる
     while (elapsedTime_ >= emitFrequency_) {
         Manager_->SetRandomRotate(isRandomRotate_);
+        Manager_->SetRotateVelocity(isRotateVelocity_);
         Manager_->SetAcceMultipy(isAcceMultiply_);
         Manager_->SetBillBorad(isBillBoard_);
         Manager_->SetRandomSize(isRandomScale_);
         Manager_->SetAllRandomSize(isAllRamdomScale_);
         Manager_->SetSinMove(isSinMove_);
         Manager_->SetFaceDirection(isFaceDirection_);
+        Manager_->SetEndScale(isEndScale_);
         Emit();                         // パーティクルを発生させる
         elapsedTime_ -= emitFrequency_; // 過剰に進んだ時間を考慮
     }
@@ -46,12 +48,14 @@ void ParticleEmitter::UpdateOnce() {
     isActive_ = false;
     if (!isActive_) {
         Manager_->SetRandomRotate(isRandomRotate_);
+        Manager_->SetRotateVelocity(isRotateVelocity_);
         Manager_->SetAcceMultipy(isAcceMultiply_);
         Manager_->SetBillBorad(isBillBoard_);
         Manager_->SetRandomSize(isRandomScale_);
         Manager_->SetAllRandomSize(isAllRamdomScale_);
         Manager_->SetSinMove(isSinMove_);
         Manager_->SetFaceDirection(isFaceDirection_);
+        Manager_->SetEndScale(isEndScale_);
         Emit(); // パーティクルを発生させる
         isActive_ = true;
     }
@@ -142,7 +146,9 @@ void ParticleEmitter::Emit() {
         allScaleMin_,
         scaleMin_,
         scaleMax_,
-        transform_.rotation_);
+        transform_.rotation_,
+        rotateStartMax_,
+        rotateStartMin_);
 }
 
 void ParticleEmitter::CreateParticle(const std::string &name, const std::string &fileName, const std::string &texturePath) {
@@ -184,6 +190,8 @@ void ParticleEmitter::SaveToJson() {
     datas_->Save("endAcce", endAcce_);
     datas_->Save("startRote", startRote_);
     datas_->Save("endRote", endRote_);
+    datas_->Save("rotateStartMax", rotateStartMax_);
+    datas_->Save("rotateStartMin", rotateStartMin_);
     datas_->Save("rotateVelocityMin", rotateVelocityMin_);
     datas_->Save("rotateVelocityMax", rotateVelocityMax_);
     datas_->Save("allScaleMin", allScaleMin_);
@@ -198,6 +206,7 @@ void ParticleEmitter::SaveToJson() {
     datas_->Save("isAcceMultiply", isAcceMultiply_);
     datas_->Save("isSinMove", isSinMove_);
     datas_->Save("isFaceDirection", isFaceDirection_);
+    datas_->Save("isEndScale", isEndScale_);
     datas_->Save("fileName", fileName_);
     datas_->Save("texturePath", texturePath_);
 }
@@ -223,6 +232,8 @@ void ParticleEmitter::LoadFromJson() {
         endAcce_ = datas_->Load<Vector3>("endAcce", {1.0f, 1.0f, 1.0f});
         startRote_ = datas_->Load<Vector3>("startRote", {0.0f, 0.0f, 0.0f});
         endRote_ = datas_->Load<Vector3>("endRote", {0.0f, 0.0f, 0.0f});
+        rotateStartMax_ = datas_->Load<Vector3>("rotateStartMax", {0.0f, 0.0f, 0.0f});
+        rotateStartMin_ = datas_->Load<Vector3>("rotateStartMin", {0.0f, 0.0f, 0.0f});
         rotateVelocityMin_ = datas_->Load<Vector3>("rotateVelocityMin", {-0.07f, -0.07f, -0.07f});
         rotateVelocityMax_ = datas_->Load<Vector3>("rotateVelocityMax", {0.07f, 0.07f, 0.07f});
         allScaleMin_ = datas_->Load<Vector3>("allScaleMin", {0.0f, 0.0f, 0.0f});
@@ -237,6 +248,7 @@ void ParticleEmitter::LoadFromJson() {
         isAcceMultiply_ = datas_->Load<bool>("isAcceMultiply", false);
         isSinMove_ = datas_->Load<bool>("isSinMove", false);
         isFaceDirection_ = datas_->Load<bool>("isFaceDirection", false);
+        isEndScale_ = datas_->Load<bool>("isEndScale", false);
         fileName_ = datas_->Load<std::string>("fileName", fileName_);
         texturePath_ = datas_->Load<std::string>("texturePath", texturePath_);
     }
@@ -322,6 +334,7 @@ void ParticleEmitter::DebugParticleData() {
                 if (ImGui::TreeNode("大きさ")) {
                     ImGui::Text("大きさ:");
                     if (isAllRamdomScale_) {
+                        ImGui::Checkbox("最初と最後同じ大きさ", &isEndScale_);
                         ImGui::DragFloat3("最大値", &allScaleMax_.x, 0.1f, 0.0f);
                         ImGui::DragFloat3("最小値", &allScaleMin_.x, 0.1f, 0.0f);
                         allScaleMin_.x = std::clamp(allScaleMin_.x, -FLT_MAX, allScaleMax_.x);
@@ -330,6 +343,9 @@ void ParticleEmitter::DebugParticleData() {
                         allScaleMax_.y = std::clamp(allScaleMax_.y, allScaleMin_.y, FLT_MAX);
                         allScaleMin_.z = std::clamp(allScaleMin_.z, -FLT_MAX, allScaleMax_.z);
                         allScaleMax_.z = std::clamp(allScaleMax_.z, allScaleMin_.z, FLT_MAX);
+                        if (!isEndScale_) {
+                            ImGui::DragFloat3("最後", &endScale_.x, 0.1f);
+                        }
                     } else if (isRandomScale_) {
                         ImGui::DragFloat("最大値", &scaleMax_, 0.1f, 0.0f);
                         ImGui::DragFloat("最小値", &scaleMin_, 0.1f, 0.0f);
@@ -339,8 +355,6 @@ void ParticleEmitter::DebugParticleData() {
                         ImGui::DragFloat3("最初", &startScale_.x, 0.1f, 0.0f);
                     } else {
                         ImGui::DragFloat3("最初", &startScale_.x, 0.1f, 0.0f);
-                    }
-                    if (!isSinMove_) {
                         ImGui::DragFloat3("最後", &endScale_.x, 0.1f);
                     }
                     ImGui::Checkbox("均等にランダムな大きさ", &isRandomScale_);
@@ -374,14 +388,39 @@ void ParticleEmitter::DebugParticleData() {
                         }
                     }
                     if (isRandomRotate_) {
-                        ImGui::DragFloat3("最大値", &rotateVelocityMax_.x, 0.01f);
-                        ImGui::DragFloat3("最小値", &rotateVelocityMin_.x, 0.01f);
-                        rotateVelocityMin_.x = std::clamp(rotateVelocityMin_.x, -FLT_MAX, rotateVelocityMax_.x);
-                        rotateVelocityMax_.x = std::clamp(rotateVelocityMax_.x, rotateVelocityMin_.x, FLT_MAX);
-                        rotateVelocityMin_.y = std::clamp(rotateVelocityMin_.y, -FLT_MAX, rotateVelocityMax_.y);
-                        rotateVelocityMax_.y = std::clamp(rotateVelocityMax_.y, rotateVelocityMin_.y, FLT_MAX);
-                        rotateVelocityMin_.z = std::clamp(rotateVelocityMin_.z, -FLT_MAX, rotateVelocityMax_.z);
-                        rotateVelocityMax_.z = std::clamp(rotateVelocityMax_.z, rotateVelocityMin_.z, FLT_MAX);
+                        float startRotationDegrees[3] = {
+                            radiansToDegrees(rotateStartMax_.x),
+                            radiansToDegrees(rotateStartMax_.y),
+                            radiansToDegrees(rotateStartMax_.z)};
+                        float endRotationDegrees[3] = {
+                            radiansToDegrees(rotateStartMin_.x),
+                            radiansToDegrees(rotateStartMin_.y),
+                            radiansToDegrees(rotateStartMin_.z)};
+
+                        if (ImGui::DragFloat3("回転 最大値", startRotationDegrees, 0.1f)) {
+                            rotateStartMax_.x = degreesToRadians(std::clamp(startRotationDegrees[0], radiansToDegrees(rotateStartMin_.x), 180.0f));
+                            rotateStartMax_.y = degreesToRadians(std::clamp(startRotationDegrees[1], radiansToDegrees(rotateStartMin_.y), 180.0f));
+                            rotateStartMax_.z = degreesToRadians(std::clamp(startRotationDegrees[2], radiansToDegrees(rotateStartMin_.z), 180.0f));
+                        }
+
+                        if (ImGui::DragFloat3("回転 最小値", endRotationDegrees, 0.1f)) {
+                            rotateStartMin_.x = degreesToRadians(std::clamp(endRotationDegrees[0], -180.0f, radiansToDegrees(rotateStartMax_.x)));
+                            rotateStartMin_.y = degreesToRadians(std::clamp(endRotationDegrees[1], -180.0f, radiansToDegrees(rotateStartMax_.y)));
+                            rotateStartMin_.z = degreesToRadians(std::clamp(endRotationDegrees[2], -180.0f, radiansToDegrees(rotateStartMax_.z)));
+                        }
+
+                        ImGui::Checkbox("ランダムな回転速度", &isRotateVelocity_);
+
+                        if (isRotateVelocity_) {
+                            ImGui::DragFloat3("最大値", &rotateVelocityMax_.x, 0.01f);
+                            ImGui::DragFloat3("最小値", &rotateVelocityMin_.x, 0.01f);
+                            rotateVelocityMin_.x = std::clamp(rotateVelocityMin_.x, -FLT_MAX, rotateVelocityMax_.x);
+                            rotateVelocityMax_.x = std::clamp(rotateVelocityMax_.x, rotateVelocityMin_.x, FLT_MAX);
+                            rotateVelocityMin_.y = std::clamp(rotateVelocityMin_.y, -FLT_MAX, rotateVelocityMax_.y);
+                            rotateVelocityMax_.y = std::clamp(rotateVelocityMax_.y, rotateVelocityMin_.y, FLT_MAX);
+                            rotateVelocityMin_.z = std::clamp(rotateVelocityMin_.z, -FLT_MAX, rotateVelocityMax_.z);
+                            rotateVelocityMax_.z = std::clamp(rotateVelocityMax_.z, rotateVelocityMin_.z, FLT_MAX);
+                        }
                     }
                     ImGui::Checkbox("ランダムな回転", &isRandomRotate_);
                     ImGui::Checkbox("進行方向に向ける", &isFaceDirection_);

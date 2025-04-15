@@ -1,7 +1,6 @@
 #include "SceneManager.h"
 #include <cassert>
-#include <ImGuiManager.h>
-#include"GlobalVariables.h"
+#include"ImGui/ImGuiManager.h"
 
 SceneManager* SceneManager::instance = nullptr;
 

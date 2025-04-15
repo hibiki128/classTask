@@ -1,8 +1,8 @@
 #pragma once
 #include <d3d12.h>
 #include"wrl.h"
-#include <PipeLineManager.h>
-#include"SrvManager.h"
+#include"PipeLine/PipeLineManager.h"
+#include"Srv/SrvManager.h"
 #include <Matrix4x4.h>
 #include"myMath.h"
 #include <Vector2.h>

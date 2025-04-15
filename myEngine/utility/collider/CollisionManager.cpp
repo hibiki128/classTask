@@ -1,8 +1,7 @@
 #define NOMINMAX
 #include "CollisionManager.h"
 #include "myMath.h"
-#include "GlobalVariables.h"
-#include"Object3dCommon.h"
+#include"Object/Object3dCommon.h"
 
 std::list<Collider*>  CollisionManager::colliders_;
 void CollisionManager::Reset() {

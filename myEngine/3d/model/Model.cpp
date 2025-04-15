@@ -1,10 +1,10 @@
 #include "Model.h"
-#include "TextureManager.h"
+#include"Texture/TextureManager.h"
 #include "fstream"
 #include "myEngine/Frame/Frame.h"
 #include "myMath.h"
 #include "sstream"
-#include <Object3dCommon.h>
+#include"Object/Object3dCommon.h"
 
 std::unordered_set<std::string> Model::jointNames = {};
 

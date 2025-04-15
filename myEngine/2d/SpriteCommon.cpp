@@ -1,5 +1,4 @@
 #include "SpriteCommon.h"
-#include "Logger.h"
 
 SpriteCommon* SpriteCommon::instance = nullptr;
 

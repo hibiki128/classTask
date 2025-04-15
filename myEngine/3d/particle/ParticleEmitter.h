@@ -1,11 +1,11 @@
 #pragma once
-#include "ParticleManager.h" // ParticleManagerのインクルード
-#include "ViewProjection.h"
-#include "WorldTransform.h" // Transformの定義があるヘッダーをインクルード
+#include "ParticleManager.h"
+#include"ViewProjection/ViewProjection.h"
+#include "WorldTransform.h"
 #include <string>
 #ifdef _DEBUG
-#include "imgui.h" // ImGuiのインクルード
-#endif             // _DEBUG
+#include "imgui.h"
+#endif
 
 #include "externals/nlohmann/json.hpp"
 

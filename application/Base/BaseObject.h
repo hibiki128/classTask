@@ -1,7 +1,7 @@
 #pragma once
 #include "ObjColor.h"
-#include "Object3d.h"
-#include "ViewProjection.h"
+#include"Object/Object3d.h"
+#include "ViewProjection/ViewProjection.h"
 #include "WorldTransform.h"
 #include "externals/nlohmann/json.hpp"
 #include "myEngine/utility/collider/Collider.h"

@@ -1,7 +1,7 @@
 #include "Framework.h"
-#include "ImGuiManager.h"
+#include "ImGui/ImGuiManager.h"
 #include "myEngine/Frame/Frame.h"
-#include <D3DResourceLeakChecker.h>
+#include "ResourceLeakChecker/D3DResourceLeakChecker.h"
 
 void Framework::Run() {
     // ゲームの初期化

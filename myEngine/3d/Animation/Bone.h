@@ -1,5 +1,5 @@
 #pragma once
-#include"ModelStructs.h"
+#include"Model/ModelStructs.h"
 class Bone
 {
 public:

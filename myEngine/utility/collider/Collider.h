@@ -1,8 +1,8 @@
 #pragma once
 #include"Vector3.h"
 #include"WorldTransform.h"
-#include"Object3d.h"
-#include"ViewProjection.h"
+#include"Object/Object3d.h"
+#include"ViewProjection/ViewProjection.h"
 #include <fstream>
 #include <filesystem>
 #include "externals/nlohmann/json.hpp"

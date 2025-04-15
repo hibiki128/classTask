@@ -1,7 +1,5 @@
 #include "TitleScene.h"
-#include "ImGuiManager.h"
 #include "SceneManager.h"
-#include "SrvManager.h"
 
 #ifdef _DEBUG
 #include <imgui.h>
@@ -10,6 +8,8 @@
 #include <LightGroup.h>
 #include <filesystem>
 #include <iostream>
+#include <Object/Object3dCommon.h>
+#include <DebugCamera/DebugCamera.h>
 
 void TitleScene::Initialize() {
     audio_ = Audio::GetInstance();

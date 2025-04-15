@@ -1,6 +1,6 @@
 #pragma once
 #include <cstdint>
-#include <ModelStructs.h>
+#include"Model/ModelStructs.h"
 class Skin
 {
 private:

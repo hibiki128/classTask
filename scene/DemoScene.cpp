@@ -1,7 +1,7 @@
 #include "DemoScene.h"
-#include "ImGuiManager.h"
+#include"ImGui/ImGuiManager.h"
 #include "SceneManager.h"
-#include "SrvManager.h"
+#include "Srv/SrvManager.h"
 
 #ifdef _DEBUG
 #include <imgui.h>

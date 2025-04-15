@@ -1,6 +1,6 @@
 #include "LineManager.h"
 #include <random>
-#include"TextureManager.h"
+#include"Texture/TextureManager.h"
 #include"fstream"
 #include <Quaternion.h>
 

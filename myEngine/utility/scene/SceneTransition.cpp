@@ -1,7 +1,7 @@
 #include "SceneTransition.h"
 #include "Easing.h"
 #include "SpriteCommon.h"
-#include "TextureManager.h"
+#include"Texture/TextureManager.h"
 #include "algorithm"
 #include "myEngine/Frame/Frame.h"
 #include <vector>

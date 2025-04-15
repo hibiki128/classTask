@@ -1,9 +1,9 @@
 #include "Object3d.h"
-#include "ModelManager.h"
+#include"Model/ModelManager.h"
 #include "Object3dCommon.h"
 #include "cassert"
 #include "myMath.h"
-#include <TextureManager.h>
+#include"Texture/TextureManager.h"
 #include <line/DrawLine3D.h>
 
 void Object3d::Initialize(const std::string &filePath) {

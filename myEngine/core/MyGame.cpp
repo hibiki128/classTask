@@ -1,6 +1,6 @@
 #include "MyGame.h"
 #include "SceneFactory.h"
-#include <ImGuiManager.h>
+#include"ImGui/ImGuiManager.h"
 
 void MyGame::Initialize() {
     Framework::Initialize();

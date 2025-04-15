@@ -6,14 +6,14 @@
 #include "Audio.h"
 #include "CollisionManager.h"
 #include "Input.h"
-#include "ModelManager.h"
-#include "Object3dCommon.h"
+#include"Model/ModelManager.h"
+#include"Object/Object3dCommon.h"
 #include "ParticleCommon.h"
 #include "ParticleEditor.h"
 #include "SceneManager.h"
 #include "SpriteCommon.h"
-#include "SrvManager.h"
-#include "TextureManager.h"
+#include"Srv/SrvManager.h"
+#include"Texture/TextureManager.h"
 #include "myEngine/offscreen/OffScreen.h"
 #include <line/DrawLine3D.h>
 

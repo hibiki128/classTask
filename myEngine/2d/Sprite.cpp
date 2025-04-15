@@ -1,7 +1,7 @@
 #include "Sprite.h"
 #include"SpriteCommon.h"
 #include "math/myMath.h"
-#include "TextureManager.h"
+#include "Texture/TextureManager.h"
 
 void Sprite::Initialize(const std::string& textureFilePath, Vector2 position, Vector4 color, Vector2 anchorpoint, bool isFlipX, bool isFlipY)
 {

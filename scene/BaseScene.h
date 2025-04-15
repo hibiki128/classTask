@@ -1,5 +1,15 @@
 #pragma once
-#include"ViewProjection.h"
+#include"ViewProjection/ViewProjection.h"
+#include "DebugCamera/DebugCamera.h"
+#include "Input.h"
+#include "Object/Object3d.h"
+#include "Object/Object3dCommon.h"
+#include "ParticleCommon.h"
+#include "ParticleEditor.h"
+#include "ParticleEmitter.h"
+#include "SpriteCommon.h"
+#include "WorldTransform.h"
+#include "Audio.h"
 class SceneManager;
 class BaseScene
 {

@@ -2,6 +2,7 @@
 #include <filesystem>
 #include <fstream>
 
+
 LightGroup *LightGroup::instance = nullptr;
 
 LightGroup *LightGroup::GetInstance() {

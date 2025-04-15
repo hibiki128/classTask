@@ -7,8 +7,8 @@
 #include <Vector3.h>
 #include <Vector4.h>
 #include <Matrix4x4.h>
-#include"ViewProjection.h"
-#include <PipeLineManager.h>
+#include"ViewProjection/ViewProjection.h"
+#include"PipeLine/PipeLineManager.h"
 
 using namespace Microsoft::WRL;
 

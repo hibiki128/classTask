@@ -3,7 +3,7 @@
 #include"SceneManager.h"
 #include"list"
 #include"Collider.h"
-#include"Object3d.h"
+#include"Object/Object3d.h"
 #include"myMath.h"
 class CollisionManager {
 public:

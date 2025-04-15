@@ -1,5 +1,5 @@
 #pragma once
-#include "ModelStructs.h"
+#include"Model/ModelStructs.h"
 #include <Quaternion.h>
 #include <Vector3.h>
 #include <map>

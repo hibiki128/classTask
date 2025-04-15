@@ -1,15 +1,6 @@
 #pragma once
-#include "Audio.h"
+
 #include "BaseScene.h"
-#include "DebugCamera.h"
-#include "Input.h"
-#include "Object3d.h"
-#include "Object3dCommon.h"
-#include "ParticleCommon.h"
-#include "ParticleEditor.h"
-#include "ParticleEmitter.h"
-#include "SpriteCommon.h"
-#include "WorldTransform.h"
 
 class TitleScene : public BaseScene {
   public: // メンバ関数

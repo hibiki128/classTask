@@ -1,10 +1,10 @@
 #pragma once
 #include "ParticleCommon.h"
-#include "SrvManager.h"
+#include"Srv/SrvManager.h"
 #include "Vector2.h"
 #include "Vector3.h"
 #include "Vector4.h"
-#include "ViewProjection.h"
+#include"ViewProjection/ViewProjection.h"
 #include "random"
 #include <Matrix4x4.h>
 #include <WorldTransform.h>

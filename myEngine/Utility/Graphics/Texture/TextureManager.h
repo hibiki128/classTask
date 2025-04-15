@@ -2,7 +2,7 @@
 #include "d3d12.h"
 #include"DirectXCommon.h"
 #include"externals/DirectXTex/DirectXTex.h"
-#include"SrvManager.h"
+#include"Srv/SrvManager.h"
 #include "string"
 #include "unordered_map"
 #include"wrl.h"

@@ -1,12 +1,12 @@
 #pragma once
-#include "Object3dCommon.h"
-#include "ViewProjection.h"
 #include "d3d12.h"
 #include "externals/nlohmann/json.hpp"
 #include "wrl.h"
 #include <Vector3.h>
 #include <Vector4.h>
 #include <string>
+#include <ViewProjection/ViewProjection.h>
+#include <Object/Object3dCommon.h>
 enum class LightType {
     Directional,
     Point,

@@ -1,13 +1,15 @@
 #pragma once
-#include"SrvManager.h"
+
 #include "Vector4.h"
 #include "Vector3.h"
 #include "Vector2.h"
 #include <Matrix4x4.h>
-#include"ViewProjection.h"
+#include"ViewProjection/ViewProjection.h"
 #include <WorldTransform.h>
 #include"random"
 #include"ParticleCommon.h"
+#include <Srv/SrvManager.h>
+
 class LineManager
 {
 public:

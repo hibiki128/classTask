@@ -1,6 +1,6 @@
 #include "Skin.h"
 #include <DirectXCommon.h>
-#include"SrvManager.h"
+#include"Srv/SrvManager.h"
 #include <myMath.h>
 #include <cassert>
 #include"algorithm"

@@ -60,7 +60,10 @@ void LightGroup::Draw() {
 
 void LightGroup::imgui() {
     ImGui::Begin("ライト設定");
-    if (ImGui::BeginTabBar("平行光源")) {
+
+    // 共通のタブバーを一つだけ作成
+    if (ImGui::BeginTabBar("LightTypeTabs")) {
+        // 平行光源タブ
         if (ImGui::BeginTabItem("平行光源")) {
             ImGui::Checkbox("平行光源アクティブ", &isDirectionalLight);
             if (directionalLightData->active) {
@@ -68,29 +71,26 @@ void LightGroup::imgui() {
                 directionalLightData->direction = directionalLightData->direction.Normalize();
                 ImGui::DragFloat("輝度", &directionalLightData->intensity, 0.01f);
                 ImGui::ColorEdit3("色", &directionalLightData->color.x);
-                // "HalfLambert", "BlinnPhong" の2つの選択肢を用意
+
+                // 光源タイプ選択
                 const char *lightingTypes[] = {"HalfLambert", "BlinnPhong"};
-
-                int selectedLightingType = directionalLightData->BlinnPhong ? 1 : 0; // 初期値はBlinnPhong
-
-                // Comboで選択されたインデックスに基づいてフラグを設定
+                int selectedLightingType = directionalLightData->BlinnPhong ? 1 : 0;
                 if (ImGui::Combo("光源タイプ", &selectedLightingType, lightingTypes, IM_ARRAYSIZE(lightingTypes))) {
-                    // フラグの設定
                     directionalLightData->HalfLambert = (selectedLightingType == 0) ? 1 : 0;
                     directionalLightData->BlinnPhong = (selectedLightingType == 1) ? 1 : 0;
                 }
+
+                // セーブボタン
+                if (ImGui::Button("セーブ")) {
+                    SaveDirectionalLight();
+                    std::string message = std::format("DirectionalLight saved.");
+                    MessageBoxA(nullptr, message.c_str(), "LightGroup", 0);
+                }
             }
             ImGui::EndTabItem();
-            if (ImGui::Button("セーブ")) {
-                SaveDirectionalLight();
-                std::string message = std::format("DirectionalLight saved.");
-                MessageBoxA(nullptr, message.c_str(), "LightGroup", 0);
-            }
         }
-        ImGui::EndTabBar();
-    }
 
-    if (ImGui::BeginTabBar("点光源")) {
+        // 点光源タブ
         if (ImGui::BeginTabItem("点光源")) {
             ImGui::Checkbox("点光源アクティブ", &isPointLight);
             if (pointLightData->active) {
@@ -99,29 +99,26 @@ void LightGroup::imgui() {
                 ImGui::DragFloat("減衰率", &pointLightData->decay, 0.1f);
                 ImGui::DragFloat("半径", &pointLightData->radius, 0.1f);
                 ImGui::ColorEdit3("色", &pointLightData->color.x);
-                // "HalfLambert", "BlinnPhong" の2つの選択肢を用意
+
+                // 光源タイプ選択
                 const char *lightingTypes[] = {"HalfLambert", "BlinnPhong"};
-
-                int selectedLightingType = pointLightData->BlinnPhong ? 1 : 0; // 初期値はBlinnPhong
-
-                // Comboで選択されたインデックスに基づいてフラグを設定
+                int selectedLightingType = pointLightData->BlinnPhong ? 1 : 0;
                 if (ImGui::Combo("光源タイプ", &selectedLightingType, lightingTypes, IM_ARRAYSIZE(lightingTypes))) {
-                    // フラグの設定
                     pointLightData->HalfLambert = (selectedLightingType == 0) ? 1 : 0;
                     pointLightData->BlinnPhong = (selectedLightingType == 1) ? 1 : 0;
                 }
-            }
-            if (ImGui::Button("セーブ")) {
-                SavePointLight();
-                std::string message = std::format("PointLight saved.");
-                MessageBoxA(nullptr, message.c_str(), "LightGroup", 0);
+
+                // セーブボタン
+                if (ImGui::Button("セーブ")) {
+                    SavePointLight();
+                    std::string message = std::format("PointLight saved.");
+                    MessageBoxA(nullptr, message.c_str(), "LightGroup", 0);
+                }
             }
             ImGui::EndTabItem();
         }
-        ImGui::EndTabBar();
-    }
 
-    if (ImGui::BeginTabBar("スポットライト")) {
+        // スポットライトタブ
         if (ImGui::BeginTabItem("スポットライト")) {
             ImGui::Checkbox("スポットライトアクティブ", &isSpotLight);
             if (spotLightData->active) {
@@ -133,27 +130,28 @@ void LightGroup::imgui() {
                 ImGui::DragFloat("距離", &spotLightData->distance, 0.1f);
                 ImGui::DragFloat("余弦", &spotLightData->cosAngle, 0.1f);
                 ImGui::ColorEdit3("色", &spotLightData->color.x);
-                // "HalfLambert", "BlinnPhong" の2つの選択肢を用意
+
+                // 光源タイプ選択
                 const char *lightingTypes[] = {"HalfLambert", "BlinnPhong"};
-
-                int selectedLightingType = spotLightData->BlinnPhong ? 1 : 0; // 初期値はBlinnPhong
-
-                // Comboで選択されたインデックスに基づいてフラグを設定
+                int selectedLightingType = spotLightData->BlinnPhong ? 1 : 0;
                 if (ImGui::Combo("光源タイプ", &selectedLightingType, lightingTypes, IM_ARRAYSIZE(lightingTypes))) {
-                    // フラグの設定
                     spotLightData->HalfLambert = (selectedLightingType == 0) ? 1 : 0;
                     spotLightData->BlinnPhong = (selectedLightingType == 1) ? 1 : 0;
                 }
-            }
-            if (ImGui::Button("セーブ")) {
-                SaveSpotLight();
-                std::string message = std::format("SpotLight saved.");
-                MessageBoxA(nullptr, message.c_str(), "LightGroup", 0);
+
+                // セーブボタン
+                if (ImGui::Button("セーブ")) {
+                    SaveSpotLight();
+                    std::string message = std::format("SpotLight saved.");
+                    MessageBoxA(nullptr, message.c_str(), "LightGroup", 0);
+                }
             }
             ImGui::EndTabItem();
         }
+
         ImGui::EndTabBar();
     }
+
     ImGui::End();
 }
 

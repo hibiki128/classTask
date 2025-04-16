@@ -158,10 +158,6 @@ void Framework::Update() {
     /// deltaTimeの更新
     Frame::Update();
 
-#ifdef _DEBUG
-    imGuiManager_->Begin();
-#endif // _DEBUG
-
     sceneManager_->Update();
 
     collisionManager_->Update();
@@ -196,7 +192,7 @@ void Framework::DisplayFPS() {
     float fps = Frame::GetFPS(); // FPSの取得
 
     // FPSを表示するウィンドウを固定位置に設定
-    ImGui::SetNextWindowPos(ImVec2((WinApp::kClientWidth - 50), 0), ImGuiCond_Always);
+    ImGui::SetNextWindowPos(ImVec2((WinApp::kClientWidth - 50), 20), ImGuiCond_Always);
     ImGui::SetNextWindowBgAlpha(0.0f); // 背景を透明に設定
 
     // ウィンドウフラグを設定

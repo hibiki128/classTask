@@ -26,6 +26,8 @@ class ImGuiManager {
     /// </summary>
     void Initialize(WinApp *winApp);
 
+    void SetupTheme();
+
     /// <summary>
     /// シングルトンインスタンスの取得
     /// </summary>
@@ -116,5 +118,10 @@ class ImGuiManager {
 
     // エンジンのウィンドウを描画するフラグ
     bool isShowMainUI_ = false;
+
+    // 重いUIコンポーネントの表示状態管理
+    bool showSceneSettings_ = true;
+    bool showObjectSettings_ = true;
+    bool showParticleSettings_ = true;
 
 };

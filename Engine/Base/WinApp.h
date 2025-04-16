@@ -58,8 +58,8 @@ class WinApp {
 
   public: // 定数
     // クライアント領域のサイズ
-    static const int32_t kClientWidth = 1440; // 横
-    static const int32_t kClientHeight = 810; // 縦
+    static const int32_t kClientWidth = 1760; // 横
+    static const int32_t kClientHeight = 990; // 縦
   private:                                    // メンバ変数
     HWND hwnd = nullptr;                      // ウィンドウハンドル
     WNDCLASS wc{};                            // ウィンドウクラスの設定

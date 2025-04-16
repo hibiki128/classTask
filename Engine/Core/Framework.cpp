@@ -1,6 +1,6 @@
 #include "Framework.h"
+#include "Engine/Frame/Frame.h"
 #include "ImGui/ImGuiManager.h"
-#include "myEngine/Frame/Frame.h"
 #include "ResourceLeakChecker/D3DResourceLeakChecker.h"
 
 void Framework::Run() {
@@ -38,17 +38,18 @@ void Framework::Initialize() {
     dxCommon->Initialize(winApp);
     ///--------------------------------
 
-    /// ---------ImGui---------
-#ifdef _DEBUG
-    ImGuiManager::GetInstance()->Initialize(winApp);
-#endif // _DEBUG
-       /// -----------------------
-
     ///--------SRVManager--------
     // SRVマネージャの初期化
     srvManager = SrvManager::GetInstance();
     srvManager->Initialize();
     ///--------------------------
+
+    /// ---------ImGui---------
+#ifdef _DEBUG
+    imGuiManager_ = ImGuiManager::GetInstance();
+    imGuiManager_->Initialize(winApp);
+#endif // _DEBUG
+       /// -----------------------
 
     // offscreenのSRV作成
     dxCommon->CreateOffscreenSRV();
@@ -137,7 +138,7 @@ void Framework::Finalize() {
     ///---------------------------
 
 #ifdef _DEBUG
-    ImGuiManager::GetInstance()->Finalize();
+    imGuiManager_->Finalize();
 #endif // _DEBUG
     line3d_->Finalize();
     srvManager->Finalize();
@@ -155,15 +156,11 @@ void Framework::Update() {
     /// deltaTimeの更新
     Frame::Update();
 #ifdef _DEBUG
-    ImGuiManager::GetInstance()->Begin();
+    imGuiManager_->Begin();
 #endif // _DEBUG
     offscreen_->DrawCommonSetting();
     sceneManager_->Update();
     collisionManager_->Update();
-#ifdef _DEBUG
-    DisplayFPS();
-    ImGuiManager::GetInstance()->End();
-#endif // _DEBUG
 
     /// -------更新処理開始----------
 
@@ -177,7 +174,6 @@ void Framework::Update() {
 }
 
 void Framework::LoadResource() {
-   
 }
 
 void Framework::PlaySounds() {

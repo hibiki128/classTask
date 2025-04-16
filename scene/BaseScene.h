@@ -10,6 +10,11 @@
 #include "SpriteCommon.h"
 #include "WorldTransform.h"
 #include "Audio.h"
+#include "LightGroup.h"
+#include "line/DrawLine3D.h"
+#ifdef _DEBUG
+#include <imgui.h>
+#endif // _DEBUG
 class SceneManager;
 class BaseScene
 {

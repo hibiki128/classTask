@@ -1,6 +1,5 @@
 #include "MyGame.h"
 #include "SceneFactory.h"
-#include"ImGui/ImGuiManager.h"
 
 void MyGame::Initialize() {
     Framework::Initialize();
@@ -28,6 +27,11 @@ void MyGame::Update() {
     Framework::Update();
     // -----ゲーム固有の処理-----
 
+    // エンジンUI描画切り替え
+    if (input->TriggerKey(DIK_O)) {
+        imGuiManager_->GetIsShowMainUI() = !imGuiManager_->GetIsShowMainUI();
+    }
+
     // -----------------------
 }
 
@@ -51,14 +55,22 @@ void MyGame::Draw() {
 #endif // _DEBUG
 
     dxCommon->PreDraw();
+
     offscreen_->SetProjection(sceneManager_->GetBaseScene()->GetViewProjection()->matProjection_);
-    offscreen_->Draw();
+    if (imGuiManager_->GetIsShowMainUI()) {
+        imGuiManager_->ShowMainUI();
+    } else {
+        offscreen_->Draw();
+    }
+
     dxCommon->TransitionDepthBarrier();
     sceneManager_->DrawForOffScreen();
     sceneManager_->DrawTransition();
 
 #ifdef _DEBUG
-    ImGuiManager::GetInstance()->Draw();
+    Framework::DisplayFPS();
+    imGuiManager_->End();
+    imGuiManager_->Draw();
 #endif // _DEBUG
        // ------------------------
 

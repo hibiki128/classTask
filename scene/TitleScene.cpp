@@ -1,16 +1,6 @@
 #include "TitleScene.h"
 #include "SceneManager.h"
 
-#ifdef _DEBUG
-#include <imgui.h>
-#endif // _DEBUG
-#include "line/DrawLine3D.h"
-#include <LightGroup.h>
-#include <filesystem>
-#include <iostream>
-#include <Object/Object3dCommon.h>
-#include <DebugCamera/DebugCamera.h>
-
 void TitleScene::Initialize() {
     audio_ = Audio::GetInstance();
     objCommon_ = Object3dCommon::GetInstance();

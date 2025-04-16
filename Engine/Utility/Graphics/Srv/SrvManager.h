@@ -112,6 +112,9 @@ public:
 	/// <returns></returns>
 	D3D12_CPU_DESCRIPTOR_HANDLE GetCPUDescriptorHandle(uint32_t index);
 	D3D12_GPU_DESCRIPTOR_HANDLE GetGPUDescriptorHandle(uint32_t index);
+        ID3D12DescriptorHeap *GetDescriptorHeap() const {
+            return descriptorHeap.Get(); // 管理してるSRVヒープ
+        }
 
 	/// <summary>
 	/// setter

@@ -1,11 +1,11 @@
 #include <vector>
 #include <string>
 #include <memory>
-#include "externals/nlohmann/json.hpp" // JSONライブラリ (nlohmann/json)
-#include "Object3d.h" // 自作エンジンの Object3d クラス
-#include "WorldTransform.h" // 自作エンジンの WorldTransform クラス
-#include "ViewProjection.h" // 自作エンジンの ViewProjection クラス
-#include "Vector3.h" // Vector3 クラス（自作エンジン内のもの）
+#include "externals/nlohmann/json.hpp"
+#include "Object/Object3d.h"
+#include "WorldTransform.h" 
+#include "ViewProjection/ViewProjection.h"
+#include "Vector3.h" 
 
 using json = nlohmann::json;
 

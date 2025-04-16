@@ -14,8 +14,9 @@
 #include "SpriteCommon.h"
 #include"Srv/SrvManager.h"
 #include"Texture/TextureManager.h"
-#include "myEngine/offscreen/OffScreen.h"
+#include "Engine/offscreen/OffScreen.h"
 #include <line/DrawLine3D.h>
+#include"ImGui/ImGuiManager.h"
 
 class Framework {
   public: // メンバ関数
@@ -59,11 +60,11 @@ class Framework {
     /// <returns></returns>
     virtual bool IsEndRequest() { return endRequest_; }
 
-  private:
     /// <summary>
     ///  FPS表示
     /// </summary>
     void DisplayFPS();
+  private:
 
   protected:
     Input *input = nullptr;
@@ -79,6 +80,7 @@ class Framework {
     SrvManager *srvManager = nullptr;
     TextureManager *textureManager_ = nullptr;
     ModelManager *modelManager_ = nullptr;
+    ImGuiManager *imGuiManager_ = nullptr;
 
     SpriteCommon *spriteCommon = nullptr;
     Object3dCommon *object3dCommon = nullptr;

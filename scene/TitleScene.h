@@ -1,6 +1,7 @@
 #pragma once
 
 #include "BaseScene.h"
+#include"application/Base/BaseObject.h"
 
 class TitleScene : public BaseScene {
   public: // メンバ関数
@@ -49,4 +50,5 @@ class TitleScene : public BaseScene {
     std::unique_ptr<DebugCamera> debugCamera_;
 
     std::unique_ptr<ParticleEmitter> emitter_;
+    std::unique_ptr<BaseObject> test;
 };

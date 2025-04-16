@@ -1,6 +1,6 @@
 #include "ParticleEmitter.h"
 #include "line/DrawLine3D.h"
-#include "myEngine/Frame/Frame.h"
+#include "Engine/Frame/Frame.h"
 // コンストラクタ
 ParticleEmitter::ParticleEmitter() {}
 

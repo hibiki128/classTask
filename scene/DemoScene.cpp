@@ -1,13 +1,5 @@
 #include "DemoScene.h"
-#include"ImGui/ImGuiManager.h"
 #include "SceneManager.h"
-#include "Srv/SrvManager.h"
-
-#ifdef _DEBUG
-#include <imgui.h>
-#endif // _DEBUG
-#include "line/DrawLine3D.h"
-#include <LightGroup.h>
 
 void DemoScene::Initialize() {
     audio_ = Audio::GetInstance();

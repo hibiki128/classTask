@@ -1,15 +1,5 @@
-#include "ImGuiManager.h"
-#include "SceneManager.h"
-#include "SrvManager.h"
 #include "GameScene.h"
-
-#ifdef _DEBUG
-#include <imgui.h>
-#endif // _DEBUG
-#include "line/DrawLine3D.h"
-#include <LightGroup.h>
-#include <filesystem>
-#include <iostream>
+#include "SceneManager.h"
 
 void GameScene::Initialize() {
     audio_ = Audio::GetInstance();

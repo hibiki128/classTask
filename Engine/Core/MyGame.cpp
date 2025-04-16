@@ -69,6 +69,7 @@ void MyGame::Draw() {
         offscreen_->Setting();
         sceneManager_->SceneSelection();
         LightGroup::GetInstance()->imgui();
+        offscreen_->Draw();
     } else {
         offscreen_->Draw();
     }

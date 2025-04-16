@@ -2,7 +2,6 @@
 #include <filesystem>
 #include <fstream>
 
-
 LightGroup *LightGroup::instance = nullptr;
 
 LightGroup *LightGroup::GetInstance() {
@@ -60,29 +59,29 @@ void LightGroup::Draw() {
 }
 
 void LightGroup::imgui() {
-
-    if (ImGui::BeginTabBar("Direction")) {
-        if (ImGui::BeginTabItem("Direction")) {
-            ImGui::Checkbox("directionalLight", &isDirectionalLight);
+    ImGui::Begin("ライト設定");
+    if (ImGui::BeginTabBar("平行光源")) {
+        if (ImGui::BeginTabItem("平行光源")) {
+            ImGui::Checkbox("平行光源アクティブ", &isDirectionalLight);
             if (directionalLightData->active) {
-                ImGui::DragFloat3("LightDirection", &directionalLightData->direction.x, 0.1f);
+                ImGui::DragFloat3("方向", &directionalLightData->direction.x, 0.1f);
                 directionalLightData->direction = directionalLightData->direction.Normalize();
-                ImGui::DragFloat("Intensity", &directionalLightData->intensity, 0.01f);
-                ImGui::ColorEdit3("Color", &directionalLightData->color.x);
+                ImGui::DragFloat("輝度", &directionalLightData->intensity, 0.01f);
+                ImGui::ColorEdit3("色", &directionalLightData->color.x);
                 // "HalfLambert", "BlinnPhong" の2つの選択肢を用意
                 const char *lightingTypes[] = {"HalfLambert", "BlinnPhong"};
 
                 int selectedLightingType = directionalLightData->BlinnPhong ? 1 : 0; // 初期値はBlinnPhong
 
                 // Comboで選択されたインデックスに基づいてフラグを設定
-                if (ImGui::Combo("Lighting Type", &selectedLightingType, lightingTypes, IM_ARRAYSIZE(lightingTypes))) {
+                if (ImGui::Combo("光源タイプ", &selectedLightingType, lightingTypes, IM_ARRAYSIZE(lightingTypes))) {
                     // フラグの設定
                     directionalLightData->HalfLambert = (selectedLightingType == 0) ? 1 : 0;
                     directionalLightData->BlinnPhong = (selectedLightingType == 1) ? 1 : 0;
                 }
             }
             ImGui::EndTabItem();
-            if (ImGui::Button("Save")) {
+            if (ImGui::Button("セーブ")) {
                 SaveDirectionalLight();
                 std::string message = std::format("DirectionalLight saved.");
                 MessageBoxA(nullptr, message.c_str(), "LightGroup", 0);
@@ -91,28 +90,28 @@ void LightGroup::imgui() {
         ImGui::EndTabBar();
     }
 
-    if (ImGui::BeginTabBar("Point")) {
-        if (ImGui::BeginTabItem("Point")) {
-            ImGui::Checkbox("pointLight", &isPointLight);
+    if (ImGui::BeginTabBar("点光源")) {
+        if (ImGui::BeginTabItem("点光源")) {
+            ImGui::Checkbox("点光源アクティブ", &isPointLight);
             if (pointLightData->active) {
-                ImGui::DragFloat3("Position", &pointLightData->position.x, 0.1f);
-                ImGui::DragFloat("Intensity", &pointLightData->intensity, 0.01f);
-                ImGui::DragFloat("Decay", &pointLightData->decay, 0.1f);
-                ImGui::DragFloat("Radius", &pointLightData->radius, 0.1f);
-                ImGui::ColorEdit3("Color", &pointLightData->color.x);
+                ImGui::DragFloat3("位置", &pointLightData->position.x, 0.1f);
+                ImGui::DragFloat("輝度", &pointLightData->intensity, 0.01f);
+                ImGui::DragFloat("減衰率", &pointLightData->decay, 0.1f);
+                ImGui::DragFloat("半径", &pointLightData->radius, 0.1f);
+                ImGui::ColorEdit3("色", &pointLightData->color.x);
                 // "HalfLambert", "BlinnPhong" の2つの選択肢を用意
                 const char *lightingTypes[] = {"HalfLambert", "BlinnPhong"};
 
                 int selectedLightingType = pointLightData->BlinnPhong ? 1 : 0; // 初期値はBlinnPhong
 
                 // Comboで選択されたインデックスに基づいてフラグを設定
-                if (ImGui::Combo("Lighting Type", &selectedLightingType, lightingTypes, IM_ARRAYSIZE(lightingTypes))) {
+                if (ImGui::Combo("光源タイプ", &selectedLightingType, lightingTypes, IM_ARRAYSIZE(lightingTypes))) {
                     // フラグの設定
                     pointLightData->HalfLambert = (selectedLightingType == 0) ? 1 : 0;
                     pointLightData->BlinnPhong = (selectedLightingType == 1) ? 1 : 0;
                 }
             }
-            if (ImGui::Button("Save")) {
+            if (ImGui::Button("セーブ")) {
                 SavePointLight();
                 std::string message = std::format("PointLight saved.");
                 MessageBoxA(nullptr, message.c_str(), "LightGroup", 0);
@@ -122,31 +121,31 @@ void LightGroup::imgui() {
         ImGui::EndTabBar();
     }
 
-    if (ImGui::BeginTabBar("Spot")) {
-        if (ImGui::BeginTabItem("Spot")) {
-            ImGui::Checkbox("spotLight", &isSpotLight);
+    if (ImGui::BeginTabBar("スポットライト")) {
+        if (ImGui::BeginTabItem("スポットライト")) {
+            ImGui::Checkbox("スポットライトアクティブ", &isSpotLight);
             if (spotLightData->active) {
-                ImGui::DragFloat3("Position", &spotLightData->position.x, 0.1f);
-                ImGui::DragFloat("Intensity", &spotLightData->intensity, 0.01f);
-                ImGui::DragFloat3("LightDirection", &spotLightData->direction.x, 0.1f);
+                ImGui::DragFloat3("位置", &spotLightData->position.x, 0.1f);
+                ImGui::DragFloat("輝度", &spotLightData->intensity, 0.01f);
+                ImGui::DragFloat3("方向", &spotLightData->direction.x, 0.1f);
                 spotLightData->direction = spotLightData->direction.Normalize();
-                ImGui::DragFloat("Decay", &spotLightData->decay, 0.1f);
-                ImGui::DragFloat("Distance", &spotLightData->distance, 0.1f);
-                ImGui::DragFloat("cosAngle", &spotLightData->cosAngle, 0.1f);
-                ImGui::ColorEdit3("Color", &spotLightData->color.x);
+                ImGui::DragFloat("減衰率", &spotLightData->decay, 0.1f);
+                ImGui::DragFloat("距離", &spotLightData->distance, 0.1f);
+                ImGui::DragFloat("余弦", &spotLightData->cosAngle, 0.1f);
+                ImGui::ColorEdit3("色", &spotLightData->color.x);
                 // "HalfLambert", "BlinnPhong" の2つの選択肢を用意
                 const char *lightingTypes[] = {"HalfLambert", "BlinnPhong"};
 
                 int selectedLightingType = spotLightData->BlinnPhong ? 1 : 0; // 初期値はBlinnPhong
 
                 // Comboで選択されたインデックスに基づいてフラグを設定
-                if (ImGui::Combo("Lighting Type", &selectedLightingType, lightingTypes, IM_ARRAYSIZE(lightingTypes))) {
+                if (ImGui::Combo("光源タイプ", &selectedLightingType, lightingTypes, IM_ARRAYSIZE(lightingTypes))) {
                     // フラグの設定
                     spotLightData->HalfLambert = (selectedLightingType == 0) ? 1 : 0;
                     spotLightData->BlinnPhong = (selectedLightingType == 1) ? 1 : 0;
                 }
             }
-            if (ImGui::Button("Save")) {
+            if (ImGui::Button("セーブ")) {
                 SaveSpotLight();
                 std::string message = std::format("SpotLight saved.");
                 MessageBoxA(nullptr, message.c_str(), "LightGroup", 0);
@@ -155,207 +154,76 @@ void LightGroup::imgui() {
         }
         ImGui::EndTabBar();
     }
+    ImGui::End();
 }
 
 void LightGroup::SaveDirectionalLight() {
-    // 保存先の固定パス
-    const std::string filePath = "resources/jsons/LightGroup/directionalLightData.json";
-
-    // 必要なフォルダを作成
-    std::filesystem::create_directories("resources/jsons/LightGroup");
-
-    // JSONデータ作成
-    nlohmann::json directionalLightJson = {
-        {"active", isDirectionalLight},
-        {"direction", {directionalLightData->direction.x, directionalLightData->direction.y, directionalLightData->direction.z}},
-        {"intensity", directionalLightData->intensity},
-        {"color", {directionalLightData->color.x, directionalLightData->color.y, directionalLightData->color.z}},
-        {"HalfLambert", directionalLightData->HalfLambert}, // 追加
-        {"BlinnPhong", directionalLightData->BlinnPhong}    // 追加
-    };
-
-    // ファイルに書き込み
-    std::ofstream outFile(filePath);
-    if (outFile.is_open()) {
-        outFile << directionalLightJson.dump(4); // インデントを4スペースに設定
-        outFile.close();
-    }
+    DLightData_->Save<bool>("active", isDirectionalLight);
+    DLightData_->Save<Vector3>("direction", directionalLightData->direction);
+    DLightData_->Save<float>("intensity", directionalLightData->intensity);
+    DLightData_->Save<Vector4>("color", directionalLightData->color);
+    DLightData_->Save<int32_t>("HalfLambert", directionalLightData->HalfLambert);
+    DLightData_->Save<int32_t>("BlinnPghong", directionalLightData->BlinnPhong);
 }
 
 void LightGroup::SavePointLight() {
-    // 保存先の固定パス
-    const std::string filePath = "resources/jsons/LightGroup/pointLightData.json";
-
-    // 必要なフォルダを作成
-    std::filesystem::create_directories("resources/jsons/LightGroup");
-
-    // JSONデータ作成
-    nlohmann::json pointLightJson = {
-        {"active", isPointLight},
-        {"position", {pointLightData->position.x, pointLightData->position.y, pointLightData->position.z}},
-        {"intensity", pointLightData->intensity},
-        {"decay", pointLightData->decay},
-        {"radius", pointLightData->radius},
-        {"color", {pointLightData->color.x, pointLightData->color.y, pointLightData->color.z}},
-        {"HalfLambert", pointLightData->HalfLambert}, // 追加
-        {"BlinnPhong", pointLightData->BlinnPhong}    // 追加
-    };
-
-    // ファイルに書き込み
-    std::ofstream outFile(filePath);
-    if (outFile.is_open()) {
-        outFile << pointLightJson.dump(4); // インデントを4スペースに設定
-        outFile.close();
-    }
+    PLightData_->Save<bool>("active", isPointLight);
+    PLightData_->Save<Vector4>("color", pointLightData->color);
+    PLightData_->Save<Vector3>("position", pointLightData->position);
+    PLightData_->Save<int32_t>("HalfLambert", pointLightData->HalfLambert);
+    PLightData_->Save<int32_t>("BlinnPhong", pointLightData->BlinnPhong);
+    PLightData_->Save<float>("intensity", pointLightData->intensity);
+    PLightData_->Save<float>("radius", pointLightData->radius);
+    PLightData_->Save<float>("decay", pointLightData->decay);
 }
 
 void LightGroup::SaveSpotLight() {
-    // 保存先の固定パス
-    const std::string filePath = "resources/jsons/LightGroup/spotLightData.json";
-
-    // 必要なフォルダを作成
-    std::filesystem::create_directories("resources/jsons/LightGroup");
-
-    // JSONデータ作成
-    nlohmann::json spotLightJson = {
-        {"active", isSpotLight},
-        {"direction", {spotLightData->direction.x, spotLightData->direction.y, spotLightData->direction.z}},
-        {"intensity", spotLightData->intensity},
-        {"color", {spotLightData->color.x, spotLightData->color.y, spotLightData->color.z}},
-        {"decay", spotLightData->decay},
-        {"distance", spotLightData->distance},
-        {"cosAngle", spotLightData->cosAngle},
-        {"HalfLambert", spotLightData->HalfLambert}, // 追加
-        {"BlinnPhong", spotLightData->BlinnPhong}    // 追加
-    };
-
-    // ファイルに書き込み
-    std::ofstream outFile(filePath);
-    if (outFile.is_open()) {
-        outFile << spotLightJson.dump(4); // インデントを4スペースに設定
-        outFile.close();
-    }
+    SLightData_->Save<bool>("active", isSpotLight);
+    SLightData_->Save<Vector4>("color", spotLightData->color);
+    SLightData_->Save<Vector3>("position", spotLightData->position);
+    SLightData_->Save<Vector3>("direction", spotLightData->direction);
+    SLightData_->Save<int32_t>("HalfLambert", spotLightData->HalfLambert);
+    SLightData_->Save<int32_t>("BlinnPhong", spotLightData->BlinnPhong);
+    SLightData_->Save<float>("intensity", spotLightData->intensity);
+    SLightData_->Save<float>("distance", spotLightData->distance);
+    SLightData_->Save<float>("cosAngle", spotLightData->cosAngle);
+    SLightData_->Save<float>("decay", spotLightData->decay);
 }
 
 void LightGroup::LoadDirectionalLight() {
-    // 読み込み元の固定パス
-    const std::string filePath = "resources/jsons/LightGroup/directionalLightData.json";
-
-    // ファイルが存在しない場合は早期リターン
-    std::ifstream inFile(filePath);
-    if (!inFile.is_open())
-        return;
-
-    // JSONデータ読み込み
-    nlohmann::json directionalLightJson;
-    inFile >> directionalLightJson;
-    inFile.close();
-
-    // Directional Lightの情報を設定
-    if (directionalLightJson.contains("active"))
-        isDirectionalLight = directionalLightJson["active"];
-    if (directionalLightJson.contains("direction"))
-        directionalLightData->direction = {
-            directionalLightJson["direction"][0],
-            directionalLightJson["direction"][1],
-            directionalLightJson["direction"][2]};
-    if (directionalLightJson.contains("intensity"))
-        directionalLightData->intensity = directionalLightJson["intensity"];
-    if (directionalLightJson.contains("color"))
-        directionalLightData->color = {
-            directionalLightJson["color"][0],
-            directionalLightJson["color"][1],
-            directionalLightJson["color"][2]};
-
-    // HalfLambert, BlinnPhong の値を読み込む
-    if (directionalLightJson.contains("HalfLambert"))
-        directionalLightData->HalfLambert = directionalLightJson["HalfLambert"];
-    if (directionalLightJson.contains("BlinnPhong"))
-        directionalLightData->BlinnPhong = directionalLightJson["BlinnPhong"];
+    DLightData_ = std::make_unique<DataHandler>("LightData", "DirectionalLight");
+    isDirectionalLight = DLightData_->Load<bool>("active", true);
+    directionalLightData->color = DLightData_->Load<Vector4>("color", {1.0f, 1.0f, 1.0f, 1.0f});
+    directionalLightData->direction = DLightData_->Load<Vector3>("direction", {0.0f, -1.0f, 0.0f});
+    directionalLightData->HalfLambert = DLightData_->Load<int32_t>("HalfLambert", false);
+    directionalLightData->BlinnPhong = DLightData_->Load<int32_t>("BlinnPghong", true);
+    directionalLightData->intensity = DLightData_->Load<float>("intensity", 1.0f);
 }
 
 void LightGroup::LoadPointLight() {
-    // 読み込み元の固定パス
-    const std::string filePath = "resources/jsons/LightGroup/pointLightData.json";
-
-    // ファイルが存在しない場合は早期リターン
-    std::ifstream inFile(filePath);
-    if (!inFile.is_open())
-        return;
-
-    // JSONデータ読み込み
-    nlohmann::json pointLightJson;
-    inFile >> pointLightJson;
-    inFile.close();
-
-    // Point Lightの情報を設定
-    if (pointLightJson.contains("active"))
-        isPointLight = pointLightJson["active"];
-    if (pointLightJson.contains("position"))
-        pointLightData->position = {
-            pointLightJson["position"][0],
-            pointLightJson["position"][1],
-            pointLightJson["position"][2]};
-    if (pointLightJson.contains("intensity"))
-        pointLightData->intensity = pointLightJson["intensity"];
-    if (pointLightJson.contains("decay"))
-        pointLightData->decay = pointLightJson["decay"];
-    if (pointLightJson.contains("radius"))
-        pointLightData->radius = pointLightJson["radius"];
-    if (pointLightJson.contains("color"))
-        pointLightData->color = {
-            pointLightJson["color"][0],
-            pointLightJson["color"][1],
-            pointLightJson["color"][2]};
-
-    // HalfLambert, BlinnPhong の値を読み込む
-    if (pointLightJson.contains("HalfLambert"))
-        pointLightData->HalfLambert = pointLightJson["HalfLambert"];
-    if (pointLightJson.contains("BlinnPhong"))
-        pointLightData->BlinnPhong = pointLightJson["BlinnPhong"];
+    PLightData_ = std::make_unique<DataHandler>("LightData", "PointLight");
+    isPointLight = PLightData_->Load<bool>("active", false);
+    pointLightData->color = PLightData_->Load<Vector4>("color", {1.0f, 1.0f, 1.0f, 1.0f});
+    pointLightData->position = PLightData_->Load<Vector3>("position", {-1.0f, 4.0f, -3.0f});
+    pointLightData->HalfLambert = PLightData_->Load<int32_t>("HalfLambert", false);
+    pointLightData->BlinnPhong = PLightData_->Load<int32_t>("BlinnPhong", true);
+    pointLightData->intensity = PLightData_->Load<float>("intensity", 1.0f);
+    pointLightData->radius = PLightData_->Load<float>("radius", 2.0f);
+    pointLightData->decay = PLightData_->Load<float>("decay", 1.0f);
 }
 
 void LightGroup::LoadSpotLight() {
-    // 読み込み元の固定パス
-    const std::string filePath = "resources/jsons/LightGroup/spotLightData.json";
-
-    // ファイルが存在しない場合は早期リターン
-    std::ifstream inFile(filePath);
-    if (!inFile.is_open())
-        return;
-
-    // JSONデータ読み込み
-    nlohmann::json spotLightJson;
-    inFile >> spotLightJson;
-    inFile.close();
-
-    // Spot Lightの情報を設定
-    if (spotLightJson.contains("active"))
-        isSpotLight = spotLightJson["active"];
-    if (spotLightJson.contains("direction"))
-        spotLightData->direction = {
-            spotLightJson["direction"][0],
-            spotLightJson["direction"][1],
-            spotLightJson["direction"][2]};
-    if (spotLightJson.contains("intensity"))
-        spotLightData->intensity = spotLightJson["intensity"];
-    if (spotLightJson.contains("color"))
-        spotLightData->color = {
-            spotLightJson["color"][0],
-            spotLightJson["color"][1],
-            spotLightJson["color"][2]};
-    if (spotLightJson.contains("decay"))
-        spotLightData->decay = spotLightJson["decay"];
-    if (spotLightJson.contains("distance"))
-        spotLightData->distance = spotLightJson["distance"];
-    if (spotLightJson.contains("cosAngle"))
-        spotLightData->cosAngle = spotLightJson["cosAngle"];
-
-    // HalfLambert, BlinnPhong の値を読み込む
-    if (spotLightJson.contains("HalfLambert"))
-        spotLightData->HalfLambert = spotLightJson["HalfLambert"];
-    if (spotLightJson.contains("BlinnPhong"))
-        spotLightData->BlinnPhong = spotLightJson["BlinnPhong"];
+    SLightData_ = std::make_unique<DataHandler>("LightData", "SpotLight");
+    isSpotLight = SLightData_->Load<bool>("active", false);
+    spotLightData->color = SLightData_->Load<Vector4>("color", {1.0f, 1.0f, 1.0f, 1.0f});
+    spotLightData->position = SLightData_->Load<Vector3>("position", {0.0f, -4.0f, -3.0f});
+    spotLightData->direction = SLightData_->Load<Vector3>("direction", {0.0f, -1.0f, 0.0f});
+    spotLightData->HalfLambert = SLightData_->Load<int32_t>("HalfLambert", false);
+    spotLightData->BlinnPhong = SLightData_->Load<int32_t>("BlinnPhong", true);
+    spotLightData->intensity = SLightData_->Load<float>("intensity", 1.0f);
+    spotLightData->distance = SLightData_->Load<float>("distance", 10.0f);
+    spotLightData->cosAngle = SLightData_->Load<float>("cosAngle", 3.0f);
+    spotLightData->decay = SLightData_->Load<float>("decay", 1.0f);
 }
 
 void LightGroup::CreatePointLight() {

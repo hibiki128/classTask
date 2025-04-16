@@ -19,15 +19,9 @@ void TitleScene::Initialize() {
 }
 
 void TitleScene::Finalize() {
-   
 }
 
 void TitleScene::Update() {
-#ifdef _DEBUG
-    // デバッグ
-    Debug();
-#endif // _DEBUG
-
     // カメラ更新
     CameraUpdate();
 
@@ -41,10 +35,9 @@ void TitleScene::Draw() {
     /// Spriteの描画準備
     spCommon_->DrawCommonSetting();
     //-----Spriteの描画開始-----
-    
+
     //-------------------------
 
-  
     objCommon_->DrawCommonSetting();
     //-----3DObjectの描画開始-----
 
@@ -92,11 +85,15 @@ void TitleScene::DrawForOffScreen() {
     /// -------描画処理終了-------
 }
 
-void TitleScene::Debug() {
-    ImGui::Begin("TitleScene:Debug");
+void TitleScene::AddSceneSetting() {
     debugCamera_->imgui();
-    LightGroup::GetInstance()->imgui();
-    ImGui::End();
+}
+
+void TitleScene::AddObjectSetting() {
+
+}
+
+void TitleScene::AddParticleSetting() {
 
     emitter_->Debug();
 }

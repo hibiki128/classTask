@@ -43,6 +43,8 @@ class SceneManager {
     /// </summary>
     void DrawForOffScreen();
 
+    void SceneSelection();
+
     /// <summary>
     /// 遷移描画
     /// </summary>

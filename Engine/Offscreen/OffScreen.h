@@ -15,7 +15,7 @@ public:
 
 	void Draw();
 
-	void DrawCommonSetting();
+	void Setting();
 
 	void SetProjection(Matrix4x4 projectionMatrix) { projectionInverse_ = projectionMatrix; }
 private:

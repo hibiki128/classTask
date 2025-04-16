@@ -1,6 +1,6 @@
 #include "ParticleEmitter.h"
-#include "line/DrawLine3D.h"
 #include "Engine/Frame/Frame.h"
+#include "line/DrawLine3D.h"
 // コンストラクタ
 ParticleEmitter::ParticleEmitter() {}
 
@@ -474,11 +474,8 @@ void ParticleEmitter::DebugParticleData() {
 // ImGuiで値を動かす関数
 void ParticleEmitter::Debug() {
 #ifdef _DEBUG
-    if (ImGui::Begin("パーティクルデータ")) {
-        if (!name_.empty() && Manager_) {
-            DebugParticleData();
-        }
-        ImGui::End();
+    if (!name_.empty() && Manager_) {
+        DebugParticleData();
     }
 #endif
 }

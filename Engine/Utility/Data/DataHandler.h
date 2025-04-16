@@ -1,11 +1,13 @@
 #pragma once
 #include <Vector2.h>
 #include <Vector3.h>
+#include"Vector4.h"
 #include <externals/nlohmann/json.hpp>
 #include <filesystem>
 #include <fstream>
 #include"iostream"
 #include <memory>
+#include <cstdint>
 
 using json = nlohmann::json;
 namespace fs = std::filesystem;
@@ -48,6 +50,18 @@ inline void from_json(const json &j, Vector3 &v) {
     v.x = j.at("x").get<float>();
     v.y = j.at("y").get<float>();
     v.z = j.at("z").get<float>();
+}
+
+// JSON変換の定義 (Vector3)
+inline void to_json(json &j, const Vector4 &v) {
+    j = json{{"x", v.x}, {"y", v.y}, {"z", v.z}, {"w",v.w}};
+}
+
+inline void from_json(const json &j, Vector4 &v) {
+    v.x = j.at("x").get<float>();
+    v.y = j.at("y").get<float>();
+    v.z = j.at("z").get<float>();
+    v.w = j.at("w").get<float>();
 }
 
 // Save (テンプレート関数はここに書く)

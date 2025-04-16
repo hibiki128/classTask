@@ -18,11 +18,6 @@ void GameScene::Finalize() {
 }
 
 void GameScene::Update() {
-#ifdef _DEBUG
-    // デバッグ
-    Debug();
-#endif // _DEBUG
-
     // カメラ更新
     CameraUpdate();
 
@@ -86,11 +81,14 @@ void GameScene::DrawForOffScreen() {
     /// -------描画処理終了-------
 }
 
-void GameScene::Debug() {
-    ImGui::Begin("GameScene:Debug");
+void GameScene::AddSceneSetting() {
     debugCamera_->imgui();
-    LightGroup::GetInstance()->imgui();
-    ImGui::End();
+}
+
+void GameScene::AddObjectSetting() {
+}
+
+void GameScene::AddParticleSetting() {
 }
 
 void GameScene::CameraUpdate() {

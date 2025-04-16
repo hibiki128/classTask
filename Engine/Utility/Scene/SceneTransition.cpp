@@ -13,7 +13,7 @@ SceneTransition::~SceneTransition() {}
 void SceneTransition::Initialize() {
     sprite_ = std::make_unique<Sprite>();
     sprite_->Initialize("debug/black1x1.png", {0, 0}, {1.0f, 1.0f, 1.0f, 1.0f});
-    sprite_->SetSize(Vector2(1280, 720)); // 画面全体を覆うサイズ
+    sprite_->SetSize(Vector2(WinApp::kClientWidth, WinApp::kClientHeight)); // 画面全体を覆うサイズ
     sprite_->SetAlpha(0.0f);              // 最初は完全に透明
     duration_ = 1.0f;                     // フェードの持続時間（例: 1秒）
     counter_ = 0.0f;                      // 経過時間カウンターを初期化

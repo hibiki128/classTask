@@ -31,51 +31,6 @@ void SceneManager::Finalize()
 
 void SceneManager::Update()
 {
-#ifdef _DEBUG
-
-	ImGui::Begin("scene");
-	if (ImGui::Button("TitleScene") && (transition_->IsEnd() && !transition_->FadeInStart())) {
-		transition_->Reset();
-		nextScene_ = sceneFactory_->CreateScene("TITLE");
-		transition_->SetFadeInStart(true);
-	}
-	if (ImGui::Button("SelectScene") && (transition_->IsEnd() && !transition_->FadeInStart())) {
-		if (!transition_->IsEnd() && transition_->FadeInStart()) {
-			return; // すでに遷移中なので、次の遷移予約はしない
-		}
-		transition_->Reset();
-		nextScene_ = sceneFactory_->CreateScene("SELECT");
-		transition_->SetFadeInStart(true);
-	}
-	if (ImGui::Button("GameScene") && (transition_->IsEnd() && !transition_->FadeInStart())) {
-		if (!transition_->IsEnd() && transition_->FadeInStart()) {
-			return; // すでに遷移中なので、次の遷移予約はしない
-		}
-		transition_->Reset();
-		nextScene_ = sceneFactory_->CreateScene("GAME");
-		transition_->SetFadeInStart(true);
-	}
-	if (ImGui::Button("ClearScene") && (transition_->IsEnd() && !transition_->FadeInStart())) {
-		if (!transition_->IsEnd() && transition_->FadeInStart()) {
-			return; // すでに遷移中なので、次の遷移予約はしない
-		}
-		transition_->Reset();
-		nextScene_ = sceneFactory_->CreateScene("CLEAR");
-		transition_->SetFadeInStart(true);
-	}
-	if (ImGui::Button("DemoScene") && (transition_->IsEnd() && !transition_->FadeInStart())) {
-		if (!transition_->IsEnd() && transition_->FadeInStart()) {
-			return; // すでに遷移中なので、次の遷移予約はしない
-		}
-		transition_->Reset();
-		nextScene_ = sceneFactory_->CreateScene("DEMO");
-		transition_->SetFadeInStart(true);
-	}
-	ImGui::End();
-
-	//transition_->Debug();
-
-#endif // _DEBUG
 
 	// 次のシーンの予約があるなら
 	if (nextScene_) {
@@ -110,6 +65,52 @@ void SceneManager::DrawForOffScreen()
 	if (scene_) {
 		scene_->DrawForOffScreen();
 	}
+}
+
+void SceneManager::SceneSelection() {
+#ifdef _DEBUG
+
+    ImGui::Begin("シーン選択");
+    if (ImGui::Button("タイトルシーン") && (transition_->IsEnd() && !transition_->FadeInStart())) {
+        transition_->Reset();
+        nextScene_ = sceneFactory_->CreateScene("TITLE");
+        transition_->SetFadeInStart(true);
+    }
+    if (ImGui::Button("セレクトシーン") && (transition_->IsEnd() && !transition_->FadeInStart())) {
+        if (!transition_->IsEnd() && transition_->FadeInStart()) {
+            return; // すでに遷移中なので、次の遷移予約はしない
+        }
+        transition_->Reset();
+        nextScene_ = sceneFactory_->CreateScene("SELECT");
+        transition_->SetFadeInStart(true);
+    }
+    if (ImGui::Button("ゲームシーン") && (transition_->IsEnd() && !transition_->FadeInStart())) {
+        if (!transition_->IsEnd() && transition_->FadeInStart()) {
+            return; // すでに遷移中なので、次の遷移予約はしない
+        }
+        transition_->Reset();
+        nextScene_ = sceneFactory_->CreateScene("GAME");
+        transition_->SetFadeInStart(true);
+    }
+    if (ImGui::Button("クリアシーン") && (transition_->IsEnd() && !transition_->FadeInStart())) {
+        if (!transition_->IsEnd() && transition_->FadeInStart()) {
+            return; // すでに遷移中なので、次の遷移予約はしない
+        }
+        transition_->Reset();
+        nextScene_ = sceneFactory_->CreateScene("CLEAR");
+        transition_->SetFadeInStart(true);
+    }
+    if (ImGui::Button("デモシーン") && (transition_->IsEnd() && !transition_->FadeInStart())) {
+        if (!transition_->IsEnd() && transition_->FadeInStart()) {
+            return; // すでに遷移中なので、次の遷移予約はしない
+        }
+        transition_->Reset();
+        nextScene_ = sceneFactory_->CreateScene("DEMO");
+        transition_->SetFadeInStart(true);
+    }
+    ImGui::End();
+
+#endif // _DEBUG
 }
 
 void SceneManager::DrawTransition()

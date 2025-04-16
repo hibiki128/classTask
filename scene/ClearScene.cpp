@@ -18,11 +18,6 @@ void ClearScene::Finalize() {
 }
 
 void ClearScene::Update() {
-#ifdef _DEBUG
-    // デバッグ
-    Debug();
-#endif // _DEBUG
-
     // カメラ更新
     CameraUpdate();
 
@@ -86,11 +81,14 @@ void ClearScene::DrawForOffScreen() {
     /// -------描画処理終了-------
 }
 
-void ClearScene::Debug() {
-    ImGui::Begin("ClearScene:Debug");
+void ClearScene::AddSceneSetting() {
     debugCamera_->imgui();
-    LightGroup::GetInstance()->imgui();
-    ImGui::End();
+}
+
+void ClearScene::AddObjectSetting() {
+}
+
+void ClearScene::AddParticleSetting() {
 }
 
 void ClearScene::CameraUpdate() {

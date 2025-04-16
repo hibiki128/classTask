@@ -26,10 +26,8 @@ void MyGame::Finalize() {
 void MyGame::Update() {
     Framework::Update();
     // -----ゲーム固有の処理-----
-
-    // エンジンUI描画切り替え
-    if (input->TriggerKey(DIK_O)) {
-        imGuiManager_->GetIsShowMainUI() = !imGuiManager_->GetIsShowMainUI();
+    if (input->TriggerKey(DIK_F11)) {
+        winApp->ToggleFullScreen();
     }
 
     // -----------------------
@@ -52,13 +50,21 @@ void MyGame::Draw() {
     //-----線描画-----
     DrawLine3D::GetInstance()->Draw(*sceneManager_->GetBaseScene()->GetViewProjection());
     //---------------
+    imGuiManager_->ShowMainMenu();
 #endif // _DEBUG
 
     dxCommon->PreDraw();
 
     offscreen_->SetProjection(sceneManager_->GetBaseScene()->GetViewProjection()->matProjection_);
+
     if (imGuiManager_->GetIsShowMainUI()) {
+        imGuiManager_->SetCurrentScene(sceneManager_->GetBaseScene());
+        imGuiManager_->ShowDockSpace();
+        Framework::DisplayFPS();
         imGuiManager_->ShowMainUI();
+        offscreen_->Setting();
+        sceneManager_->SceneSelection();
+        LightGroup::GetInstance()->imgui();
     } else {
         offscreen_->Draw();
     }
@@ -68,7 +74,6 @@ void MyGame::Draw() {
     sceneManager_->DrawTransition();
 
 #ifdef _DEBUG
-    Framework::DisplayFPS();
     imGuiManager_->End();
     imGuiManager_->Draw();
 #endif // _DEBUG

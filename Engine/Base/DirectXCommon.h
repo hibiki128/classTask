@@ -138,6 +138,15 @@ public: // メンバ関数
 	IDxcUtils* GetDxcUtils() { return dxcUtils; }
 	IDxcCompiler3* GetDxcCompiler() { return dxcCompiler; }
 
+	Vector4 GetClearColor() const {
+            return Vector4(
+                clearColorValue.Color[0], // R
+                clearColorValue.Color[1], // G
+                clearColorValue.Color[2], // B
+                clearColorValue.Color[3]  // A
+            );
+	}
+
 	// バックバッファの数を取得
 	size_t GetBackBufferCount()const { return backBuffers.size(); }
 

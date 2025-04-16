@@ -7,6 +7,7 @@
 #include <string>
 #include <ViewProjection/ViewProjection.h>
 #include <Object/Object3dCommon.h>
+#include"Data/DataHandler.h"
 enum class LightType {
     Directional,
     Point,
@@ -149,4 +150,7 @@ class LightGroup {
     bool isDirectionalLight = true;
     bool isPointLight = false;
     bool isSpotLight = false;
+    std::unique_ptr<DataHandler> DLightData_ = nullptr;
+    std::unique_ptr<DataHandler> PLightData_ = nullptr;
+    std::unique_ptr<DataHandler> SLightData_ = nullptr;
 };

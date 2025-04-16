@@ -83,17 +83,17 @@ void OffScreen::Draw()
 	dxCommon->GetCommandList()->DrawInstanced(3, 1, 0, 0);
 }
 
-void OffScreen::DrawCommonSetting()
+void OffScreen::Setting()
 {
 #ifdef _DEBUG
-	ImGui::Begin("Offscreen");
+	ImGui::Begin("オフスクリーン");
 
 	// ShaderModeを文字列で表現
-	const char* shaderModeItems[] = { "None", "Gray", "Vignett", "Smooth", "Gauss", "OutLine","Depth","Blur","Cinematic" };
+	const char* shaderModeItems[] = { "なし", "グレイ", "ビネット", "スムース", "ガウス", "アウトライン(エッジ検出)","アウトライン(深度ベース)","ブラー","シネマティック" };
 	int currentShaderMode = static_cast<int>(shaderMode_);
 
 	// Comboを描画してユーザーが選択した場合に値を更新
-	if (ImGui::Combo("Shader Mode", &currentShaderMode, shaderModeItems, IM_ARRAYSIZE(shaderModeItems)))
+	if (ImGui::Combo("シェーダーモード", &currentShaderMode, shaderModeItems, IM_ARRAYSIZE(shaderModeItems)))
 	{
 		shaderMode_ = static_cast<ShaderMode>(currentShaderMode);
 		LoadFromJson(shaderMode_);
@@ -106,23 +106,23 @@ void OffScreen::DrawCommonSetting()
 	case ShaderMode::kGray:
 		break;
 	case ShaderMode::kVigneet:
-		ImGui::DragFloat("Exponent", &vignetteData->vignetteExponent, 0.1f, 0.0f, 10.0f);
-		ImGui::DragFloat("Radius", &vignetteData->vignetteRadius, 0.01f, 0.0f, 10.0f);
-		ImGui::DragFloat("Strength", &vignetteData->vignetteStrength, 0.01f);
-		ImGui::DragFloat2("Center", &vignetteData->vignetteCenter.x, 0.01f, -10.0f, 10.0f);
+		ImGui::DragFloat("滑らかさ", &vignetteData->vignetteExponent, 0.1f, 0.0f, 10.0f);
+		ImGui::DragFloat("半径", &vignetteData->vignetteRadius, 0.01f, 0.0f, 10.0f);
+		ImGui::DragFloat("強度", &vignetteData->vignetteStrength, 0.01f);
+		ImGui::DragFloat2("中心", &vignetteData->vignetteCenter.x, 0.01f, -10.0f, 10.0f);
 		break;
 	case ShaderMode::kSmooth:
-		ImGui::DragInt("Kernel Size", &smoothData->kernelSize, 2, 3, 7);
+		ImGui::DragInt("カーネルサイズ", &smoothData->kernelSize, 2, 3, 7);
 		break;
 	case ShaderMode::kGauss:
-		ImGui::DragInt("Kernel Size", &gaussianData->kernelSize, 2, 3, 7);
-		ImGui::DragFloat("sigma", &gaussianData->sigma, 0.01f, 0.01f, 10.0f);
+		ImGui::DragInt("カーネルサイズ", &gaussianData->kernelSize, 2, 3, 7);
+		ImGui::DragFloat("シグマ", &gaussianData->sigma, 0.01f, 0.01f, 10.0f);
 		break;
 	case ShaderMode::kOutLine:
 		break;
 	case ShaderMode::kDepth:
 		depthData->projectionInverse = Inverse(projectionInverse_);
-		ImGui::DragInt("Kernel Size", &depthData->kernelSize, 2, 3, 7);
+		ImGui::DragInt("カーネルサイズ", &depthData->kernelSize, 2, 3, 7);
 		break;
 	case ShaderMode::kBlur:
 		ImGui::DragFloat2("中心座標", &radialData->kCenter.x, 0.1f);

@@ -1,7 +1,8 @@
 #pragma once
 #include "DirectXCommon.h"
-#include"Srv/SrvManager.h"
+#include "Srv/SrvManager.h"
 #include "WinApp.h"
+#include <BaseScene.h>
 class ImGuiManager {
   private:
     /// ====================================
@@ -51,9 +52,23 @@ class ImGuiManager {
     /// </summary>
     void Draw();
 
+    /// <summary>
+    /// メインUI表示
+    /// </summary>
     void ShowMainUI();
 
+    /// <summary>
+    /// メニュー表示
+    /// </summary>
+    void ShowMainMenu();
+
+    /// <summary>
+    /// ドックスペース追加
+    /// </summary>
+    void ShowDockSpace();
+
     bool &GetIsShowMainUI();
+    void SetCurrentScene(BaseScene *currentScene) { currentScene_ = currentScene; };
 
   private:
     /// ====================================
@@ -66,11 +81,6 @@ class ImGuiManager {
     void CreateDescriptorHeap();
 
     /// <summary>
-    /// メニュー表示
-    /// </summary>
-    void ShowMainMenu();
-
-    /// <summary>
     /// シーン表示
     /// </summary>
     void ShowSceneWindow();
@@ -78,11 +88,13 @@ class ImGuiManager {
     /// <summary>
     /// ヒエラルキー表示
     /// </summary>
-    void ShowHierarchyWindow();
+    void ShowSceneSettingWindow();
 
-    void ShowInspectorWindow();
+    void ShowObjectSettingWindow();
 
-    void ShowProjectWindow();
+    void ShowParticleSettingWindow();
+
+    void FixAspectRatio();
 
   private:
     /// ====================================
@@ -92,6 +104,7 @@ class ImGuiManager {
     // SRV用デスクリプタヒープ
     Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> srvHeap_;
     SrvManager *srvManager_ = nullptr;
+    BaseScene *currentScene_ = nullptr;
 
     DirectXCommon *dxCommon_;
 
@@ -99,8 +112,9 @@ class ImGuiManager {
     ImVec2 hierarchyWindowPosition_ = {0.0f, 64.0f};
 
     // シーンウィンドウ
-    ImVec2 sceneTextureSize_ = {256.0f, 72.0f};
+    ImVec2 sceneTextureSize_ = {800.0f, 450.0f};
 
     // エンジンのウィンドウを描画するフラグ
     bool isShowMainUI_ = false;
+
 };

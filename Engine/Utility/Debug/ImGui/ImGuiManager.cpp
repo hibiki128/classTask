@@ -99,9 +99,9 @@ void ImGuiManager::Draw() {
     ID3D12GraphicsCommandList *commandList = dxCommon_->GetCommandList().Get();
 
     //// デスクリプタヒープの配列をセットするコマンド
-    //ID3D12DescriptorHeap *ppHeaps[] = {srvHeap_.Get()};
-    //commandList->SetDescriptorHeaps(_countof(ppHeaps), ppHeaps);
-    // 描画コマンドを発行
+    // ID3D12DescriptorHeap *ppHeaps[] = {srvHeap_.Get()};
+    // commandList->SetDescriptorHeaps(_countof(ppHeaps), ppHeaps);
+    //  描画コマンドを発行
     ImGui_ImplDX12_RenderDrawData(ImGui::GetDrawData(), commandList);
 }
 
@@ -128,14 +128,36 @@ void ImGuiManager::ShowMainMenu() {
 
             // ゲームオブジェクト
             if (ImGui::BeginMenu("ゲームオブジェクト")) {
-
                 ImGui::EndMenu();
             }
 
             // パーティクルグループ
             if (ImGui::BeginMenu("パーティクルグループ")) {
-
                 ImGui::EndMenu();
+            }
+
+            ImGui::EndMenu();
+        }
+
+        // 表示切り替えメニュー
+        if (ImGui::BeginMenu("表示モード")) {
+
+            if (ImGui::MenuItem("フルスクリーン")) {
+                WinApp::GetInstance()->ToggleFullScreen();
+            }
+
+            // isShowMainUI_がtrueなら「ゲームシーンへ」ボタンを表示
+            if (isShowMainUI_) {
+                if (ImGui::MenuItem("ゲームシーンへ")) {
+                    isShowMainUI_ = false; // ゲームシーンに切り替え
+                }
+            }
+            // falseなら「デバッグシーンへ」ボタンを表示
+            else {
+                if (ImGui::MenuItem("デバッグシーンへ")) {
+                    isShowMainUI_ = true; // デバッグUIを表示
+                    WinApp::GetInstance()->IsFullScreen() = false;
+                }
             }
 
             ImGui::EndMenu();
@@ -145,60 +167,121 @@ void ImGuiManager::ShowMainMenu() {
     }
 }
 
-void ImGuiManager::ShowHierarchyWindow() {
-    ImGui::Begin("Hierarchy");
-
+void ImGuiManager::ShowSceneSettingWindow() {
+    ImGui::Begin("シーン設定");
+    currentScene_->AddSceneSetting();
     ImGui::End();
 }
 
-void ImGuiManager::ShowInspectorWindow() {
-    ImGui::Begin("Inspector");
-
+void ImGuiManager::ShowObjectSettingWindow() {
+    ImGui::Begin("オブジェクト設定");
+    currentScene_->AddObjectSetting();
     ImGui::End();
 }
 
-void ImGuiManager::ShowProjectWindow() {
-    ImGui::Begin("Project");
-
+void ImGuiManager::ShowParticleSettingWindow() {
+    ImGui::Begin("パーティクル設定");
+    currentScene_->AddParticleSetting();
     ImGui::End();
+}
+
+void ImGuiManager::FixAspectRatio() {
+
+    // 横幅ベースで16:9に合わせた高さ
+    float adjustedHeight = (sceneTextureSize_.x * 9.0f / 16.0f);
+    // 高さベースで16:9に合わせた横幅
+    float adjustedWidth = (sceneTextureSize_.y * 16.0f / 9.0f);
+
+    // 元のサイズとの差を計算
+    float deltaFromWidth = std::abs(adjustedHeight - sceneTextureSize_.y);
+    float deltaFromHeight = std::abs(adjustedWidth - sceneTextureSize_.x);
+
+    // 近い方を採用
+    if (deltaFromWidth < deltaFromHeight) {
+        sceneTextureSize_.y = adjustedHeight;
+    } else {
+        sceneTextureSize_.x = adjustedWidth;
+    }
 }
 
 void ImGuiManager::ShowSceneWindow() {
-    // ウィンドウの装飾（パディングやタイトルバー）を考慮
-    ImVec2 padding = ImGui::GetStyle().WindowPadding;                                   // ウィンドウの左右パディング
-    float titleBarHeight = ImGui::GetFontSize() + ImGui::GetStyle().FramePadding.y * 2; // タイトルバーの高さ
+    // ImGuiウィンドウ開始前にNextWindowSizeは設定しない（手動サイズ変更を許可）
+    ImGui::Begin("Scene", nullptr, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoScrollbar);
 
-    // ウィンドウサイズを設定
-    ImVec2 windowSize = {sceneTextureSize_.x + padding.x * 2, sceneTextureSize_.y + padding.y * 2 + titleBarHeight};
-    ImGui::SetNextWindowSize(windowSize);
+    // ImGuiウィンドウの中の利用可能サイズを取得（スクロールバーやパディングを除いたサイズ）
+    ImVec2 contentRegion = ImGui::GetContentRegionAvail();
 
-    // シーンウィンドウ開始
-    ImGui::Begin("Scene", nullptr, ImGuiWindowFlags_NoResize);
+    // 利用可能サイズに収まるように16:9でsceneTextureSize_を補正する
+    float maxWidth = contentRegion.x;
+    float maxHeight = contentRegion.y;
 
-    // レンダーテクスチャに描画する内容をウィンドウ内に描画する
+    // 横幅ベースで16:9にしたときの高さ
+    float adjustedHeight = maxWidth * 9.0f / 16.0f;
+    // 高さベースで16:9にしたときの横幅
+    float adjustedWidth = maxHeight * 16.0f / 9.0f;
+
+    // 画面内に収まるように調整（できるだけ大きく保ちつつ、片方でオーバーしないように）
+    if (adjustedHeight <= maxHeight) {
+        sceneTextureSize_.x = maxWidth;
+        sceneTextureSize_.y = adjustedHeight;
+    } else {
+        sceneTextureSize_.x = adjustedWidth;
+        sceneTextureSize_.y = maxHeight;
+    }
+
+    // 背景カラー設定
     uint32_t srvIndex = dxCommon_->GetOffScreenSrvIndex();
+    ImVec4 backgroundColor = ImVec4(dxCommon_->GetClearColor().x, dxCommon_->GetClearColor().y, dxCommon_->GetClearColor().z, dxCommon_->GetClearColor().w);
 
-    //
-    ImGui::ImageWithBg(static_cast<ImTextureID>(SrvManager::GetInstance()->GetGPUDescriptorHandle(srvIndex).ptr), sceneTextureSize_, ImVec2(0.0f, 0.0f), ImVec2(1.0f, 1.0f), ImVec4(0.0f, 0.0f, 0.0f, 1.0f));
+    // レンダーテクスチャをImGuiウィンドウに描画
+    ImGui::ImageWithBg(static_cast<ImTextureID>(
+                           SrvManager::GetInstance()->GetGPUDescriptorHandle(srvIndex).ptr),
+                       sceneTextureSize_, ImVec2(0.0f, 0.0f), ImVec2(1.0f, 1.0f),
+                       backgroundColor);
 
     ImGui::End();
 }
 
+
+
 void ImGuiManager::ShowMainUI() {
-    // メインタブ
-    ShowMainMenu();
     // シーンウィンドウ
     ShowSceneWindow();
     // ヒエラルキーウィンドウ
-    ShowHierarchyWindow();
+    ShowSceneSettingWindow();
     // インスペクターウィンドウ
-    ShowInspectorWindow();
+    ShowObjectSettingWindow();
     // プロジェクトウィンドウを描画
-    ShowProjectWindow();
+    ShowParticleSettingWindow();
 }
 
 bool &ImGuiManager::GetIsShowMainUI() {
     return isShowMainUI_;
+}
+
+void ImGuiManager::ShowDockSpace() {
+    ImGuiWindowFlags window_flags = ImGuiWindowFlags_MenuBar | ImGuiWindowFlags_NoDocking;
+    ImGuiViewport *viewport = ImGui::GetMainViewport();
+
+    ImGui::SetNextWindowPos(viewport->WorkPos);
+    ImGui::SetNextWindowSize(viewport->WorkSize);
+    ImGui::SetNextWindowViewport(viewport->ID);
+
+    ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0.0f);
+    ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.0f);
+
+    window_flags |= ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoCollapse |
+                    ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove |
+                    ImGuiWindowFlags_NoBringToFrontOnFocus | ImGuiWindowFlags_NoNavFocus;
+
+    ImGui::Begin("DockSpaceWindow", nullptr, window_flags);
+    ImGui::PopStyleVar(2);
+
+    // DockSpaceの生成
+    ImGuiID dockspace_id = ImGui::GetID("MyDockSpace");
+    ImGui::DockSpace(dockspace_id, ImVec2(0.0f, 0.0f), ImGuiDockNodeFlags_PassthruCentralNode);
+
+    ImGui::End();
 }
 
 #endif //_DEBUG

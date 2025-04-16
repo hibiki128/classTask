@@ -61,7 +61,7 @@
       <PreprocessorDefinitions>_DEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp20</LanguageStandard>
-      <AdditionalOptions>/utf-8 /ignore:4049 /ignore:4098</AdditionalOptions>
+      <AdditionalOptions>/utf-8 /IGNORE:4049 /IGNORE:4099 </AdditionalOptions>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
       <TreatWarningAsError>true</TreatWarningAsError>
@@ -88,7 +88,7 @@ copy "$(WindowsSdkDIr)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
       <PreprocessorDefinitions>NDEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp20</LanguageStandard>
-      <AdditionalOptions>/utf-8</AdditionalOptions>
+      <AdditionalOptions>/utf-8 /IGNORE:4049 /IGNORE:4099 </AdditionalOptions>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <AdditionalIncludeDirectories>$(ProjectDir);$(ProjectDir)Engine\2d;$(ProjectDir)Engine\3d;$(ProjectDir)Engine\3d\light;$(ProjectDir)Engine\3d\particle;$(ProjectDir)Engine\3d\model;$(ProjectDir)Engine\3d\transform;$(ProjectDir)Engine\3d\camera;$(ProjectDir)Engine\base;$(ProjectDir)Engine\input;$(ProjectDir)Engine\utility;$(ProjectDir)Engine\utility\graphics;$(ProjectDir)Engine\utility\debug;$(ProjectDir)Engine\utility\string;$(ProjectDir)scene;$(ProjectDir)Engine\core;$(ProjectDir)Engine\utility\edit;$(ProjectDir)Engine\utility\collider;$(ProjectDir)Engine\utility\scene;$(ProjectDir)particle;$(ProjectDir)math;$(ProjectDir)Engine\Audio;$(ProjectDir)externals\assimp\include;$(ProjectDir)externals\DirectXTex;$(ProjectDir)myEngine\Audio;$(ProjectDir)scene\MyGame;$(ProjectDir)scene\MyGame;$(ProjectDir)scene</AdditionalIncludeDirectories>

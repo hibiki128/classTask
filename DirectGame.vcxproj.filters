@@ -272,9 +272,6 @@
     <ClCompile Include="Engine\3d\Line\DrawLine3D.cpp">
       <Filter>ソースファイル\myEngine\3d\line</Filter>
     </ClCompile>
-    <ClCompile Include="myEngine\3d\light\LightGroup.cpp">
-      <Filter>ソースファイル\myEngine\light</Filter>
-    </ClCompile>
     <ClCompile Include="Engine\Offscreen\OffScreen.cpp">
       <Filter>ソースファイル\myEngine\offscreen</Filter>
     </ClCompile>
@@ -515,9 +512,6 @@
     </ClInclude>
     <ClInclude Include="Engine\3d\Line\DrawLine3D.h">
       <Filter>ソースファイル\myEngine\3d\line</Filter>
-    </ClInclude>
-    <ClInclude Include="myEngine\3d\light\LightGroup.h">
-      <Filter>ソースファイル\myEngine\light</Filter>
     </ClInclude>
     <ClInclude Include="math\Quaternion.h">
       <Filter>ソースファイル\math</Filter>

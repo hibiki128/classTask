@@ -48,6 +48,7 @@ void Framework::Initialize() {
 #ifdef _DEBUG
     imGuiManager_ = ImGuiManager::GetInstance();
     imGuiManager_->Initialize(winApp);
+    imGuiManager_->GetIsShowMainUI() = true;
 #endif // _DEBUG
        /// -----------------------
 
@@ -153,14 +154,19 @@ void Framework::Finalize() {
 }
 
 void Framework::Update() {
+
     /// deltaTimeの更新
     Frame::Update();
+
 #ifdef _DEBUG
     imGuiManager_->Begin();
 #endif // _DEBUG
-    offscreen_->DrawCommonSetting();
+
     sceneManager_->Update();
+
     collisionManager_->Update();
+
+    LightGroup::GetInstance()->Update(*sceneManager_->GetBaseScene()->GetViewProjection());
 
     /// -------更新処理開始----------
 
@@ -190,7 +196,7 @@ void Framework::DisplayFPS() {
     float fps = Frame::GetFPS(); // FPSの取得
 
     // FPSを表示するウィンドウを固定位置に設定
-    ImGui::SetNextWindowPos(ImVec2(1230, 0), ImGuiCond_Always);
+    ImGui::SetNextWindowPos(ImVec2((WinApp::kClientWidth - 50), 0), ImGuiCond_Always);
     ImGui::SetNextWindowBgAlpha(0.0f); // 背景を透明に設定
 
     // ウィンドウフラグを設定

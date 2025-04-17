@@ -16,7 +16,7 @@
     <ProjectGuid>{556e1b34-4edc-4f08-88c5-93ae6aa769de}</ProjectGuid>
     <RootNamespace>DirectGame</RootNamespace>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
-    <ProjectName>myEngine</ProjectName>
+    <ProjectName>Hagine</ProjectName>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">

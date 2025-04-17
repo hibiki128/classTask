@@ -269,12 +269,14 @@ void ImGuiManager::ShowMainMenu() {
         if (ImGui::BeginMenu(ICON_FA_EYE " 表示")) {
             // ウィンドウ表示設定
             if (ImGui::BeginMenu(ICON_FA_WINDOW_MAXIMIZE " ウィンドウ")) {
-        /*        ImGui::MenuItem(ICON_FA_GAMEPAD " ゲームビュー", nullptr, &showGameView_);
-                ImGui::MenuItem(ICON_FA_CUBES " シーンビュー", nullptr, &showSceneView_);
-                ImGui::MenuItem(ICON_FA_TERMINAL " コンソール", nullptr, &showConsole_);
-                ImGui::MenuItem(ICON_FA_SITEMAP " ヒエラルキー", nullptr, &showHierarchy_);
-                ImGui::MenuItem(ICON_FA_SLIDERS_H " インスペクター", nullptr, &showInspector_);
-                ImGui::MenuItem(ICON_FA_FOLDER " プロジェクト", nullptr, &showProject_);*/
+                //ImGui::MenuItem(ICON_FA_GAMEPAD " ゲームビュー", nullptr, &showGameView_);
+                ImGui::MenuItem(ICON_FA_BOOK_OPEN " シーンビュー", nullptr, &showSceneView_);
+                ImGui::MenuItem(ICON_FA_CUBE " オブジェクトビュー", nullptr, &showObjectView_);
+                ImGui::MenuItem(ICON_FA_STAR " パーティクルビュー", nullptr, &showParticleView_);
+                //ImGui::MenuItem(ICON_FA_TERMINAL " コンソール", nullptr, &showConsole_);
+                //ImGui::MenuItem(ICON_FA_SITEMAP " ヒエラルキー", nullptr, &showHierarchy_);
+                //ImGui::MenuItem(ICON_FA_SLIDERS_H " インスペクター", nullptr, &showInspector_);
+                //ImGui::MenuItem(ICON_FA_FOLDER " プロジェクト", nullptr, &showProject_);
                 ImGui::EndMenu();
             }
 
@@ -403,7 +405,7 @@ void ImGuiManager::ShowMainMenu() {
 }
 
 void ImGuiManager::ShowSceneSettingWindow() {
-    if (!showSceneSettings_)
+    if (!showSceneView_)
         return; // 表示しない場合は早期リターン
 
     // パフォーマンス改善: 軽量化フラグを追加
@@ -415,7 +417,7 @@ void ImGuiManager::ShowSceneSettingWindow() {
         flags |= ImGuiWindowFlags_NoBringToFrontOnFocus; // フォーカス時に前面に出さない
     }
 
-    ImGui::Begin("シーン設定", &showSceneSettings_, flags);
+    ImGui::Begin("シーン設定", &showSceneView_, flags);
 
     currentScene_->AddSceneSetting();
 
@@ -423,7 +425,7 @@ void ImGuiManager::ShowSceneSettingWindow() {
 }
 
 void ImGuiManager::ShowObjectSettingWindow() {
-    if (!showObjectSettings_)
+    if (!showObjectView_)
         return; // 表示しない場合は早期リターン
 
     ImGuiWindowFlags flags = ImGuiWindowFlags_None;
@@ -432,7 +434,7 @@ void ImGuiManager::ShowObjectSettingWindow() {
         flags |= ImGuiWindowFlags_NoBringToFrontOnFocus;
     }
 
-    ImGui::Begin("オブジェクト設定", &showObjectSettings_, flags);
+    ImGui::Begin("オブジェクト設定", &showObjectView_, flags);
 
     currentScene_->AddObjectSetting();
 
@@ -440,7 +442,7 @@ void ImGuiManager::ShowObjectSettingWindow() {
 }
 
 void ImGuiManager::ShowParticleSettingWindow() {
-    if (!showParticleSettings_)
+    if (!showParticleView_)
         return; // 表示しない場合は早期リターン
 
     ImGuiWindowFlags flags = ImGuiWindowFlags_None;
@@ -449,7 +451,7 @@ void ImGuiManager::ShowParticleSettingWindow() {
         flags |= ImGuiWindowFlags_NoBringToFrontOnFocus;
     }
 
-    ImGui::Begin("パーティクル設定", &showParticleSettings_, flags);
+    ImGui::Begin("パーティクル設定", &showParticleView_, flags);
 
     currentScene_->AddParticleSetting();
 

@@ -120,8 +120,8 @@ class ImGuiManager {
     bool isShowMainUI_ = false;
 
     // 重いUIコンポーネントの表示状態管理
-    bool showSceneSettings_ = true;
-    bool showObjectSettings_ = true;
-    bool showParticleSettings_ = true;
+    bool showSceneView_ = true;
+    bool showObjectView_ = true;
+    bool showParticleView_ = true;
 
 };

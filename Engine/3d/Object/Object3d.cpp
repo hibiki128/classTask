@@ -1,10 +1,10 @@
 #include "Object3d.h"
-#include"Model/ModelManager.h"
 #include "Object3dCommon.h"
 #include "cassert"
 #include "myMath.h"
-#include"Texture/TextureManager.h"
 #include <line/DrawLine3D.h>
+#include <Texture/TextureManager.h>
+#include <Model/ModelManager.h>
 
 void Object3d::Initialize(const std::string &filePath) {
     this->obj3dCommon = Object3dCommon::GetInstance();
@@ -79,6 +79,7 @@ void Object3d::SetAnimation(const std::string &fileName) {
     model->SetAnimator(currentModelAnimation_->GetAnimator());
     model->SetBone(currentModelAnimation_->GetBone());
     model->SetSkin(currentModelAnimation_->GetSkin());
+    currentModelAnimation_->GetAnimator()->SetIsAnimation(true);
     currentModelAnimation_->GetAnimator()->SetAnimationTime(0.0f);
 
     // ファイルパスを更新

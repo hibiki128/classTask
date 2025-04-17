@@ -16,6 +16,13 @@ void TitleScene::Initialize() {
     ParticleEditor::GetInstance()->AddParticleEmitter("hit");
     emitter_ = std::make_unique<ParticleEmitter>();
     emitter_ = ParticleEditor::GetInstance()->GetEmitter("hit");
+
+    test = std::make_unique<BaseObject>();
+    test->Init("test");
+    test->CreateModel("animation/walk.gltf");
+    test->AddAnimation("animation/sneakWalk.gltf");
+    test->AddAnimation("animation/walk.gltf");
+    
 }
 
 void TitleScene::Finalize() {
@@ -27,6 +34,9 @@ void TitleScene::Update() {
 
     // シーン切り替え
     ChangeScene();
+
+    test->Update();
+
 }
 
 void TitleScene::Draw() {
@@ -40,13 +50,13 @@ void TitleScene::Draw() {
 
     objCommon_->DrawCommonSetting();
     //-----3DObjectの描画開始-----
-
+    test->Draw(vp_);
     //--------------------------
 
     /// Particleの描画準備
     ptCommon_->DrawCommonSetting();
     //------Particleの描画開始-------
-    emitter_->Draw(vp_);
+    
     //-----------------------------
 
     /// Spriteの描画準備
@@ -77,7 +87,7 @@ void TitleScene::DrawForOffScreen() {
     /// Particleの描画準備
     ptCommon_->DrawCommonSetting();
     //------Particleの描画開始-------
-
+    //emitter_->Draw(vp_);
     //-----------------------------
 
     /// ----------------------------------
@@ -90,7 +100,7 @@ void TitleScene::AddSceneSetting() {
 }
 
 void TitleScene::AddObjectSetting() {
-
+    test->DebugImGui();
 }
 
 void TitleScene::AddParticleSetting() {

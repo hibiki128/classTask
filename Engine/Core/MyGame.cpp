@@ -30,6 +30,21 @@ void MyGame::Update() {
         winApp->ToggleFullScreen();
     }
 
+#ifdef _DEBUG
+    imGuiManager_->Begin();
+    imGuiManager_->ShowMainMenu();
+    if (imGuiManager_->GetIsShowMainUI()) {
+        imGuiManager_->SetCurrentScene(sceneManager_->GetBaseScene());
+        imGuiManager_->ShowDockSpace();
+        Framework::DisplayFPS();
+        imGuiManager_->ShowMainUI();
+        offscreen_->Setting();
+        sceneManager_->SceneSelection();
+        LightGroup::GetInstance()->imgui();
+    }
+    imGuiManager_->End();
+#endif // _DEBUG
+
     // -----------------------
 }
 
@@ -50,42 +65,19 @@ void MyGame::Draw() {
     //-----線描画-----
     DrawLine3D::GetInstance()->Draw(*sceneManager_->GetBaseScene()->GetViewProjection());
     //---------------
-
-    imGuiManager_->Begin();
-    imGuiManager_->ShowMainMenu();
 #endif // _DEBUG
 
     dxCommon->PreDraw();
 
     offscreen_->SetProjection(sceneManager_->GetBaseScene()->GetViewProjection()->matProjection_);
 
-#ifdef _DEBUG
-
-    if (imGuiManager_->GetIsShowMainUI()) {
-        imGuiManager_->SetCurrentScene(sceneManager_->GetBaseScene());
-        imGuiManager_->ShowDockSpace();
-        Framework::DisplayFPS();
-        imGuiManager_->ShowMainUI();
-        offscreen_->Setting();
-        sceneManager_->SceneSelection();
-        LightGroup::GetInstance()->imgui();
-        offscreen_->Draw();
-    } else {
-        offscreen_->Draw();
-    }
-#endif // _DEBUG
-
-#ifndef _DEBUG
     offscreen_->Draw();
-#endif // !_DEBUG
-
 
     dxCommon->TransitionDepthBarrier();
     sceneManager_->DrawForOffScreen();
     sceneManager_->DrawTransition();
 
 #ifdef _DEBUG
-    imGuiManager_->End();
     imGuiManager_->Draw();
 #endif // _DEBUG
        // ------------------------

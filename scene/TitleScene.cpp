@@ -56,7 +56,7 @@ void TitleScene::Draw() {
     /// Particleの描画準備
     ptCommon_->DrawCommonSetting();
     //------Particleの描画開始-------
-    
+    emitter_->Draw(vp_);
     //-----------------------------
 
     /// Spriteの描画準備
@@ -87,7 +87,7 @@ void TitleScene::DrawForOffScreen() {
     /// Particleの描画準備
     ptCommon_->DrawCommonSetting();
     //------Particleの描画開始-------
-    //emitter_->Draw(vp_);
+
     //-----------------------------
 
     /// ----------------------------------

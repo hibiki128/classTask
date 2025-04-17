@@ -109,6 +109,7 @@ copy "$(WindowsSdkDIr)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
   <ItemGroup>
     <ClCompile Include="Engine\Utility\Data\DataHandler.cpp" />
     <ClCompile Include="Engine\3d\Particle\ParticleEditor.cpp" />
+    <ClCompile Include="Engine\3d\Primitive\PrimitiveModel.cpp" />
     <ClCompile Include="scene\DemoScene.cpp" />
     <ClCompile Include="scene\ClearScene.cpp" />
     <ClCompile Include="Engine\3d\Animation\ModelAnimation.cpp" />
@@ -199,6 +200,7 @@ copy "$(WindowsSdkDIr)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
   <ItemGroup>
     <ClInclude Include="Engine\Utility\Data\DataHandler.h" />
     <ClInclude Include="Engine\3d\Particle\ParticleEditor.h" />
+    <ClInclude Include="Engine\3d\Primitive\PrimitiveModel.h" />
     <ClInclude Include="scene\DemoScene.h" />
     <ClInclude Include="scene\ClearScene.h" />
     <ClInclude Include="Engine\3d\Animation\ModelAnimation.h" />

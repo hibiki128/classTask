@@ -22,7 +22,6 @@ void TitleScene::Initialize() {
     test->CreateModel("animation/walk.gltf");
     test->AddAnimation("animation/sneakWalk.gltf");
     test->AddAnimation("animation/walk.gltf");
-    
 }
 
 void TitleScene::Finalize() {
@@ -36,7 +35,6 @@ void TitleScene::Update() {
     ChangeScene();
 
     test->Update();
-
 }
 
 void TitleScene::Draw() {
@@ -104,7 +102,6 @@ void TitleScene::AddObjectSetting() {
 }
 
 void TitleScene::AddParticleSetting() {
-
     emitter_->Debug();
 }
 
@@ -117,7 +114,13 @@ void TitleScene::CameraUpdate() {
 }
 
 void TitleScene::ChangeScene() {
+
+#ifdef _DEBUG
+
+#endif // _DEBUG
+#ifndef _DEBUG
     if (input_->TriggerKey(DIK_SPACE)) {
         sceneManager_->NextSceneReservation("GAME");
     }
+#endif // !_DEBUG
 }

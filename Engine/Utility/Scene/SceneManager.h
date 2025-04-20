@@ -43,7 +43,7 @@ class SceneManager {
     /// </summary>
     void DrawForOffScreen();
 
-    void SceneSelection();
+    void SceneSelection(const std::string & sceneName);
 
     /// <summary>
     /// 遷移描画

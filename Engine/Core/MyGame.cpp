@@ -39,7 +39,6 @@ void MyGame::Update() {
         Framework::DisplayFPS();
         imGuiManager_->ShowMainUI();
         offscreen_->Setting();
-        sceneManager_->SceneSelection();
         LightGroup::GetInstance()->imgui();
     }
     imGuiManager_->End();

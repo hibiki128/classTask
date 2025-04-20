@@ -24,8 +24,8 @@ void SceneTransition::Initialize() {
     isEnd = false;
 
     // transition_ 配列の初期化
-    int rows = 10;                                   // 縦方向のスプライト数
-    int cols = 17;                                   // 横方向のスプライト数
+    int rows = 15;                                   // 縦方向のスプライト数
+    int cols = 23;                                   // 横方向のスプライト数
     float size = 0.0f;                               // 初期サイズを 0.0f に設定
     Vector4 defaultColor = {1.0f, 1.0f, 1.0f, 1.0f}; // スプライトの初期色
 
@@ -52,14 +52,14 @@ void SceneTransition::Update() {
 
 void SceneTransition::Draw() {
     SpriteCommon::GetInstance()->DrawCommonSetting();
-     sprite_->Draw();
+    /* sprite_->Draw();*/
 
     // 各スプライトを描画
-   /* for (const auto &row : transition_) {
+    for (const auto &row : transition_) {
         for (const auto &sprite : row) {
             sprite->Draw();
         }
-    }*/
+    }
 }
 
 void SceneTransition::Debug() {
@@ -91,8 +91,8 @@ void SceneTransition::FadeUpdate() {
 }
 
 void SceneTransition::FadeIn() {
-     DefaultFadeIn();
-   // ReverseFadeIn();
+    // DefaultFadeIn();
+   ReverseFadeIn();
 
     counter_ += 1.0f / 60.0f; // フレームレートを基にカウント（1フレームごとに0.0167秒進む）
     if (counter_ >= duration_) {
@@ -102,8 +102,8 @@ void SceneTransition::FadeIn() {
 }
 
 void SceneTransition::FadeOut() {
-     DefaultFadeOut();
-    //ReverseFadeOut();
+    // DefaultFadeOut();
+    ReverseFadeOut();
 
     // カウンターを減少（フレームレートに基づく）
     counter_ -= 1.0f / 60.0f;

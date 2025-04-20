@@ -5,37 +5,92 @@
 #ifdef _DEBUG
 #include "imgui.h"
 #endif // _DEBUG
+#include"algorithm"
 
 void DebugCamera::Initialize(ViewProjection *viewProjection) {
     viewProjection_ = viewProjection;
     translation_ = {0.0f, 0.0f, -50.0f};
-    rotation_.y = 0.0f;
+    rotation_ = {0.0f, 0.0f, 0.0f};
     matRot_ = MakeIdentity4x4();
+    isActive_ = false;
+    useMouse = true;
+    mouseSensitivity = 0.003f;
+    moveZspeed = 0.005f;
+    mouse = {0.0f, 0.0f};
 }
 
 void DebugCamera::Update() {
     if (isActive_) {
-        rotation_ = {0.0f, 0.0f, 0.0f};
-        Vector3 offset = translation_;
         if (useMouse) {
             CameraMove(rotation_, translation_, mouse);
         }
-        /*追加分の回転行列を生成*/
-        Matrix4x4 matRotDelta = MakeIdentity4x4();
-        matRotDelta *= MakeRotateXMatrix(rotation_.x);
-        matRotDelta *= MakeRotateYMatrix(rotation_.y);
-        matRot_ = matRotDelta * matRot_;
-        offset = TransformNormal(offset, matRot_);
-        Matrix4x4 scaleMatrix = MakeScaleMatrix(Vector3(1.0f, 1.0f, 1.0f));
-        rotateXYZMatrix = matRot_;
-        Matrix4x4 translateMatrix = MakeTranslateMatrix(offset);
-        Matrix4x4 cameraMatrix = (scaleMatrix * rotateXYZMatrix) * translateMatrix;
+
+        // 回転行列を更新せず、直接MakeAffineMatrixで渡す
+        rotateXYZMatrix = MakeRotateXMatrix(rotation_.x) *
+                          MakeRotateYMatrix(rotation_.y) *
+                          MakeRotateZMatrix(rotation_.z); // デバッグ用に保持
+
+        // 各方向ベクトル（回転行列適用後）
+        Matrix4x4 matRot = MakeRotateXMatrix(rotation_.x) * MakeRotateYMatrix(rotation_.y);
+        Vector3 forward = TransformNormal({0.0f, 0.0f, -1.0f}, matRot);
+        Vector3 right = TransformNormal({1.0f, 0.0f, 0.0f}, matRot);
+        Vector3 up = {0.0f, 1.0f, 0.0f}; // ワールド上方向は固定
+
+        // キーボード移動
+        Vector3 move = {0, 0, 0};
+        if (Input::GetInstance()->PushKey(DIK_W))
+            move += forward;
+        if (Input::GetInstance()->PushKey(DIK_S))
+            move -= forward;
+        if (Input::GetInstance()->PushKey(DIK_D))
+            move += right;
+        if (Input::GetInstance()->PushKey(DIK_A))
+            move -= right;
+        if (Input::GetInstance()->PushKey(DIK_SPACE))
+            move += up;
+        if (Input::GetInstance()->PushKey(DIK_LSHIFT))
+            move -= up;
+
+        translation_ += move * moveZspeed * 10.0f;
+
+        // カメラ行列の作成（回転はオイラー角ベースで）
+        Matrix4x4 cameraMatrix = MakeAffineMatrix(
+            {1.0f, 1.0f, 1.0f},
+            rotation_,
+            translation_);
+
+        // ビュー・プロジェクション行列の設定
         viewProjection_->matWorld_ = cameraMatrix;
         viewProjection_->matView_ = Inverse(cameraMatrix);
-        viewProjection_->matProjection_ = MakePerspectiveFovMatrix(45.0f * std::numbers::pi_v<float> / 180.0f,
-                                                                   float(WinApp::kClientWidth) / float(WinApp::kClientHeight),
-                                                                   0.1f, 1000.0f);
-        ;
+        viewProjection_->matProjection_ = MakePerspectiveFovMatrix(
+            45.0f * std::numbers::pi_v<float> / 180.0f,
+            float(WinApp::kClientWidth) / float(WinApp::kClientHeight),
+            0.1f, 1000.0f);
+    }
+}
+
+ 
+
+void DebugCamera::CameraMove(Vector3 &cameraRotate, Vector3 &cameraTranslate, Vector2 &clickPosition) {
+    // マウス右クリック中にのみ視点回転
+    if (Input::GetInstance()->IsPressMouse(1)) {
+        Vector2 currentMousePos = Input::GetInstance()->GetMousePos();
+
+        float deltaX = static_cast<float>(currentMousePos.x - clickPosition.x);
+        float deltaY = static_cast<float>(currentMousePos.y - clickPosition.y);
+
+        // 視点回転を加算（Yaw：Y軸、Pitch：X軸）
+        cameraRotate.y += deltaX * mouseSensitivity;
+        cameraRotate.x += deltaY * mouseSensitivity;
+
+        // 上下反転制限（オプション）
+        const float pi_2 = std::numbers::pi_v<float> / 2.0f - 0.01f;
+        cameraRotate.x = std::clamp(cameraRotate.x, -pi_2, pi_2);
+
+        clickPosition = currentMousePos;
+    } else {
+        // クリック開始時位置を記録
+        clickPosition = Input::GetInstance()->GetMousePos();
     }
 }
 
@@ -67,78 +122,4 @@ void DebugCamera::imgui() {
         ImGui::EndTabBar();
     }
 #endif // _DEBUG
-}
-
-void DebugCamera::CameraMove(Vector3 &cameraRotate, Vector3 &cameraTranslate, Vector2 &clickPosition) {
-    // 各フラグ
-    static bool isLeftClicked = false;
-    static bool isWheelClicked = false;
-
-    // 回転を考慮する
-    Matrix4x4 rotationMatrix = MakeRotateXYZMatrix(cameraRotate);
-    Vector3 X = {1.0f, 0.0f, 0.0f};
-    Vector3 Y = {0.0f, 1.0f, 0.0f};
-    Vector3 Z = {0.0f, 0.0f, -1.0f};
-
-    Vector3 rotatedX = Transformation(X, rotationMatrix);
-    Vector3 rotatedY = Transformation(Y, rotationMatrix);
-    Vector3 rotatedZ = Transformation(Z, rotationMatrix);
-
-    /// ========カメラ操作========
-    // カメラの回転を更新する
-    if (Input::GetInstance()->IsPressMouse(1) == 1) {
-        if (!isLeftClicked) {
-            // マウスがクリックされたときに現在のマウス位置を保存する
-            clickPosition = Input::GetInstance()->GetMousePos();
-            isLeftClicked = true;
-        } else {
-            // マウスがクリックされている間はカメラの回転を更新する
-            Vector2 currentMousePos;
-            currentMousePos = Input::GetInstance()->GetMousePos();
-
-            float deltaX = static_cast<float>(currentMousePos.x - clickPosition.x);
-            float deltaY = static_cast<float>(currentMousePos.y - clickPosition.y);
-
-            cameraRotate.x += (deltaY * mouseSensitivity); // 5.0f;
-            cameraRotate.y += (deltaX * mouseSensitivity); // 5.0f;
-
-            // 現在のマウス位置を保存する
-            clickPosition = currentMousePos;
-        }
-    } else {
-        // マウスがクリックされていない場合はフラグをリセットする
-        isLeftClicked = false;
-    }
-
-    // カメラの位置を更新する
-    if (Input::GetInstance()->IsPressMouse(2) == 1) {
-        if (!isWheelClicked) {
-            // マウスがクリックされたときに現在のマウス位置を保存する
-            clickPosition = Input::GetInstance()->GetMousePos();
-            isWheelClicked = true;
-        } else {
-            // マウスがクリックされている間はカメラの位置を更新する
-            Vector2 currentMousePos;
-            currentMousePos = Input::GetInstance()->GetMousePos();
-
-            float deltaX = static_cast<float>(currentMousePos.x - clickPosition.x);
-            float deltaY = static_cast<float>(currentMousePos.y - clickPosition.y);
-
-            cameraTranslate -= (rotatedX * deltaX * mouseSensitivity);
-            cameraTranslate += (rotatedY * deltaY * mouseSensitivity);
-
-            // 現在のマウス位置を保存する
-            clickPosition = currentMousePos;
-        }
-    } else {
-        // マウスがクリックされていない場合はフラグをリセットする
-        isWheelClicked = false;
-    }
-
-    // マウスホイールの移動量を取得する
-    int wheelDelta = -Input::GetInstance()->GetWheel();
-
-    // マウスホイールの移動量に応じてカメラの移動を更新する
-    cameraTranslate.z += rotatedZ.z * float(wheelDelta) * moveZspeed;
-    /// =====================
 }

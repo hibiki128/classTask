@@ -2,8 +2,9 @@
 #ifdef _DEBUG
 #include "imgui.h"
 #include "imgui_impl_win32.h"
-#include <imgui_impl_dx12.h>
 #include <externals/icon/IconsFontAwesome5.h>
+#include <imgui_impl_dx12.h>
+#include"SceneManager.h"
 
 ImGuiManager *ImGuiManager::instance = nullptr;
 
@@ -17,9 +18,9 @@ void ImGuiManager::Initialize(WinApp *winApp) {
     // Docking機能を有効化
     ImGuiIO &io = ImGui::GetIO();
     // 高度な機能を有効化
-    io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;   // ドッキング機能
-    io.ConfigWindowsResizeFromEdges = true;             // エッジからリサイズ
-    io.ConfigWindowsMoveFromTitleBarOnly = true;        // タイトルバーからの移動
+    io.ConfigFlags |= ImGuiConfigFlags_DockingEnable; // ドッキング機能
+    io.ConfigWindowsResizeFromEdges = true;           // エッジからリサイズ
+    io.ConfigWindowsMoveFromTitleBarOnly = true;      // タイトルバーからの移動
 
     // パフォーマンス関連の設定
     io.ConfigMemoryCompactTimer = 300.0f; // メモリ圧縮の間隔を長く
@@ -32,7 +33,7 @@ void ImGuiManager::Initialize(WinApp *winApp) {
 
     io.Fonts->AddFontFromFileTTF("resources/fonts/PixelMplus12-Regular.ttf", 14.0f, nullptr, io.Fonts->GetGlyphRangesJapanese());
 
-      // アイコンフォント読み込み（FontAwesomeなど）
+    // アイコンフォント読み込み（FontAwesomeなど）
     // FontAwesomeの設定
     static const ImWchar icon_ranges[] = {ICON_MIN_FA, ICON_MAX_FA, 0};
     ImFontConfig icons_config;
@@ -40,7 +41,6 @@ void ImGuiManager::Initialize(WinApp *winApp) {
     icons_config.PixelSnapH = true;
     icons_config.GlyphMinAdvanceX = fontSize;
     io.Fonts->AddFontFromFileTTF("resources/fonts/fa-solid-900.ttf", fontSize, &icons_config, icon_ranges);
-
 
     // フォントの生成
     unsigned char *tex_pixels = nullptr;
@@ -152,7 +152,6 @@ void ImGuiManager::SetupTheme() {
     }
 }
 
-
 void ImGuiManager::CreateDescriptorHeap() {
     HRESULT result;
 
@@ -260,7 +259,7 @@ void ImGuiManager::ShowMainMenu() {
             }
             ImGui::Separator();
             if (ImGui::MenuItem(ICON_FA_COG " 環境設定", "Ctrl+,")) {
-                //showSettingsWindow_ = true;
+                // showSettingsWindow_ = true;
             }
             ImGui::EndMenu();
         }
@@ -269,14 +268,14 @@ void ImGuiManager::ShowMainMenu() {
         if (ImGui::BeginMenu(ICON_FA_EYE " 表示")) {
             // ウィンドウ表示設定
             if (ImGui::BeginMenu(ICON_FA_WINDOW_MAXIMIZE " ウィンドウ")) {
-                //ImGui::MenuItem(ICON_FA_GAMEPAD " ゲームビュー", nullptr, &showGameView_);
+                // ImGui::MenuItem(ICON_FA_GAMEPAD " ゲームビュー", nullptr, &showGameView_);
                 ImGui::MenuItem(ICON_FA_BOOK_OPEN " シーンビュー", nullptr, &showSceneView_);
                 ImGui::MenuItem(ICON_FA_CUBE " オブジェクトビュー", nullptr, &showObjectView_);
                 ImGui::MenuItem(ICON_FA_STAR " パーティクルビュー", nullptr, &showParticleView_);
-                //ImGui::MenuItem(ICON_FA_TERMINAL " コンソール", nullptr, &showConsole_);
-                //ImGui::MenuItem(ICON_FA_SITEMAP " ヒエラルキー", nullptr, &showHierarchy_);
-                //ImGui::MenuItem(ICON_FA_SLIDERS_H " インスペクター", nullptr, &showInspector_);
-                //ImGui::MenuItem(ICON_FA_FOLDER " プロジェクト", nullptr, &showProject_);
+                // ImGui::MenuItem(ICON_FA_TERMINAL " コンソール", nullptr, &showConsole_);
+                // ImGui::MenuItem(ICON_FA_SITEMAP " ヒエラルキー", nullptr, &showHierarchy_);
+                // ImGui::MenuItem(ICON_FA_SLIDERS_H " インスペクター", nullptr, &showInspector_);
+                // ImGui::MenuItem(ICON_FA_FOLDER " プロジェクト", nullptr, &showProject_);
                 ImGui::EndMenu();
             }
 
@@ -381,7 +380,7 @@ void ImGuiManager::ShowMainMenu() {
             if (ImGui::MenuItem(ICON_FA_WATER " シェーダーエディタ")) {
             }
             ImGui::Separator();
-            if (ImGui::MenuItem(ICON_FA_BUG " デバッグ情報表示", nullptr/*, &showDebugInfo_*/)) {
+            if (ImGui::MenuItem(ICON_FA_BUG " デバッグ情報表示", nullptr /*, &showDebugInfo_*/)) {
             }
             ImGui::EndMenu();
         }
@@ -391,14 +390,32 @@ void ImGuiManager::ShowMainMenu() {
             if (ImGui::MenuItem(ICON_FA_BOOK " ドキュメント", "F1")) {
             }
             if (ImGui::MenuItem(ICON_FA_INFO_CIRCLE " バージョン情報")) {
-                //showAboutWindow_ = true;
+                // showAboutWindow_ = true;
             }
             ImGui::EndMenu();
         }
 
-        // 右側にパフォーマンス情報を表示
-        ImGui::SetCursorPosX(ImGui::GetWindowWidth() - 300);
-       // ImGui::Text("FPS: %.1f | Memory: %.1f MB", ImGui::GetIO().Framerate, GetMemoryUsage());
+        // シーンメニュー
+        if (ImGui::BeginMenu(ICON_FA_GLOBE " シーン選択")) { // 地球アイコン（意味：全体メニュー）
+
+            if (ImGui::MenuItem(ICON_FA_HOME " タイトルシーン")) { // home アイコン
+                SceneManager::GetInstance()->SceneSelection("TITLE");
+            }
+            if (ImGui::MenuItem(ICON_FA_BARS " セレクトシーン")) { // bars アイコン（メニュー選択感）
+                SceneManager::GetInstance()->SceneSelection("SELECT");
+            }
+            if (ImGui::MenuItem(ICON_FA_GAMEPAD " ゲームシーン")) { // gamepad アイコン
+                SceneManager::GetInstance()->SceneSelection("GAME");
+            }
+            if (ImGui::MenuItem(ICON_FA_TROPHY " クリアシーン")) { // trophy アイコン
+                SceneManager::GetInstance()->SceneSelection("CLEAR");
+            }
+            if (ImGui::MenuItem(ICON_FA_FILM " デモシーン")) { // film アイコン
+                SceneManager::GetInstance()->SceneSelection("DEMO");
+            }
+
+            ImGui::EndMenu();
+        }
 
         ImGui::EndMainMenuBar();
     }

@@ -44,6 +44,10 @@ void Framework::Initialize() {
     srvManager->Initialize();
     ///--------------------------
 
+    ///--------BaseObjectManager--------
+    baseObjectManager_ = BaseObjectManager::GetInstance();
+    ///---------------------------------
+
     /// ---------ImGui---------
 #ifdef _DEBUG
     imGuiManager_ = ImGuiManager::GetInstance();
@@ -150,6 +154,7 @@ void Framework::Finalize() {
 #ifdef _DEBUG
     imGuiManager_->Finalize();
 #endif // _DEBUG
+    baseObjectManager_->Finalize();
     line3d_->Finalize();
     srvManager->Finalize();
     audio->Finalize();
@@ -166,6 +171,8 @@ void Framework::Update() {
 
     /// deltaTimeの更新
     Frame::Update();
+
+    baseObjectManager_->Update();
 
     sceneManager_->Update();
 

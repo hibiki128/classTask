@@ -317,6 +317,15 @@
     <ClCompile Include="Engine\3d\Primitive\PrimitiveModel.cpp">
       <Filter>ソースファイル</Filter>
     </ClCompile>
+    <ClCompile Include="Engine\3d\Particle\ParticleGroup.cpp">
+      <Filter>ソースファイル</Filter>
+    </ClCompile>
+    <ClCompile Include="Engine\3d\Object\BaseObjectManager.cpp">
+      <Filter>ソースファイル</Filter>
+    </ClCompile>
+    <ClCompile Include="Engine\3d\Particle\ParticleGroupManager.cpp">
+      <Filter>ソースファイル</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="resources\shaders\Particle\Particle.hlsli">
@@ -557,6 +566,9 @@
     </ClInclude>
     <ClInclude Include="Engine\3d\Particle\ParticleEditor.h" />
     <ClInclude Include="Engine\3d\Primitive\PrimitiveModel.h" />
+    <ClInclude Include="Engine\3d\Particle\ParticleGroup.h" />
+    <ClInclude Include="Engine\3d\Object\BaseObjectManager.h" />
+    <ClInclude Include="Engine\3d\Particle\ParticleGroupManager.h" />
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="resources\shaders\Particle\Particle.PS.hlsl">

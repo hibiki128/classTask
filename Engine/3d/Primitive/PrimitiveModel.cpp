@@ -11,6 +11,9 @@ void PrimitiveModel::Initialize() {
     CreateCube();
     CreateCylinder();
     CreateRing();
+    CreateTriangle();
+    CreateCone();
+    CreatePyramid();
 }
 
 PrimitiveModel *PrimitiveModel::GetInstance() {
@@ -308,4 +311,235 @@ void PrimitiveModel::CreateRing() {
 
     // マップに挿入
     primitiveDataMap_.insert(std::make_pair(PrimitiveType::Ring, primitiveData));
+}
+
+void PrimitiveModel::CreateTriangle() {
+    // 三角形の頂点データ（XY平面上で垂直配置）
+    PrimitiveData primitiveData{};
+
+    // 原点を中心とした正三角形を作成
+    // 正三角形の高さ = sqrt(3)/2 * 辺の長さ
+    const float side = 2.0f; // 辺の長さ2単位
+    const float height = std::sqrt(3.0f) * side / 2.0f;
+    const float halfSide = side / 2.0f;
+    const float offsetY = height / 3.0f; // 三角形を原点中心にするためのオフセット
+
+    // 頂点の生成（XY平面上、Z+方向を正面に）
+    primitiveData.vertices = {
+        // Position (x,y,z,w), UV, Normal
+        {{0.0f, height - offsetY, 0.0f, 1.0f}, {0.5f, 0.0f}, {0.0f, 0.0f, 1.0f}}, // 上部
+        {{-halfSide, -offsetY, 0.0f, 1.0f}, {0.0f, 1.0f}, {0.0f, 0.0f, 1.0f}},    // 左下
+        {{halfSide, -offsetY, 0.0f, 1.0f}, {1.0f, 1.0f}, {0.0f, 0.0f, 1.0f}}      // 右下
+    };
+
+    // インデックスの生成（一つの三角形のみ）
+    primitiveData.indices = {0, 1, 2};
+
+    primitiveData.color = {1.0f, 1.0f, 1.0f, 1.0f};
+    primitiveData.uvMatrix = MakeIdentity4x4();
+
+    // プリミティブマップに追加
+    primitiveDataMap_.insert(std::make_pair(PrimitiveType::Triangle, primitiveData));
+}
+
+void PrimitiveModel::CreateCone() {
+    // 円錐の頂点データ
+    PrimitiveData primitiveData{};
+
+    const uint32_t kBaseDivide = 32;
+    const float kRadius = 1.0f;
+    const float kHeight = 2.0f;
+    const float radianPerDivide = 2.0f * std::numbers::pi_v<float> / float(kBaseDivide);
+
+    // 頂点（円錐の先端）を作成
+    VertexData apex{};
+    apex.position = {0.0f, kHeight / 2.0f, 0.0f, 1.0f};
+    apex.normal = {0.0f, 1.0f, 0.0f};
+    apex.texcoord = {0.5f, 0.0f};
+    primitiveData.vertices.push_back(apex);
+
+    // 底面の頂点を作成
+    for (uint32_t i = 0; i <= kBaseDivide; ++i) {
+        float angle = i * radianPerDivide;
+        float sinTheta = std::sinf(angle);
+        float cosTheta = std::cosf(angle);
+        float u = float(i) / float(kBaseDivide);
+
+        // 側面の法線計算（隣接面の平均）
+        // 円錐の場合、法線は他のプリミティブほど単純ではない
+        float nx = cosTheta;
+        float ny = 0.2f; // Y成分を少し入れて角度をつける
+        float nz = sinTheta;
+        float length = std::sqrt(nx * nx + ny * ny + nz * nz);
+        nx /= length;
+        ny /= length;
+        nz /= length;
+
+        VertexData baseVertex{};
+        baseVertex.position = {kRadius * cosTheta, -kHeight / 2.0f, kRadius * sinTheta, 1.0f};
+        baseVertex.normal = {nx, ny, nz};
+        baseVertex.texcoord = {u, 1.0f};
+        primitiveData.vertices.push_back(baseVertex);
+    }
+
+    // 側面の三角形を作成
+    for (uint32_t i = 0; i < kBaseDivide; ++i) {
+        uint32_t current = i + 1;
+        uint32_t next = i + 2;
+
+        // 三角形（先端と底面の2頂点で構成）
+        primitiveData.indices.push_back(0); // 先端
+        primitiveData.indices.push_back(current);
+        primitiveData.indices.push_back(next);
+    }
+
+    // 底面の中心頂点を追加
+    VertexData baseCenter{};
+    baseCenter.position = {0.0f, -kHeight / 2.0f, 0.0f, 1.0f};
+    baseCenter.normal = {0.0f, -1.0f, 0.0f};
+    baseCenter.texcoord = {0.5f, 0.5f};
+    uint32_t baseCenterIndex = static_cast<uint32_t>(primitiveData.vertices.size());
+    primitiveData.vertices.push_back(baseCenter);
+
+    // 底面の三角形を作成
+    for (uint32_t i = 0; i < kBaseDivide; ++i) {
+        uint32_t current = i + 1;
+        uint32_t next = i + 2;
+
+        // 底面の三角形
+        primitiveData.indices.push_back(baseCenterIndex);
+        primitiveData.indices.push_back(next);
+        primitiveData.indices.push_back(current);
+    }
+
+    primitiveData.color = {1.0f, 1.0f, 1.0f, 1.0f};
+    primitiveData.uvMatrix = MakeIdentity4x4();
+
+    // PrimitiveTypeを追加する必要があります
+    primitiveDataMap_.insert(std::make_pair(PrimitiveType::Cone, primitiveData));
+}
+
+void PrimitiveModel::CreatePyramid() {
+    // 四角錐（ピラミッド）の頂点データ
+    PrimitiveData primitiveData{};
+
+    const float kSide = 2.0f;
+    const float kHeight = 2.0f;
+    const float halfSide = kSide / 2.0f;
+
+    // 頂点を作成
+    // 頂点
+    VertexData apex{};
+    apex.position = {0.0f, kHeight / 2.0f, 0.0f, 1.0f};
+    apex.texcoord = {0.5f, 0.0f};
+
+    // 底面の四隅
+    VertexData frontLeft{};
+    frontLeft.position = {-halfSide, -kHeight / 2.0f, halfSide, 1.0f};
+    frontLeft.texcoord = {0.0f, 1.0f};
+
+    VertexData frontRight{};
+    frontRight.position = {halfSide, -kHeight / 2.0f, halfSide, 1.0f};
+    frontRight.texcoord = {1.0f, 1.0f};
+
+    VertexData backLeft{};
+    backLeft.position = {-halfSide, -kHeight / 2.0f, -halfSide, 1.0f};
+    backLeft.texcoord = {0.0f, 0.0f};
+
+    VertexData backRight{};
+    backRight.position = {halfSide, -kHeight / 2.0f, -halfSide, 1.0f};
+    backRight.texcoord = {1.0f, 0.0f};
+
+    // 前面
+    VertexData apexFront = apex;
+    apexFront.normal = Vector3(0.0f, 0.5f, 1.0f).Normalize();
+    primitiveData.vertices.push_back(apexFront);
+
+    VertexData frontLeftCopy = frontLeft;
+    frontLeftCopy.normal = Vector3(0.0f, 0.5f, 1.0f).Normalize();
+    primitiveData.vertices.push_back(frontLeftCopy);
+
+    VertexData frontRightCopy = frontRight;
+    frontRightCopy.normal = Vector3(0.0f, 0.5f, 1.0f).Normalize();
+    primitiveData.vertices.push_back(frontRightCopy);
+
+    // 右面
+    VertexData apexRight = apex;
+    apexRight.normal = Vector3(1.0f, 0.5f, 0.0f).Normalize();
+    primitiveData.vertices.push_back(apexRight);
+
+    VertexData frontRightCopy2 = frontRight;
+    frontRightCopy2.normal = Vector3(1.0f, 0.5f, 0.0f).Normalize();
+    primitiveData.vertices.push_back(frontRightCopy2);
+
+    VertexData backRightCopy = backRight;
+    backRightCopy.normal = Vector3(1.0f, 0.5f, 0.0f).Normalize();
+    primitiveData.vertices.push_back(backRightCopy);
+
+    // 背面
+    VertexData apexBack = apex;
+    apexBack.normal = Vector3(0.0f, 0.5f, -1.0f).Normalize();
+    primitiveData.vertices.push_back(apexBack);
+
+    VertexData backRightCopy2 = backRight;
+    backRightCopy2.normal = Vector3(0.0f, 0.5f, -1.0f).Normalize();
+    primitiveData.vertices.push_back(backRightCopy2);
+
+    VertexData backLeftCopy = backLeft;
+    backLeftCopy.normal = Vector3(0.0f, 0.5f, -1.0f).Normalize();
+    primitiveData.vertices.push_back(backLeftCopy);
+
+    // 左面
+    VertexData apexLeft = apex;
+    apexLeft.normal = Vector3(-1.0f, 0.5f, 0.0f).Normalize();
+    primitiveData.vertices.push_back(apexLeft);
+
+    VertexData backLeftCopy2 = backLeft;
+    backLeftCopy2.normal = Vector3(-1.0f, 0.5f, 0.0f).Normalize();
+    primitiveData.vertices.push_back(backLeftCopy2);
+
+    VertexData frontLeftCopy2 = frontLeft;
+    frontLeftCopy2.normal = Vector3(-1.0f, 0.5f, 0.0f).Normalize();
+    primitiveData.vertices.push_back(frontLeftCopy2);
+
+    // 底面
+    VertexData bottomFrontLeft = frontLeft;
+    bottomFrontLeft.normal = {0.0f, -1.0f, 0.0f};
+    primitiveData.vertices.push_back(bottomFrontLeft);
+
+    VertexData bottomFrontRight = frontRight;
+    bottomFrontRight.normal = {0.0f, -1.0f, 0.0f};
+    primitiveData.vertices.push_back(bottomFrontRight);
+
+    VertexData bottomBackLeft = backLeft;
+    bottomBackLeft.normal = {0.0f, -1.0f, 0.0f};
+    primitiveData.vertices.push_back(bottomBackLeft);
+
+    VertexData bottomBackRight = backRight;
+    bottomBackRight.normal = {0.0f, -1.0f, 0.0f};
+    primitiveData.vertices.push_back(bottomBackRight);
+
+    // インデックスの生成
+    // 四つの側面（それぞれ三角形）
+    for (uint32_t i = 0; i < 4; ++i) {
+        uint32_t baseIndex = i * 3;
+        primitiveData.indices.push_back(baseIndex);
+        primitiveData.indices.push_back(baseIndex + 1);
+        primitiveData.indices.push_back(baseIndex + 2);
+    }
+
+    // 底面（二つの三角形）
+    primitiveData.indices.push_back(12); // 底面左前
+    primitiveData.indices.push_back(13); // 底面右前
+    primitiveData.indices.push_back(14); // 底面左後
+
+    primitiveData.indices.push_back(13); // 底面右前
+    primitiveData.indices.push_back(15); // 底面右後
+    primitiveData.indices.push_back(14); // 底面左後
+
+    primitiveData.color = {1.0f, 1.0f, 1.0f, 1.0f};
+    primitiveData.uvMatrix = MakeIdentity4x4();
+
+    // PrimitiveTypeを追加する必要があります
+    primitiveDataMap_.insert(std::make_pair(PrimitiveType::Pyramid, primitiveData));
 }

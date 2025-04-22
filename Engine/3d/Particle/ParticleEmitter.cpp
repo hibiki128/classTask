@@ -15,7 +15,7 @@ void ParticleEmitter::Initialize(std::string name, std::string filePath) {
         }
         Manager_ = std::make_unique<ParticleManager>();
         Manager_->Initialize(SrvManager::GetInstance());
-        Manager_->CreateParticleGroup(name_, fileName_);
+        Manager_->AddParticleGroup(name_, fileName_);
         if (texturePath_.empty()) {
             texturePath_ = Manager_->GetTexturePath();
         }
@@ -157,7 +157,7 @@ void ParticleEmitter::CreateParticle(const std::string &name, const std::string 
     fileName_ = fileName;
     Manager_ = std::make_unique<ParticleManager>();
     Manager_->Initialize(SrvManager::GetInstance());
-    Manager_->CreateParticleGroup(name_, fileName_);
+    Manager_->AddParticleGroup(name_, fileName_);
     if (texturePath_.empty()) {
         texturePath_ = Manager_->GetTexturePath();
     }

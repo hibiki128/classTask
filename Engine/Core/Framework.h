@@ -17,6 +17,7 @@
 #include "Engine/offscreen/OffScreen.h"
 #include <line/DrawLine3D.h>
 #include"ImGui/ImGuiManager.h"
+#include"Object/BaseObjectManager.h"
 
 class Framework {
   public: // メンバ関数
@@ -81,6 +82,7 @@ class Framework {
     TextureManager *textureManager_ = nullptr;
     ModelManager *modelManager_ = nullptr;
     ImGuiManager *imGuiManager_ = nullptr;
+    BaseObjectManager *baseObjectManager_ = nullptr;
 
     SpriteCommon *spriteCommon = nullptr;
     Object3dCommon *object3dCommon = nullptr;

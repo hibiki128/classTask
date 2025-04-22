@@ -2,6 +2,7 @@
 
 #include "BaseScene.h"
 #include"application/Base/BaseObject.h"
+#include"Easing.h"
 
 class TitleScene : public BaseScene {
   public: // メンバ関数
@@ -60,6 +61,7 @@ class TitleScene : public BaseScene {
     ParticleCommon *ptCommon_;
 
     ViewProjection vp_;
+    Easing ease_;
     std::unique_ptr<DebugCamera> debugCamera_;
 
     std::unique_ptr<ParticleEmitter> emitter_;

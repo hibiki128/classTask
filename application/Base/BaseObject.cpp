@@ -1,12 +1,12 @@
 #include "BaseObject.h"
 
-void BaseObject::Init(const std::string className) {
-    objectName_ = className;
+void BaseObject::Init(const std::string objectName) {
+    objectName_ = objectName;
     /// ワールドトランスフォームの初期化
     transform_.Initialize();
     // カラーのセット
     objColor_.Initialize();
-    objColor_.SetColor(Vector4(1, 1, 1, 1));
+    objColor_.GetColor() = Vector4(1, 1, 1, 1);
     // ライティングのセット
     isLighting_ = true;
     isCollider = false;

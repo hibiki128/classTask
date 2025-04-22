@@ -3,7 +3,7 @@
 #include "fstream"
 #include "Engine/Frame/Frame.h"
 #include <random>
-std::unordered_map<std::string, ParticleManager::ModelData> ParticleManager::modelCache;
+std::unordered_map<std::string,ModelData> ParticleManager::modelCache;
 
 void ParticleManager::Initialize(SrvManager *srvManager) {
     particleCommon = ParticleCommon::GetInstance();
@@ -160,26 +160,11 @@ void ParticleManager::Draw() {
     }
 }
 
-void ParticleManager::CreateParticleGroup(const std::string name, const std::string &filename) {
+void ParticleManager::AddParticleGroup(const std::string name, const std::string &filename) {
     if (particleGroups.contains(name)) {
         return;
     }
-
-    particleGroups[name] = ParticleGroup();
-    ParticleGroup &particleGroup = particleGroups[name];
-    CreateVartexData(filename);
-    particleGroup.material.textureFilePath = modelData.material.textureFilePath;
-    TextureManager::GetInstance()->LoadTexture(modelData.material.textureFilePath);
-    modelData.material.textureIndex = TextureManager::GetInstance()->GetTextureIndexByFilePath(modelData.material.textureFilePath);
-    particleGroup.material.textureIndex = modelData.material.textureIndex;
-    particleGroup.instancingResource = particleCommon->GetDxCommon()->CreateBufferResource(sizeof(ParticleForGPU) * kNumMaxInstance);
-    particleGroup.instancingSRVIndex = srvManager_->Allocate() + 1;
-    particleGroup.instancingResource->Map(0, nullptr, reinterpret_cast<void **>(&particleGroup.instancingData));
-
-    srvManager_->CreateSRVforStructuredBuffer(particleGroup.instancingSRVIndex, particleGroup.instancingResource.Get(), kNumMaxInstance, sizeof(ParticleForGPU));
-
-    CreateMaterial();
-    particleGroup.instanceCount = 0;
+    
 }
 
 void ParticleManager::SetTexture(const std::string &filePath) {
@@ -203,7 +188,7 @@ void ParticleManager::CreateVartexData(const std::string &filename) {
     std::memcpy(vertexData, modelData.vertices.data(), sizeof(VertexData) * modelData.vertices.size());
 }
 
-ParticleManager::Particle ParticleManager::MakeNewParticle(
+Particle ParticleManager::MakeNewParticle(
     std::mt19937 &randomEngine,
     const Vector3 &translate,
     const Vector3 &rotation,
@@ -340,7 +325,7 @@ ParticleManager::Particle ParticleManager::MakeNewParticle(
     return particle;
 }
 
-ParticleManager::MaterialData ParticleManager::LoadMaterialTemplateFile(const std::string &directoryPath, const std::string &filename) {
+MaterialData ParticleManager::LoadMaterialTemplateFile(const std::string &directoryPath, const std::string &filename) {
     MaterialData materialData;                          // 構築するMaterialData
     std::string line;                                   // ファイルから読んだ1行を格納するもの
     std::ifstream file(directoryPath + "/" + filename); // ファイルを開く
@@ -367,7 +352,7 @@ ParticleManager::MaterialData ParticleManager::LoadMaterialTemplateFile(const st
     return materialData;
 }
 
-ParticleManager::ModelData ParticleManager::LoadObjFile(const std::string &directoryPath, const std::string &filename) {
+ModelData ParticleManager::LoadObjFile(const std::string &directoryPath, const std::string &filename) {
     std::string fullPath = directoryPath + filename;
 
     // キャッシュを確認して、既に読み込まれている場合はそれを返す
@@ -453,7 +438,7 @@ void ParticleManager::CreateMaterial() {
     materialData->uvTransform = MakeIdentity4x4();
 }
 
-std::list<ParticleManager::Particle> ParticleManager::Emit(
+std::list<Particle> ParticleManager::Emit(
     const std::string name,
     const Vector3 &position,
     uint32_t count,
@@ -472,7 +457,7 @@ std::list<ParticleManager::Particle> ParticleManager::Emit(
     assert(particleGroups.find(name) != particleGroups.end() && "Error: パーティクルグループが存在しません。");
 
     // 指定されたパーティクルグループを取得
-    ParticleGroup &particleGroup = particleGroups[name];
+    ParticleGroupData &particleGroup = particleGroups[name];
 
     // 新しいパーティクルを生成し、パーティクルグループに追加
     std::list<Particle> newParticles;

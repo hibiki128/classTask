@@ -8,6 +8,7 @@
 #include "random"
 #include <Matrix4x4.h>
 #include <WorldTransform.h>
+#include <ModelStructs.h>
 class ParticleManager {
   public:
     /// <summary>
@@ -30,7 +31,7 @@ class ParticleManager {
     /// </summary>
     /// <param name="name"></param>
     /// <param name="textureFilePath"></param>
-    void CreateParticleGroup(const std::string name, const std::string &filename);
+    void AddParticleGroup(const std::string name, const std::string &filename);
 
     std::string GetTexturePath() { return modelData.material.textureFilePath; }
 
@@ -53,69 +54,8 @@ class ParticleManager {
     void CreateVartexData(const std::string &filename);
 
   private:
-    struct ParticleForGPU {
-        Matrix4x4 WVP;
-        Matrix4x4 World;
-        Vector4 color;
-    };
-
-    // 頂点データ
-    struct VertexData {
-        Vector4 position;
-        Vector2 texcoord;
-    };
-
-    struct MaterialData {
-        std::string textureFilePath;
-        uint32_t textureIndex;
-    };
-
-    struct ModelData {
-        std::vector<VertexData> vertices;
-        MaterialData material;
-    };
-
-    struct Particle {
-        WorldTransform transform; // 位置
-        Vector3 velocity;         // 速度
-        Vector3 Acce;
-        Vector3 startScale;
-        Vector3 endScale;
-        Vector3 startAcce;
-        Vector3 endAcce;
-        Vector3 startRote;
-        Vector3 endRote;
-        Vector3 rotateVelocity;
-        Vector3 fixedDirection;
-        Vector4 color;     // 色
-        float lifeTime;    // ライフタイム
-        float currentTime; // 現在の時間
-        float initialAlpha;
-    };
-
-    // マテリアルデータ
-    struct Material {
-        Vector4 color;
-        Matrix4x4 uvTransform;
-        float padding[3];
-    };
 
     ModelData modelData;
-
-    struct ParticleGroup {
-        // マテリアルデータ
-        MaterialData material;
-        // パーティクルのリスト (std::list<Particle> 型)
-        std::list<Particle> particles;
-        // インスタンシングデータ用SRVインデックス
-        uint32_t instancingSRVIndex = 0;
-        // インスタンシングリソース
-        Microsoft::WRL::ComPtr<ID3D12Resource> instancingResource = nullptr;
-        // インスタンス数
-        uint32_t instanceCount = 0;
-        // インスタンシングデータを書き込むためのポインタ
-        ParticleForGPU *instancingData = nullptr;
-    };
 
     ParticleCommon *particleCommon = nullptr;
 
@@ -133,7 +73,7 @@ class ParticleManager {
 
     SrvManager *srvManager_;
     static std::unordered_map<std::string, ModelData> modelCache;
-    std::unordered_map<std::string, ParticleGroup> particleGroups;
+    std::unordered_map<std::string, ParticleGroupData> particleGroups;
 
     // Δtを定義
     static const uint32_t kNumMaxInstance = 10000; // 最大インスタンス数の制限

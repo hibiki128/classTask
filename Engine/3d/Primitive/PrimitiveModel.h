@@ -8,6 +8,9 @@ enum class PrimitiveType {
     Cube,
     Cylinder,
     Ring,
+    Triangle,
+    Cone,
+    Pyramid
 };
 
 class PrimitiveModel {
@@ -55,6 +58,9 @@ class PrimitiveModel {
     void CreateCube();
     void CreateCylinder();
     void CreateRing();
+    void CreateTriangle();
+    void CreateCone();
+    void CreatePyramid();
 
   private:
     /// ===================================================

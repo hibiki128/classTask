@@ -1,5 +1,6 @@
 #include "TitleScene.h"
 #include "SceneManager.h"
+#include <Engine/Frame/Frame.h>
 
 void TitleScene::Initialize() {
     audio_ = Audio::GetInstance();
@@ -19,8 +20,13 @@ void TitleScene::Initialize() {
 
     test = std::make_unique<BaseObject>();
     test->Init("test");
-    test->CreatePrimitiveModel(PrimitiveType::Plane);
+    test->CreatePrimitiveModel(PrimitiveType::Ring);
     test->SetTexture("debug/uvChecker.png");
+
+    ease_.time = 0.0f;
+    ease_.maxTime = 1.0f;
+    ease_.amplitude = 0.3f;
+    ease_.period = 0.2f;
 }
 
 void TitleScene::Finalize() {
@@ -32,6 +38,12 @@ void TitleScene::Update() {
 
     // シーン切り替え
     ChangeScene();
+
+    ease_.time += Frame::DeltaTime();
+    if (ease_.time >= ease_.maxTime - 0.3f) {
+        ease_.time = 0.0f;
+    }
+    test->GetWorldScale() = EaseAmplitudeScale<Vector3>({1.0f, 1.0f, 1.0f}, ease_.time, ease_.maxTime, ease_.amplitude, ease_.period);
 
     test->Update();
 }
@@ -97,6 +109,16 @@ void TitleScene::AddSceneSetting() {
 }
 
 void TitleScene::AddObjectSetting() {
+    if (ImGui::BeginTabBar("イージング設定")) {
+        if (ImGui::BeginTabItem("イージング設定")) {
+            ImGui::DragFloat("最大時間", &ease_.maxTime, 0.1f);
+            ImGui::DragFloat("イージング時間", &ease_.time, 0.1f);
+            ImGui::DragFloat("振幅", &ease_.amplitude, 0.1f);
+            ImGui::DragFloat("周期", &ease_.period, 0.1f);
+            ImGui::EndTabItem();
+        };
+        ImGui::EndTabBar();
+    }
     test->DebugImGui();
 }
 

@@ -47,7 +47,7 @@ class ParticleEmitter {
     void SetColor(const Vector4 &color) { Manager_->SetColor(color); }
     void SetName(const std::string &name) { 
         name_ = name; 
-        Manager_->CreateParticleGroup(name_, fileName_);
+        Manager_->AddParticleGroup(name_, fileName_);
     }
 
     void CreateParticle(const std::string &name, const std::string &fileName, const std::string &texturePath);

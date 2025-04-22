@@ -50,6 +50,7 @@ class BaseObject : public Collider {
     virtual void Draw(const ViewProjection &viewProjection, Vector3 offSet = {0.0f,0.0f,0.0f});
 
     virtual void CreateModel(const std::string modelname);
+    virtual void CreatePrimitiveModel(const PrimitiveType &type);
     virtual void CreateCollider();
 
     virtual void DebugImGui();

@@ -87,6 +87,8 @@ class Framework {
     ParticleCommon *particleCommon = nullptr;
     ParticleEditor *particleEditor = nullptr;
 
+    PrimitiveModel *primitiveModel = nullptr;
+
     std::unique_ptr<CollisionManager> collisionManager_;
     std::unique_ptr<OffScreen> offscreen_;
     std::unique_ptr<OffScreen> offscreen2_;

@@ -19,9 +19,8 @@ void TitleScene::Initialize() {
 
     test = std::make_unique<BaseObject>();
     test->Init("test");
-    test->CreateModel("animation/walk.gltf");
-    test->AddAnimation("animation/sneakWalk.gltf");
-    test->AddAnimation("animation/walk.gltf");
+    test->CreatePrimitiveModel(PrimitiveType::Plane);
+    test->SetTexture("debug/uvChecker.png");
 }
 
 void TitleScene::Finalize() {

@@ -60,7 +60,12 @@ Vector3 BaseObject::GetWorldPosition() const {
 
 void BaseObject::CreateModel(const std::string modelname) {
     obj3d_ = std::make_unique<Object3d>();
-    obj3d_->Initialize(modelname);
+    obj3d_->CreateModel(modelname);
+}
+
+void BaseObject::CreatePrimitiveModel(const PrimitiveType &type) {
+    obj3d_ = std::make_unique<Object3d>();
+    obj3d_->CreatePrimitiveModel(type);
 }
 
 void BaseObject::CreateCollider() {

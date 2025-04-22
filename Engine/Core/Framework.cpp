@@ -73,6 +73,11 @@ void Framework::Initialize() {
     modelManager_->Initialize(srvManager);
     ///----------------------------------
 
+    ///----------PrimitiveModel-----------
+    primitiveModel = PrimitiveModel::GetInstance();
+    primitiveModel->Initialize();
+    ///-----------------------------------
+
     ///----------SpriteCommon------------
     // スプライト共通部の初期化
     spriteCommon = SpriteCommon::GetInstance();
@@ -137,6 +142,10 @@ void Framework::Finalize() {
     /// -------ModelCommon-------
     modelManager_->Finalize();
     ///---------------------------
+
+    /// -------PrimitiveModel-------
+    primitiveModel->Finalize();
+    ///-----------------------------
 
 #ifdef _DEBUG
     imGuiManager_->Finalize();

@@ -9,8 +9,20 @@ enum class PrimitiveType {
     Cylinder,
     Ring,
 };
+
 class PrimitiveModel {
   private:
+    /// ====================================================
+    /// private method
+    /// ====================================================
+
+    static PrimitiveModel *instance;
+
+    PrimitiveModel() = default;
+    ~PrimitiveModel() = default;
+    PrimitiveModel(PrimitiveModel &) = delete;
+    PrimitiveModel &operator=(PrimitiveModel &) = delete;
+
     struct PrimitiveData {
         std::vector<VertexData> vertices;
         std::vector<uint32_t> indices;
@@ -19,14 +31,17 @@ class PrimitiveModel {
     };
 
   public:
-    void Initialize();
-    void CreateSphere();
-    void CreatePlane();
-    void CreateCube();
-    void CreateCylinder();
-    void CreateRing();
+    /// =============================================================
+    /// public method
+    /// =============================================================
 
-    PrimitiveData GetPrimitiveData(const PrimitiveType& type) {
+    void Initialize();
+
+    static PrimitiveModel *GetInstance();
+
+    void Finalize();
+
+    PrimitiveData GetPrimitiveData(const PrimitiveType &type) {
         auto it = primitiveDataMap_.find(type);
         if (it != primitiveDataMap_.end()) {
             return it->second;
@@ -35,5 +50,16 @@ class PrimitiveModel {
     }
 
   private:
+    void CreateSphere();
+    void CreatePlane();
+    void CreateCube();
+    void CreateCylinder();
+    void CreateRing();
+
+  private:
+    /// ===================================================
+    /// private variaus
+    /// ===================================================
+
     std::unordered_map<PrimitiveType, PrimitiveData> primitiveDataMap_;
 };

@@ -126,8 +126,15 @@ void Framework::Initialize() {
 
     LightGroup::GetInstance()->Initialize();
 
+    ///-------ParticleEditor-------
     particleEditor = ParticleEditor::GetInstance();
     particleEditor->Initialize();
+    ///----------------------------
+
+    ///-------ParticleGroupManager-------
+    particleGroupManager_ = ParticleGroupManager::GetInstance();
+    particleGroupManager_->Initialize();
+    ///---------------------------------
 
     /// 時間の初期化
     Frame::Init();
@@ -150,6 +157,10 @@ void Framework::Finalize() {
     /// -------PrimitiveModel-------
     primitiveModel->Finalize();
     ///-----------------------------
+
+    /// -------ParticleGroupManager-------
+    particleGroupManager_->Finalize();
+    ///---------------------------------
 
 #ifdef _DEBUG
     imGuiManager_->Finalize();

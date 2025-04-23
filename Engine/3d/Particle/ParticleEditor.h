@@ -1,5 +1,7 @@
 #pragma once
 #include "ParticleEmitter.h"
+#include"ParticleGroupManager.h"
+#include"ParticleGroup.h"
 #include "unordered_map"
 #include <memory>
 class ParticleEditor {
@@ -19,6 +21,7 @@ class ParticleEditor {
     void Initialize();
     void Load();
     void AddParticleEmitter(const std::string &name);
+    void AddParticleGroup(const std::string &name, const std::string &fileName, const std::string &texturePath);
     void EditorWindow();
     void DrawAll(const ViewProjection &vp_);
     void DebugAll();
@@ -33,6 +36,7 @@ class ParticleEditor {
 
   private:
     std::string localFileObj_;
+    std::string localEmitterName_;
     std::string localTexturePath_;
     std::string localFileTexture_;
     std::string localName_;
@@ -40,5 +44,8 @@ class ParticleEditor {
     std::string fileName_;
     std::string texturePath_;
     std::unordered_map<std::string, std::unique_ptr<ParticleEmitter>> emitters_;
+
+    ParticleGroupManager *particleGroupManager_ = nullptr;
+
     bool isLoad_ = false;
 };

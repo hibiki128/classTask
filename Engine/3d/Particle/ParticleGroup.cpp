@@ -1,10 +1,9 @@
 #include "ParticleGroup.h"
+#include "Srv/SrvManager.h"
 #include "fstream"
 #include <Texture/TextureManager.h>
-#include"Srv/SrvManager.h"
 
 std::unordered_map<std::string, ModelData> ParticleGroup::modelCache;
-
 
 void ParticleGroup::Initialize() {
 }
@@ -12,29 +11,33 @@ void ParticleGroup::Initialize() {
 void ParticleGroup::Update() {
 }
 
-ParticleGroupData ParticleGroup::CreateParticleGroup(const std::string &groupName, const std::string &filename) {
-    particleGroup.groupName = groupName;
+ParticleGroupData ParticleGroup::CreateParticleGroup(const std::string &groupName, const std::string &filename, const std::string &texturePath) {
+    particleGroupData_.groupName = groupName;
+    particleGroupData_.material.modelFilePath = filename;
     CreateVartexData(filename);
-    particleGroup.material.textureFilePath = modelData.material.textureFilePath;
-    TextureManager::GetInstance()->LoadTexture(modelData.material.textureFilePath);
-    modelData.material.textureIndex = TextureManager::GetInstance()->GetTextureIndexByFilePath(modelData.material.textureFilePath);
-    particleGroup.material.textureIndex = modelData.material.textureIndex;
-    particleGroup.instancingResource = particleCommon->GetDxCommon()->CreateBufferResource(sizeof(ParticleForGPU) * kNumMaxInstance);
-    particleGroup.instancingSRVIndex = SrvManager::GetInstance()->Allocate() + 1;
-    particleGroup.instancingResource->Map(0, nullptr, reinterpret_cast<void **>(&particleGroup.instancingData));
+    if (texturePath.empty()) {
+        particleGroupData_.material.textureFilePath = modelData.material.textureFilePath;
+    } else {
+        particleGroupData_.material.textureFilePath = texturePath;
+    }
+    TextureManager::GetInstance()->LoadTexture(particleGroupData_.material.textureFilePath);
+    particleGroupData_.material.textureIndex = TextureManager::GetInstance()->GetTextureIndexByFilePath(particleGroupData_.material.textureFilePath);
+    particleGroupData_.instancingResource = ParticleCommon::GetInstance()->GetDxCommon()->CreateBufferResource(sizeof(ParticleForGPU) * kNumMaxInstance);
+    particleGroupData_.instancingSRVIndex = SrvManager::GetInstance()->Allocate() + 1;
+    particleGroupData_.instancingResource->Map(0, nullptr, reinterpret_cast<void **>(&particleGroupData_.instancingData));
 
-    SrvManager::GetInstance()->CreateSRVforStructuredBuffer(particleGroup.instancingSRVIndex, particleGroup.instancingResource.Get(), kNumMaxInstance, sizeof(ParticleForGPU));
+    SrvManager::GetInstance()->CreateSRVforStructuredBuffer(particleGroupData_.instancingSRVIndex, particleGroupData_.instancingResource.Get(), kNumMaxInstance, sizeof(ParticleForGPU));
 
     CreateMaterial();
-    particleGroup.instanceCount = 0;
-    return particleGroup;
+    particleGroupData_.instanceCount = 0;
+    return particleGroupData_;
 }
 
 void ParticleGroup::CreateVartexData(const std::string &filename) {
     modelData = LoadObjFile("resources/models/", filename);
 
     // 頂点リソースを作る
-    vertexResource = particleCommon->GetDxCommon()->CreateBufferResource(sizeof(VertexData) * modelData.vertices.size());
+    vertexResource = ParticleCommon::GetInstance()->GetDxCommon()->CreateBufferResource(sizeof(VertexData) * modelData.vertices.size());
     // 頂点バッファビューを作成する
     vertexBufferView.BufferLocation = vertexResource->GetGPUVirtualAddress();            // リソースの先頭アドレスから使う
     vertexBufferView.SizeInBytes = UINT(sizeof(VertexData) * modelData.vertices.size()); // 使用するリソースのサイズは頂点のサイズ
@@ -47,7 +50,7 @@ void ParticleGroup::CreateVartexData(const std::string &filename) {
 
 void ParticleGroup::CreateMaterial() {
     // Sprite用のマテリアルリソースをつくる
-    materialResource = particleCommon->GetDxCommon()->CreateBufferResource(sizeof(Material));
+    materialResource = ParticleCommon::GetInstance()->GetDxCommon()->CreateBufferResource(sizeof(Material));
     // 書き込むためのアドレスを取得
     materialResource->Map(0, nullptr, reinterpret_cast<void **>(&materialData));
     // 色の設定

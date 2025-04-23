@@ -18,6 +18,7 @@
 #include <line/DrawLine3D.h>
 #include"ImGui/ImGuiManager.h"
 #include"Object/BaseObjectManager.h"
+#include"Particle/ParticleGroupManager.h"
 
 class Framework {
   public: // メンバ関数
@@ -83,6 +84,7 @@ class Framework {
     ModelManager *modelManager_ = nullptr;
     ImGuiManager *imGuiManager_ = nullptr;
     BaseObjectManager *baseObjectManager_ = nullptr;
+    ParticleGroupManager *particleGroupManager_ = nullptr;
 
     SpriteCommon *spriteCommon = nullptr;
     Object3dCommon *object3dCommon = nullptr;

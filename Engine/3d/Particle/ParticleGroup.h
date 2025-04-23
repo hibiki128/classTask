@@ -9,9 +9,17 @@ class ParticleGroup {
 
     void Update();
 
-    ParticleGroupData CreateParticleGroup(const std::string &groupName, const std::string &filename);
+    ParticleGroupData CreateParticleGroup(const std::string &groupName, const std::string &filename, const std::string &texturePath = {});
 
-    std::string GetGroupName() { return particleGroup.groupName; }
+    const std::string GetGroupName() { return particleGroupData_.groupName; }
+    uint32_t GetMaxInstance() { return kNumMaxInstance; }
+    ParticleGroupData& GetParticleGroupData() { return particleGroupData_; }
+    std::string &GetTexturePath() { return particleGroupData_.material.textureFilePath; }
+    Microsoft::WRL::ComPtr<ID3D12Resource> GetmaterialResource() { return materialResource; }
+    Microsoft::WRL::ComPtr<ID3D12Resource> GetVertexResource() { return vertexResource; }
+    D3D12_VERTEX_BUFFER_VIEW &GetVertexBufferView() { return vertexBufferView; }
+    ModelData GetModelData() { return modelData; }
+    MaterialData GetMaterialData() { return modelData.material; }
 
   private:
     void CreateVartexData(const std::string &filename);
@@ -50,6 +58,7 @@ class ParticleGroup {
     Material *materialData = nullptr;
 
     ModelData modelData;
-    ParticleCommon *particleCommon = nullptr;
-    ParticleGroupData particleGroup;
+    ParticleGroupData particleGroupData_;
+
+
 };

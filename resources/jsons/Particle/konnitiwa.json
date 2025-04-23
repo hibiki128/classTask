@@ -10,18 +10,18 @@
         "z": 0.0
     },
     "alphaMax": 1.0,
-    "alphaMin": 0.5,
-    "count": 8,
-    "emitFrequency": 0.10000000149011612,
+    "alphaMin": 1.0,
+    "count": 1,
+    "emitFrequency": 1.0,
     "emitterRotation": {
         "x": 0.0,
         "y": 0.0,
         "z": 0.0
     },
     "emitterScale": {
-        "x": 1.0,
-        "y": 1.0,
-        "z": 1.0
+        "x": 0.0,
+        "y": 0.0,
+        "z": 0.0
     },
     "emitterTranslation": {
         "x": 0.0,
@@ -39,24 +39,24 @@
         "z": 0.0
     },
     "endScale": {
-        "x": 0.0,
-        "y": 0.0,
-        "z": 0.0
+        "x": 1.0,
+        "y": 1.0,
+        "z": 1.0
     },
     "fileName": "debug/Cube.obj",
     "isAcceMultiply": true,
-    "isActive": false,
+    "isActive": true,
     "isAllRamdomScale": false,
     "isBillBoard": false,
     "isEndScale": false,
     "isFaceDirection": false,
-    "isRandomColor": true,
+    "isRandomColor": false,
     "isRandomRotate": true,
     "isRandomScale": false,
-    "isSinMove": true,
+    "isSinMove": false,
     "isVisible": true,
-    "lifeTimeMax": 2.799999952316284,
-    "lifeTimeMin": 0.5,
+    "lifeTimeMax": 1.0,
+    "lifeTimeMin": 1.0,
     "rotateStartMax": {
         "x": 0.0,
         "y": 0.0,
@@ -96,13 +96,13 @@
     },
     "texturePath": "debug/monsterBall.png",
     "velocityMax": {
-        "x": 50.0,
-        "y": 50.0,
-        "z": 50.0
+        "x": 0.0,
+        "y": 0.0,
+        "z": 0.0
     },
     "velocityMin": {
-        "x": -50.0,
-        "y": -50.0,
-        "z": -50.0
+        "x": 0.0,
+        "y": 0.0,
+        "z": 0.0
     }
 }

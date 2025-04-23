@@ -1,4 +1,7 @@
 {
+    "GroupName_0": "aaa",
+    "GroupName_1": "ik",
+    "GroupName_2": "ppp",
     "allScaleMax": {
         "x": 0.05000000074505806,
         "y": 1.0,
@@ -11,7 +14,7 @@
     },
     "alphaMax": 1.0,
     "alphaMin": 1.0,
-    "count": 10,
+    "count": 1,
     "emitFrequency": 1.0,
     "emitterRotation": {
         "x": 0.0,

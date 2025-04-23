@@ -1,25 +1,21 @@
 #include "ParticleEmitter.h"
 #include "Engine/Frame/Frame.h"
 #include "line/DrawLine3D.h"
+
+#include "ParticleGroupManager.h"
 // コンストラクタ
 ParticleEmitter::ParticleEmitter() {}
 
-void ParticleEmitter::Initialize(std::string name, std::string filePath) {
+void ParticleEmitter::Initialize(std::string name) {
     transform_.Initialize();
     if (!name.empty()) {
         name_ = name;
         datas_ = std::make_unique<DataHandler>("Particle", name_);
         LoadFromJson();
-        if (!filePath.empty()) {
-            fileName_ = filePath;
-        }
         Manager_ = std::make_unique<ParticleManager>();
         Manager_->Initialize(SrvManager::GetInstance());
-        Manager_->AddParticleGroup(name_, fileName_);
-        if (texturePath_.empty()) {
-            texturePath_ = Manager_->GetTexturePath();
-        }
-        Manager_->SetTexture(texturePath_);
+        LoadParticleGroup();
+        datas_ = std::make_unique<DataHandler>("Particle", name_);
     }
 }
 
@@ -114,16 +110,10 @@ void ParticleEmitter::DrawEmitter() {
     }
 }
 
-void ParticleEmitter::SetTexture(const std::string &filePath) {
-    texturePath_ = filePath;
-    Manager_->SetTexture(filePath);
-}
-
 // Emit関数
 void ParticleEmitter::Emit() {
     // ParticleManagerのEmit関数を呼び出す
     Manager_->Emit(
-        name_,
         transform_.translation_,
         count_,
         transform_.scale_, // スケールを引数として渡す
@@ -149,22 +139,6 @@ void ParticleEmitter::Emit() {
         transform_.rotation_,
         rotateStartMax_,
         rotateStartMin_);
-}
-
-void ParticleEmitter::CreateParticle(const std::string &name, const std::string &fileName, const std::string &texturePath) {
-
-    name_ = name;
-    fileName_ = fileName;
-    Manager_ = std::make_unique<ParticleManager>();
-    Manager_->Initialize(SrvManager::GetInstance());
-    Manager_->AddParticleGroup(name_, fileName_);
-    if (texturePath_.empty()) {
-        texturePath_ = Manager_->GetTexturePath();
-    }
-    texturePath_ = texturePath;
-    Manager_->SetTexture(texturePath_);
-    datas_ = std::make_unique<DataHandler>("Particle", name_);
-    LoadFromJson();
 }
 
 #pragma region ImGui関連
@@ -207,8 +181,12 @@ void ParticleEmitter::SaveToJson() {
     datas_->Save("isSinMove", isSinMove_);
     datas_->Save("isFaceDirection", isFaceDirection_);
     datas_->Save("isEndScale", isEndScale_);
-    datas_->Save("fileName", fileName_);
-    datas_->Save("texturePath", texturePath_);
+    particleGroupNames_ = Manager_->GetParticleGroupsName();
+    int count = 0;
+    for (auto &particleGroupName : particleGroupNames_) {
+        datas_->Save("GroupName_" + std::to_string(count), particleGroupName);
+        count++;
+    }
 }
 
 void ParticleEmitter::LoadFromJson() {
@@ -249,8 +227,19 @@ void ParticleEmitter::LoadFromJson() {
         isSinMove_ = datas_->Load<bool>("isSinMove", false);
         isFaceDirection_ = datas_->Load<bool>("isFaceDirection", false);
         isEndScale_ = datas_->Load<bool>("isEndScale", false);
-        fileName_ = datas_->Load<std::string>("fileName", fileName_);
-        texturePath_ = datas_->Load<std::string>("texturePath", texturePath_);
+        for (size_t i = 0; i < ParticleGroupManager::GetInstance()->GetParticleGroups().size(); i++) {
+            std::string groupName = datas_->Load<std::string>("GroupName_" + std::to_string(i), "");
+            if (groupName == "") {
+                break;
+            }
+            particleGroupNames_.push_back(groupName);
+        }
+    }
+}
+
+void ParticleEmitter::LoadParticleGroup() {
+    for (auto &particleGroupname : particleGroupNames_) {
+        AddParticleGroup(ParticleGroupManager::GetInstance()->GetParticleGroup(particleGroupname));
     }
 }
 
@@ -453,6 +442,39 @@ void ParticleEmitter::DebugParticleData() {
                 ImGui::Checkbox("ランダムカラー", &isRandomColor_);
             }
 
+            if (ImGui::CollapsingHeader("グループ")) {
+                // エミッター選択
+                static std::string selectedGroup = "";
+
+                // パーティクルグループマネージャからグループのリストを取得
+                std::vector<ParticleGroup *> groupList = ParticleGroupManager::GetInstance()->GetParticleGroups();
+
+                if (ImGui::BeginCombo("グループ選択", selectedGroup.empty() ? "なし" : selectedGroup.c_str())) {
+                    for (ParticleGroup *group : groupList) {
+                        std::string groupName = group->GetGroupName();
+                        bool isSelected = (groupName == selectedGroup);
+                        if (ImGui::Selectable(groupName.c_str(), isSelected)) {
+                            selectedGroup = groupName;
+                        }
+                        if (isSelected) {
+                            ImGui::SetItemDefaultFocus();
+                        }
+                    }
+                    ImGui::EndCombo();
+                }
+
+                // 追加と削除のボタン
+                if (!selectedGroup.empty()) {
+                    if (ImGui::Button("グループをエミッターに追加")) {
+                        AddParticleGroup(ParticleGroupManager::GetInstance()->GetParticleGroup(selectedGroup));
+                    }
+                    ImGui::SameLine();
+                    if (ImGui::Button("グループをエミッターから削除")) {
+                        RemoveParticleGroup(selectedGroup);
+                    }
+                }
+            }
+
             if (ImGui::Button("セーブ")) {
                 SaveToJson();
                 std::string message = std::format("ParticleData saved.");
@@ -478,5 +500,8 @@ void ParticleEmitter::Debug() {
         DebugParticleData();
     }
 #endif
+}
+void ParticleEmitter::AddParticleGroup(ParticleGroup *particleGroup) {
+    Manager_->AddParticleGroup(particleGroup);
 }
 #pragma endregion

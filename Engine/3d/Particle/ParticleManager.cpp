@@ -1,9 +1,8 @@
 #include "ParticleManager.h"
-#include"Texture/TextureManager.h"
-#include "fstream"
 #include "Engine/Frame/Frame.h"
+#include "Texture/TextureManager.h"
+#include "fstream"
 #include <random>
-std::unordered_map<std::string,ModelData> ParticleManager::modelCache;
 
 void ParticleManager::Initialize(SrvManager *srvManager) {
     particleCommon = ParticleCommon::GetInstance();
@@ -25,17 +24,17 @@ void ParticleManager::Update(const ViewProjection &viewProjection) {
     // ビルボード行列を逆行列にすることで、カメラに対して正しい向きにする
     billboardMatrix = Inverse(billboardMatrix);
 
-    for (auto &[groupName, particleGroup] : particleGroups) {
+    for (auto &[groupName, particleGroup] : particleGroups_) {
 
         uint32_t numInstance = 0;
 
         // 各パーティクルの更新
-        for (auto particleIterator = particleGroup.particles.begin();
-             particleIterator != particleGroup.particles.end();) {
+        for (auto particleIterator = particleGroup->GetParticleGroupData().particles.begin();
+             particleIterator != particleGroup->GetParticleGroupData().particles.end();) {
 
             // パーティクルの生存時間チェック
             if ((*particleIterator).lifeTime <= (*particleIterator).currentTime) {
-                particleIterator = particleGroup.particles.erase(particleIterator);
+                particleIterator = particleGroup->GetParticleGroupData().particles.erase(particleIterator);
                 continue;
             }
             // パーティクルの生存時間に基づく進行度 t を計算
@@ -127,11 +126,11 @@ void ParticleManager::Update(const ViewProjection &viewProjection) {
             Matrix4x4 worldViewProjectionMatrix = worldMatrix * viewProjectionMatrix;
 
             // インスタンスデータに設定
-            if (numInstance < kNumMaxInstance) {
-                particleGroup.instancingData[numInstance].WVP = worldViewProjectionMatrix;
-                particleGroup.instancingData[numInstance].World = worldMatrix;
-                particleGroup.instancingData[numInstance].color = (*particleIterator).color;
-                particleGroup.instancingData[numInstance].color.w = (*particleIterator).color.w; // アルファ値の設定
+            if (numInstance < particleGroup->GetMaxInstance()) {
+                particleGroup->GetParticleGroupData().instancingData[numInstance].WVP = worldViewProjectionMatrix;
+                particleGroup->GetParticleGroupData().instancingData[numInstance].World = worldMatrix;
+                particleGroup->GetParticleGroupData().instancingData[numInstance].color = (*particleIterator).color;
+                particleGroup->GetParticleGroupData().instancingData[numInstance].color.w = (*particleIterator).color.w; // アルファ値の設定
                 ++numInstance;
             }
 
@@ -139,53 +138,31 @@ void ParticleManager::Update(const ViewProjection &viewProjection) {
         }
 
         // インスタンス数の更新
-        particleGroup.instanceCount = numInstance;
+        particleGroup->GetParticleGroupData().instanceCount = numInstance;
     }
 }
 
 void ParticleManager::Draw() {
 
-    particleCommon->GetDxCommon()->GetCommandList()->IASetVertexBuffers(0, 1, &vertexBufferView);
+    for (auto &[groupName, particleGroup] : particleGroups_) {
+        particleCommon->GetDxCommon()->GetCommandList()->IASetVertexBuffers(0, 1, &particleGroup->GetVertexBufferView());
 
-    for (auto &[groupName, particleGroup] : particleGroups) {
-        if (particleGroup.instanceCount > 0) {
-            particleCommon->GetDxCommon()->GetCommandList()->SetGraphicsRootConstantBufferView(0, materialResource->GetGPUVirtualAddress());
+        if (particleGroup->GetParticleGroupData().instanceCount > 0) {
+            particleCommon->GetDxCommon()->GetCommandList()->SetGraphicsRootConstantBufferView(0, particleGroup->GetmaterialResource()->GetGPUVirtualAddress());
 
-            srvManager_->SetGraphicsRootDescriptorTable(1, particleGroup.instancingSRVIndex);
+            srvManager_->SetGraphicsRootDescriptorTable(1, particleGroup->GetParticleGroupData().instancingSRVIndex);
 
-            srvManager_->SetGraphicsRootDescriptorTable(2, modelData.material.textureIndex);
+            srvManager_->SetGraphicsRootDescriptorTable(2, particleGroup->GetParticleGroupData().material.textureIndex);
 
-            particleCommon->GetDxCommon()->GetCommandList()->DrawInstanced(UINT(modelData.vertices.size()), particleGroup.instanceCount, 0, 0);
+            particleCommon->GetDxCommon()->GetCommandList()->DrawInstanced(UINT(particleGroup->GetModelData().vertices.size()), particleGroup->GetParticleGroupData().instanceCount, 0, 0);
         }
     }
 }
 
-void ParticleManager::AddParticleGroup(const std::string name, const std::string &filename) {
-    if (particleGroups.contains(name)) {
-        return;
-    }
-    
-}
-
-void ParticleManager::SetTexture(const std::string &filePath) {
-    TextureManager::GetInstance()->LoadTexture(filePath);
-    modelData.material.textureFilePath = filePath;
-    modelData.material.textureIndex = TextureManager::GetInstance()->GetTextureIndexByFilePath(filePath);
-}
-
-void ParticleManager::CreateVartexData(const std::string &filename) {
-    modelData = LoadObjFile("resources/models/", filename);
-
-    // 頂点リソースを作る
-    vertexResource = particleCommon->GetDxCommon()->CreateBufferResource(sizeof(VertexData) * modelData.vertices.size());
-    // 頂点バッファビューを作成する
-    vertexBufferView.BufferLocation = vertexResource->GetGPUVirtualAddress();            // リソースの先頭アドレスから使う
-    vertexBufferView.SizeInBytes = UINT(sizeof(VertexData) * modelData.vertices.size()); // 使用するリソースのサイズは頂点のサイズ
-    vertexBufferView.StrideInBytes = sizeof(VertexData);                                 // 1頂点当たりのサイズ
-
-    // 頂点リソースにデータを書き込む
-    vertexResource->Map(0, nullptr, reinterpret_cast<void **>(&vertexData)); // 書き込むためのアドレスを取得
-    std::memcpy(vertexData, modelData.vertices.data(), sizeof(VertexData) * modelData.vertices.size());
+void ParticleManager::AddParticleGroup(ParticleGroup *particleGroup) {
+    assert(particleGroup);
+    particleGroups_.insert(std::pair(particleGroup->GetGroupName(), particleGroup));
+    particleGroupNames_.push_back(particleGroup->GetGroupName());
 }
 
 Particle ParticleManager::MakeNewParticle(
@@ -325,125 +302,12 @@ Particle ParticleManager::MakeNewParticle(
     return particle;
 }
 
-MaterialData ParticleManager::LoadMaterialTemplateFile(const std::string &directoryPath, const std::string &filename) {
-    MaterialData materialData;                          // 構築するMaterialData
-    std::string line;                                   // ファイルから読んだ1行を格納するもの
-    std::ifstream file(directoryPath + "/" + filename); // ファイルを開く
-    assert(file.is_open());                             // 開けなかったら止める
-    while (std::getline(file, line)) {
-        std::string identifier;
-        std::istringstream s(line);
-        s >> identifier;
-
-        // identifierに応じた処理
-        if (identifier == "map_Kd") {
-            std::string textureFilename;
-            s >> textureFilename;
-            // 連結してファイルパスにする
-            materialData.textureFilePath = textureFilename;
-        }
-    }
-
-    // テクスチャが張られていない場合の処理
-    if (materialData.textureFilePath.empty()) {
-        materialData.textureFilePath = "debug/white1x1.png";
-    }
-
-    return materialData;
-}
-
-ModelData ParticleManager::LoadObjFile(const std::string &directoryPath, const std::string &filename) {
-    std::string fullPath = directoryPath + filename;
-
-    // キャッシュを確認して、既に読み込まれている場合はそれを返す
-    auto it = modelCache.find(fullPath);
-    if (it != modelCache.end()) {
-        return it->second;
-    }
-
-    ModelData modelData;
-    std::vector<Vector4> positions; // 位置
-    std::vector<Vector2> texcoords; // テクスチャ座標
-    std::string line;               // ファイルから読んだ1行目を格納するもの
-
-    // ファイル名からフォルダ部分を取得
-    std::string folderPath;
-    size_t lastSlashPos = filename.find_last_of("/\\");
-    if (lastSlashPos != std::string::npos) {
-        folderPath = filename.substr(0, lastSlashPos);
-    }
-
-    std::ifstream file(fullPath); // ファイルを開く
-    assert(file.is_open());       // ファイルが開けなかったら停止
-
-    while (std::getline(file, line)) {
-        std::string identifier;
-        std::istringstream s(line);
-        s >> identifier;
-
-        if (identifier == "v") {
-            Vector4 position;
-            s >> position.x >> position.y >> position.z;
-            position.x *= -1.0f;
-            position.w = 1.0f;
-            positions.push_back(position);
-        } else if (identifier == "vt") {
-            Vector2 texcoord;
-            s >> texcoord.x >> texcoord.y;
-            texcoord.y = 1.0f - texcoord.y;
-            texcoords.push_back(texcoord);
-        } else if (identifier == "f") {
-            VertexData triangle[3];
-            for (int32_t faceVertex = 0; faceVertex < 3; ++faceVertex) {
-                std::string vertexDefinition;
-                s >> vertexDefinition;
-                std::istringstream v(vertexDefinition);
-                uint32_t elementIndices[3];
-                for (int32_t element = 0; element < 3; ++element) {
-                    std::string index;
-                    std::getline(v, index, '/');
-                    elementIndices[element] = std::stoi(index);
-                }
-                Vector4 position = positions[elementIndices[0] - 1];
-                Vector2 texcoord = texcoords[elementIndices[1] - 1];
-                VertexData vertex = {position, texcoord};
-                modelData.vertices.push_back(vertex);
-                triangle[faceVertex] = {position, texcoord};
-            }
-        } else if (identifier == "mtllib") {
-            std::string materialFilename;
-            s >> materialFilename;
-            if (!folderPath.empty()) {
-                modelData.material = LoadMaterialTemplateFile(directoryPath + folderPath, materialFilename);
-            } else {
-                modelData.material = LoadMaterialTemplateFile(directoryPath, materialFilename);
-            }
-        }
-    }
-
-    // キャッシュに保存
-    modelCache[fullPath] = modelData;
-
-    return modelData;
-}
-
-void ParticleManager::CreateMaterial() {
-    // Sprite用のマテリアルリソースをつくる
-    materialResource = particleCommon->GetDxCommon()->CreateBufferResource(sizeof(Material));
-    // 書き込むためのアドレスを取得
-    materialResource->Map(0, nullptr, reinterpret_cast<void **>(&materialData));
-    // 色の設定
-    materialData->color = Vector4(1.0f, 1.0f, 1.0f, 1.0f);
-    // Lightingの設定
-    materialData->uvTransform = MakeIdentity4x4();
-}
-
+// 全てのパーティクルグループに対してパーティクルを生成する関数
 std::list<Particle> ParticleManager::Emit(
-    const std::string name,
     const Vector3 &position,
     uint32_t count,
-    const Vector3 &scale,                                   // スケールを引数として追加
-    const Vector3 &velocityMin, const Vector3 &velocityMax, // 速度の範囲を引数として追加
+    const Vector3 &scale,
+    const Vector3 &velocityMin, const Vector3 &velocityMax,
     float lifeTimeMin, float lifeTimeMax,
     const Vector3 &particleStartScale, const Vector3 &particleEndScale,
     const Vector3 &startAcce, const Vector3 &endAcce,
@@ -453,44 +317,43 @@ std::list<Particle> ParticleManager::Emit(
     const Vector3 &allScaleMax, const Vector3 &allScaleMin,
     const float &scaleMin, const float &scaleMax, const Vector3 &rotation,
     const Vector3 &rotateStartMax, const Vector3 &rotateStartMin) {
-    // パーティクルグループが存在するか確認
-    assert(particleGroups.find(name) != particleGroups.end() && "Error: パーティクルグループが存在しません。");
 
-    // 指定されたパーティクルグループを取得
-    ParticleGroupData &particleGroup = particleGroups[name];
+    std::list<Particle> allNewParticles; // 生成された全パーティクルを格納
 
-    // 新しいパーティクルを生成し、パーティクルグループに追加
-    std::list<Particle> newParticles;
-    for (uint32_t nowCount = 0; nowCount < count; ++nowCount) {
-        // 新たなパーティクルを作成
-        Particle particle = MakeNewParticle(
-            randomEngine,
-            position,
-            rotation,
-            scale, // 追加されたスケール
-            velocityMin,
-            velocityMax, // 追加された速度の範囲
-            lifeTimeMin,
-            lifeTimeMax, // 追加されたライフタイムの範囲
-            particleStartScale,
-            particleEndScale,
-            startAcce,
-            endAcce,
-            startRote,
-            endRote,
-            isRandomColor,
-            alphaMin,
-            alphaMax,
-            rotateVelocityMin,
-            rotateVelocityMax,
-            allScaleMax, allScaleMin,
-            scaleMin, scaleMax,
-            rotateStartMax, rotateStartMin);
-        newParticles.push_back(particle);
+    // 全てのパーティクルグループに対してループ
+    for (auto &[groupName, particleGroup] : particleGroups_) {
+        std::list<Particle> newParticles; // 各グループごとの新規パーティクルリスト
+
+        for (uint32_t nowCount = 0; nowCount < count; ++nowCount) {
+            // 新しいパーティクルを生成
+            Particle particle = MakeNewParticle(
+                randomEngine,
+                position,
+                rotation,
+                scale,
+                velocityMin, velocityMax,
+                lifeTimeMin, lifeTimeMax,
+                particleStartScale, particleEndScale,
+                startAcce, endAcce,
+                startRote, endRote,
+                isRandomColor,
+                alphaMin, alphaMax,
+                rotateVelocityMin, rotateVelocityMax,
+                allScaleMax, allScaleMin,
+                scaleMin, scaleMax,
+                rotateStartMax, rotateStartMin);
+
+            newParticles.push_back(particle); // 生成したパーティクルをリストに追加
+        }
+
+        // 各グループのパーティクルデータに追加
+        particleGroup->GetParticleGroupData().particles.splice(
+            particleGroup->GetParticleGroupData().particles.end(),
+            newParticles);
+
+        // 全体の返却用リストにも追加
+        allNewParticles.splice(allNewParticles.end(), newParticles);
     }
 
-    // 新たに生成されたパーティクルをグループに追加
-    particleGroup.particles.splice(particleGroup.particles.end(), newParticles);
-
-    return newParticles; // 作成されたパーティクルを返す
+    return allNewParticles; // 全グループに生成されたパーティクルをまとめて返す
 }

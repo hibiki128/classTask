@@ -31,6 +31,7 @@ struct VertexData {
 struct MaterialData {
     std::string textureFilePath;
     uint32_t textureIndex = 0;
+    std::string modelFilePath;
     Matrix4x4 uvTransform;
     Vector4 color;
 };

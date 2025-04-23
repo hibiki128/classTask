@@ -35,8 +35,16 @@ class ParticleManager {
     void AddParticleGroup(ParticleGroup* particleGroup);
 
     void RemoveParticleGroup(const std::string &name) {
+        // マップやセットなどからグループ本体を削除
         particleGroups_.erase(name);
+
+        // 名前リスト（vector）からも削除
+        auto it = std::find(particleGroupNames_.begin(), particleGroupNames_.end(), name);
+        if (it != particleGroupNames_.end()) {
+            particleGroupNames_.erase(it);
+        }
     }
+
     void SetBillBorad(bool isBillBoard) { isBillboard = isBillBoard; }
     void SetRandomRotate(bool isRandomRotate) { isRandomRotate_ = isRandomRotate; }
     void SetRotateVelocity(bool isRotateVelocity) { isRotateVelocity_ = isRotateVelocity; }

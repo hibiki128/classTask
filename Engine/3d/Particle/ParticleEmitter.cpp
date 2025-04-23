@@ -3,6 +3,7 @@
 #include "line/DrawLine3D.h"
 
 #include "ParticleGroupManager.h"
+#include <set>
 // コンストラクタ
 ParticleEmitter::ParticleEmitter() {}
 
@@ -443,36 +444,146 @@ void ParticleEmitter::DebugParticleData() {
             }
 
             if (ImGui::CollapsingHeader("グループ")) {
-                // エミッター選択
-                static std::string selectedGroup = "";
+                // エミッターにアタッチされているグループ名をセットとして扱う（高速検索のため）
+                std::set<std::string> emitterGroupNames(
+                    particleGroupNames_.begin(),
+                   particleGroupNames_.end());
 
-                // パーティクルグループマネージャからグループのリストを取得
-                std::vector<ParticleGroup *> groupList = ParticleGroupManager::GetInstance()->GetParticleGroups();
+                // 全パーティクルグループを取得
+                std::vector<ParticleGroup *> allGroups = ParticleGroupManager::GetInstance()->GetParticleGroups();
 
-                if (ImGui::BeginCombo("グループ選択", selectedGroup.empty() ? "なし" : selectedGroup.c_str())) {
-                    for (ParticleGroup *group : groupList) {
-                        std::string groupName = group->GetGroupName();
-                        bool isSelected = (groupName == selectedGroup);
-                        if (ImGui::Selectable(groupName.c_str(), isSelected)) {
-                            selectedGroup = groupName;
-                        }
-                        if (isSelected) {
-                            ImGui::SetItemDefaultFocus();
-                        }
-                    }
-                    ImGui::EndCombo();
-                }
+                // 選択状態を保持するインデックス
+                static std::vector<int> leftSelected;
+                static std::vector<int> rightSelected;
 
-                // 追加と削除のボタン
-                if (!selectedGroup.empty()) {
-                    if (ImGui::Button("グループをエミッターに追加")) {
-                        AddParticleGroup(ParticleGroupManager::GetInstance()->GetParticleGroup(selectedGroup));
-                    }
-                    ImGui::SameLine();
-                    if (ImGui::Button("グループをエミッターから削除")) {
-                        RemoveParticleGroup(selectedGroup);
+                // グループ分類用のリスト
+                std::vector<std::string> availableNames;
+                std::vector<const char *> availableItems;
+                std::vector<std::string> attachedNames;
+                std::vector<const char *> attachedItems;
+
+               // グループを分類する処理
+                for (const auto &group : allGroups) {
+                    const std::string &name = group->GetGroupName();
+                    if (emitterGroupNames.contains(name)) {
+                        attachedNames.push_back(name);
+                    } else {
+                        availableNames.push_back(name);
                     }
                 }
+
+                // c_str() 変換は最後に行う
+                availableItems.clear();
+                attachedItems.clear();
+                for (auto &name : availableNames) {
+                    availableItems.push_back(name.c_str());
+                }
+                for (auto &name : attachedNames) {
+                    attachedItems.push_back(name.c_str());
+                }
+
+                // 範囲外インデックスを除外
+                while (!leftSelected.empty() && leftSelected.back() >= availableNames.size())
+                    leftSelected.pop_back();
+                while (!rightSelected.empty() && rightSelected.back() >= attachedNames.size())
+                    rightSelected.pop_back();
+
+                // UI横幅の取得
+                float width = ImGui::GetContentRegionAvail().x;
+                float halfWidth = width * 0.45f;
+
+                ImGui::Text("利用可能");
+                ImGui::SameLine(width - halfWidth - 50);
+                ImGui::Text("アタッチ済み");
+
+                ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(8, 4));
+
+                // 左リスト（未アタッチグループ）
+                ImGui::BeginChild("available_groups", ImVec2(halfWidth, 200), true);
+                for (int i = 0; i < availableItems.size(); i++) {
+                    bool isSelected = std::find(leftSelected.begin(), leftSelected.end(), i) != leftSelected.end();
+                    if (ImGui::Selectable(availableItems[i], isSelected, ImGuiSelectableFlags_AllowDoubleClick)) {
+                        if (!ImGui::GetIO().KeyCtrl)
+                            leftSelected.clear();
+
+                        auto it = std::find(leftSelected.begin(), leftSelected.end(), i);
+                        if (it != leftSelected.end())
+                            leftSelected.erase(it);
+                        else
+                            leftSelected.push_back(i);
+
+                        // ダブルクリックで追加
+                        if (ImGui::IsItemHovered() && ImGui::IsMouseDoubleClicked(0)) {
+                            ParticleGroup *group = ParticleGroupManager::GetInstance()->GetParticleGroup(availableNames[i]);
+                            if (group) {
+                                AddParticleGroup(group);
+                            }
+                            leftSelected.clear();
+                        }
+                    }
+                }
+                ImGui::EndChild();
+
+                ImGui::SameLine();
+
+                // 中央の追加・削除ボタン
+                ImGui::BeginGroup();
+                ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(0, 8));
+
+                ImGui::PushID("move_right");
+                if (ImGui::Button(">>", ImVec2(40, 30)) && !leftSelected.empty()) {
+                    for (auto it = leftSelected.rbegin(); it != leftSelected.rend(); ++it) {
+                        int idx = *it;
+                        ParticleGroup *group = ParticleGroupManager::GetInstance()->GetParticleGroup(availableNames[idx]);
+                        if (group) {
+                            AddParticleGroup(group);
+                            particleGroupNames_ = Manager_->GetParticleGroupsName();
+                        }
+                    }
+                    leftSelected.clear();
+                }
+                ImGui::PopID();
+
+                ImGui::PushID("move_left");
+                if (ImGui::Button("<<", ImVec2(40, 30)) && !rightSelected.empty()) {
+                    for (auto it = rightSelected.rbegin(); it != rightSelected.rend(); ++it) {
+                        int idx = *it;
+                        RemoveParticleGroup(attachedNames[idx]);
+                        particleGroupNames_ = Manager_->GetParticleGroupsName();
+                    }
+                    rightSelected.clear();
+                }
+                ImGui::PopID();
+
+                ImGui::PopStyleVar(); // ボタン間の余白復元
+                ImGui::EndGroup();
+
+                ImGui::SameLine();
+
+                // 右リスト（アタッチ済みグループ）
+                ImGui::BeginChild("attached_groups", ImVec2(halfWidth, 200), true);
+                for (int i = 0; i < attachedItems.size(); i++) {
+                    bool isSelected = std::find(rightSelected.begin(), rightSelected.end(), i) != rightSelected.end();
+                    if (ImGui::Selectable(attachedItems[i], isSelected, ImGuiSelectableFlags_AllowDoubleClick)) {
+                        if (!ImGui::GetIO().KeyCtrl)
+                            rightSelected.clear();
+
+                        auto it = std::find(rightSelected.begin(), rightSelected.end(), i);
+                        if (it != rightSelected.end())
+                            rightSelected.erase(it);
+                        else
+                            rightSelected.push_back(i);
+
+                        // ダブルクリックで削除
+                        if (ImGui::IsItemHovered() && ImGui::IsMouseDoubleClicked(0)) {
+                            RemoveParticleGroup(attachedNames[i]);
+                            rightSelected.clear();
+                        }
+                    }
+                }
+                ImGui::EndChild();
+
+                ImGui::PopStyleVar(); // ItemSpacing 戻す
             }
 
             if (ImGui::Button("セーブ")) {

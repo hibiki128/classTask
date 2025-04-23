@@ -1,0 +1,110 @@
+{
+    "GroupName_0": "aaa",
+    "GroupName_1": "dadada",
+    "GroupName_2": "ppp",
+    "GroupName_3": "ik",
+    "allScaleMax": {
+        "x": 1.0,
+        "y": 1.0,
+        "z": 1.0
+    },
+    "allScaleMin": {
+        "x": 0.0,
+        "y": 0.0,
+        "z": 0.0
+    },
+    "alphaMax": 1.0,
+    "alphaMin": 1.0,
+    "count": 1,
+    "emitFrequency": 0.10000000149011612,
+    "emitterRotation": {
+        "x": 0.0,
+        "y": 0.0,
+        "z": 0.0
+    },
+    "emitterScale": {
+        "x": 1.0,
+        "y": 1.0,
+        "z": 1.0
+    },
+    "emitterTranslation": {
+        "x": 0.0,
+        "y": 0.0,
+        "z": 0.0
+    },
+    "endAcce": {
+        "x": 1.0,
+        "y": 1.0,
+        "z": 1.0
+    },
+    "endRote": {
+        "x": 0.0,
+        "y": 0.0,
+        "z": 0.0
+    },
+    "endScale": {
+        "x": 0.0,
+        "y": 0.0,
+        "z": 0.0
+    },
+    "isAcceMultiply": false,
+    "isActive": false,
+    "isAllRamdomScale": false,
+    "isBillBoard": false,
+    "isEndScale": false,
+    "isFaceDirection": false,
+    "isRandomColor": false,
+    "isRandomRotate": false,
+    "isRandomScale": false,
+    "isSinMove": false,
+    "isVisible": true,
+    "lifeTimeMax": 3.0,
+    "lifeTimeMin": 1.0,
+    "rotateStartMax": {
+        "x": 0.0,
+        "y": 0.0,
+        "z": 0.0
+    },
+    "rotateStartMin": {
+        "x": 0.0,
+        "y": 0.0,
+        "z": 0.0
+    },
+    "rotateVelocityMax": {
+        "x": 0.07000000029802322,
+        "y": 0.07000000029802322,
+        "z": 0.07000000029802322
+    },
+    "rotateVelocityMin": {
+        "x": -0.07000000029802322,
+        "y": -0.07000000029802322,
+        "z": -0.07000000029802322
+    },
+    "scaleMax": 1.0,
+    "scaleMin": 1.0,
+    "startAcce": {
+        "x": 1.0,
+        "y": 1.0,
+        "z": 1.0
+    },
+    "startRote": {
+        "x": 0.0,
+        "y": 0.0,
+        "z": 0.0
+    },
+    "startScale": {
+        "x": 1.0,
+        "y": 1.0,
+        "z": 1.0
+    },
+    "velocityMax": {
+        "x": 1.0,
+        "y": 1.0,
+        "z": 1.0
+    },
+    "velocityMin": {
+        "x": -1.0,
+        "y": -1.0,
+        "z": -1.0
+    }
+}

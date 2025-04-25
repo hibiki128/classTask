@@ -145,6 +145,7 @@ void ParticleManager::Update(const ViewProjection &viewProjection) {
 void ParticleManager::Draw() {
 
     for (auto &[groupName, particleGroup] : particleGroups_) {
+        particleCommon->GetDxCommon()->GetCommandList()->IASetIndexBuffer(&particleGroup->GetIndexBufferView());
         particleCommon->GetDxCommon()->GetCommandList()->IASetVertexBuffers(0, 1, &particleGroup->GetVertexBufferView());
 
         if (particleGroup->GetParticleGroupData().instanceCount > 0) {

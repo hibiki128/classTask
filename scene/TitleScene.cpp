@@ -20,7 +20,7 @@ void TitleScene::Initialize() {
 
     test = std::make_unique<BaseObject>();
     test->Init("test");
-    test->CreatePrimitiveModel(PrimitiveType::Ring);
+    test->CreatePrimitiveModel(PrimitiveType::Sphere);
     test->SetTexture("debug/uvChecker.png");
 
     ease_.time = 0.0f;

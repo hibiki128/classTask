@@ -23,6 +23,7 @@ class ParticleGroup {
     std::string &GetTexturePath() { return particleGroupData_.material.textureFilePath; }
 
     D3D12_VERTEX_BUFFER_VIEW &GetVertexBufferView() { return vertexBufferView; }
+    D3D12_INDEX_BUFFER_VIEW &GetIndexBufferView() { return indexBufferView; }
 
     ModelData GetModelData() { return modelData; }
 

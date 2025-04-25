@@ -33,6 +33,9 @@ void Model::CreatePrimitiveModel(ModelCommon *modelCommon, const PrimitiveType &
     modelData.indices = PrimitiveModel::GetInstance()->GetPrimitiveData(type).indices;
     modelData.material.color = PrimitiveModel::GetInstance()->GetPrimitiveData(type).color;
     modelData.material.uvTransform = PrimitiveModel::GetInstance()->GetPrimitiveData(type).uvMatrix;
+    modelData.material.textureFilePath = "debug/uvChecker.png";
+    TextureManager::GetInstance()->LoadTexture(modelData.material.textureFilePath);
+    modelData.material.textureIndex = TextureManager::GetInstance()->GetTextureIndexByFilePath(modelData.material.textureFilePath);
     CreateVartexData();
     CreateIndexResource();
 }

@@ -1,4 +1,5 @@
 #include "ParticleGroup.h"
+#include "Model/ModelManager.h"
 #include "Srv/SrvManager.h"
 #include "fstream"
 #include <Texture/TextureManager.h>
@@ -14,7 +15,12 @@ void ParticleGroup::Update() {
 ParticleGroupData ParticleGroup::CreateParticleGroup(const std::string &groupName, const std::string &filename, const std::string &texturePath) {
     particleGroupData_.groupName = groupName;
     particleGroupData_.material.modelFilePath = filename;
-    CreateVartexData(filename);
+    ModelManager::GetInstance()->LoadModel(filename);
+    model_ = ModelManager::GetInstance()->FindModel(filename);
+    modelData = model_->GetModelData();
+    //modelData = LoadObjFile("resources/models/", filename);
+    CreateVertexData();
+    CreateIndexResource();
     if (texturePath.empty()) {
         particleGroupData_.material.textureFilePath = modelData.material.textureFilePath;
     } else {
@@ -33,8 +39,32 @@ ParticleGroupData ParticleGroup::CreateParticleGroup(const std::string &groupNam
     return particleGroupData_;
 }
 
-void ParticleGroup::CreateVartexData(const std::string &filename) {
-    modelData = LoadObjFile("resources/models/", filename);
+ParticleGroupData ParticleGroup::CreatePrimitiveParticleGroup(const std::string &groupName, PrimitiveType type, const std::string &texturePath) {
+    particleGroupData_.groupName = groupName;
+    type_ = type;
+    model_ = ModelManager::GetInstance()->FindModel(ModelManager::GetInstance()->CreatePrimitiveModel(type));
+    modelData = model_->GetModelData();
+    CreateVertexData();
+    CreateIndexResource();
+    if (texturePath.empty()) {
+        particleGroupData_.material.textureFilePath = modelData.material.textureFilePath;
+    } else {
+        particleGroupData_.material.textureFilePath = texturePath;
+    }
+    TextureManager::GetInstance()->LoadTexture(particleGroupData_.material.textureFilePath);
+    particleGroupData_.material.textureIndex = TextureManager::GetInstance()->GetTextureIndexByFilePath(particleGroupData_.material.textureFilePath);
+    particleGroupData_.instancingResource = ParticleCommon::GetInstance()->GetDxCommon()->CreateBufferResource(sizeof(ParticleForGPU) * kNumMaxInstance);
+    particleGroupData_.instancingSRVIndex = SrvManager::GetInstance()->Allocate() + 1;
+    particleGroupData_.instancingResource->Map(0, nullptr, reinterpret_cast<void **>(&particleGroupData_.instancingData));
+
+    SrvManager::GetInstance()->CreateSRVforStructuredBuffer(particleGroupData_.instancingSRVIndex, particleGroupData_.instancingResource.Get(), kNumMaxInstance, sizeof(ParticleForGPU));
+
+    CreateMaterial();
+    particleGroupData_.instanceCount = 0;
+    return particleGroupData_;
+}
+
+void ParticleGroup::CreateVertexData() {
 
     // 頂点リソースを作る
     vertexResource = ParticleCommon::GetInstance()->GetDxCommon()->CreateBufferResource(sizeof(VertexData) * modelData.vertices.size());
@@ -59,104 +89,11 @@ void ParticleGroup::CreateMaterial() {
     materialData->uvTransform = MakeIdentity4x4();
 }
 
-MaterialData ParticleGroup::LoadMaterialTemplateFile(const std::string &directoryPath, const std::string &filename) {
-    MaterialData materialData;                          // 構築するMaterialData
-    std::string line;                                   // ファイルから読んだ1行を格納するもの
-    std::ifstream file(directoryPath + "/" + filename); // ファイルを開く
-    assert(file.is_open());                             // 開けなかったら止める
-    while (std::getline(file, line)) {
-        std::string identifier;
-        std::istringstream s(line);
-        s >> identifier;
-
-        // identifierに応じた処理
-        if (identifier == "map_Kd") {
-            std::string textureFilename;
-            s >> textureFilename;
-            // 連結してファイルパスにする
-            materialData.textureFilePath = textureFilename;
-        }
-    }
-
-    // テクスチャが張られていない場合の処理
-    if (materialData.textureFilePath.empty()) {
-        materialData.textureFilePath = "debug/white1x1.png";
-    }
-
-    return materialData;
-}
-
-ModelData ParticleGroup::LoadObjFile(const std::string &directoryPath, const std::string &filename) {
-    std::string fullPath = directoryPath + filename;
-
-    // キャッシュを確認して、既に読み込まれている場合はそれを返す
-    auto it = modelCache.find(fullPath);
-    if (it != modelCache.end()) {
-        return it->second;
-    }
-
-    ModelData modelData;
-    std::vector<Vector4> positions; // 位置
-    std::vector<Vector2> texcoords; // テクスチャ座標
-    std::string line;               // ファイルから読んだ1行目を格納するもの
-
-    // ファイル名からフォルダ部分を取得
-    std::string folderPath;
-    size_t lastSlashPos = filename.find_last_of("/\\");
-    if (lastSlashPos != std::string::npos) {
-        folderPath = filename.substr(0, lastSlashPos);
-    }
-
-    std::ifstream file(fullPath); // ファイルを開く
-    assert(file.is_open());       // ファイルが開けなかったら停止
-
-    while (std::getline(file, line)) {
-        std::string identifier;
-        std::istringstream s(line);
-        s >> identifier;
-
-        if (identifier == "v") {
-            Vector4 position;
-            s >> position.x >> position.y >> position.z;
-            position.x *= -1.0f;
-            position.w = 1.0f;
-            positions.push_back(position);
-        } else if (identifier == "vt") {
-            Vector2 texcoord;
-            s >> texcoord.x >> texcoord.y;
-            texcoord.y = 1.0f - texcoord.y;
-            texcoords.push_back(texcoord);
-        } else if (identifier == "f") {
-            VertexData triangle[3];
-            for (int32_t faceVertex = 0; faceVertex < 3; ++faceVertex) {
-                std::string vertexDefinition;
-                s >> vertexDefinition;
-                std::istringstream v(vertexDefinition);
-                uint32_t elementIndices[3];
-                for (int32_t element = 0; element < 3; ++element) {
-                    std::string index;
-                    std::getline(v, index, '/');
-                    elementIndices[element] = std::stoi(index);
-                }
-                Vector4 position = positions[elementIndices[0] - 1];
-                Vector2 texcoord = texcoords[elementIndices[1] - 1];
-                VertexData vertex = {position, texcoord};
-                modelData.vertices.push_back(vertex);
-                triangle[faceVertex] = {position, texcoord};
-            }
-        } else if (identifier == "mtllib") {
-            std::string materialFilename;
-            s >> materialFilename;
-            if (!folderPath.empty()) {
-                modelData.material = LoadMaterialTemplateFile(directoryPath + folderPath, materialFilename);
-            } else {
-                modelData.material = LoadMaterialTemplateFile(directoryPath, materialFilename);
-            }
-        }
-    }
-
-    // キャッシュに保存
-    modelCache[fullPath] = modelData;
-
-    return modelData;
+void ParticleGroup::CreateIndexResource() {
+    indexResource = ParticleCommon::GetInstance()->GetDxCommon()->CreateBufferResource(sizeof(uint32_t) * modelData.indices.size());
+    indexBufferView.BufferLocation = indexResource->GetGPUVirtualAddress();
+    indexBufferView.SizeInBytes = UINT(sizeof(uint32_t) * modelData.indices.size());
+    indexBufferView.Format = DXGI_FORMAT_R32_UINT;
+    indexResource->Map(0, nullptr, reinterpret_cast<void **>(&indexData));
+    std::memcpy(indexData, modelData.indices.data(), sizeof(uint32_t) * modelData.indices.size());
 }

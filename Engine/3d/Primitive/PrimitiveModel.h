@@ -3,6 +3,7 @@
 #include <unordered_map>
 
 enum class PrimitiveType {
+    None = 0,
     Plane,
     Sphere,
     Cube,
@@ -10,8 +11,9 @@ enum class PrimitiveType {
     Ring,
     Triangle,
     Cone,
-    Pyramid
+    Pyramid,
 };
+
 
 class PrimitiveModel {
   private:

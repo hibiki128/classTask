@@ -20,6 +20,8 @@ class BaseObjectManager {
 
     void Finalize();
 
+    void DeleteObject();
+
     void AddObject(std::unique_ptr<BaseObject> baseObject);
 
     void Update();

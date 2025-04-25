@@ -14,6 +14,10 @@ void BaseObjectManager::Finalize() {
     instance = nullptr;
 }
 
+void BaseObjectManager::DeleteObject() {
+    baseObjects_.clear();
+}
+
 void BaseObjectManager::AddObject(std::unique_ptr<BaseObject> baseObject) {
     const std::string &name = baseObject->GetName();
     baseObjects_.emplace(name, std::move(baseObject));

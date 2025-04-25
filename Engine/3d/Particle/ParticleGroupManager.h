@@ -28,6 +28,7 @@ class ParticleGroupManager {
     void AddParticleGroup(std::unique_ptr<ParticleGroup> particleGroup);
 
     void CreateParticleGroup(const std::string &groupName, const std::string &filename, const std::string &texturePath = {});
+    void CreatePrimitiveParticleGroup(const std::string &groupName, PrimitiveType type, const std::string &texturePath);
 
     ParticleGroup *GetParticleGroup(const std::string &name) {
         for (const auto &group : particleGroups_) {
@@ -38,7 +39,7 @@ class ParticleGroupManager {
         return nullptr;
     }
 
-    std::vector<ParticleGroup*> GetParticleGroups() {
+    std::vector<ParticleGroup *> GetParticleGroups() {
         std::vector<ParticleGroup *> result;
         for (const auto &group : particleGroups_) {
             result.push_back(group.get()); // unique_ptr から生ポインタを取得

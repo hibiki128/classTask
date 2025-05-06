@@ -127,6 +127,7 @@ struct ParticleForGPU {
 
 struct Particle {
     WorldTransform transform; // 位置
+    Vector3 emitterPosition;
     Vector3 velocity;         // 速度
     Vector3 Acce;
     Vector3 startScale;

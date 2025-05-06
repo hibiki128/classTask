@@ -64,7 +64,30 @@ void ParticleManager::Update(const ViewProjection &viewProjection) {
                 (*particleIterator).color.w = (*particleIterator).initialAlpha - ((*particleIterator).currentTime / (*particleIterator).lifeTime);
             }
 
+            if (isGatherMode_ && t >= gatherStartRatio_) {
+                // ギャザー効果の強さを計算（ライフタイム終盤ほど強く）
+                float gatherFactor = (t - gatherStartRatio_) / (1.0f - gatherStartRatio_);
+                gatherFactor = std::clamp(gatherFactor, 0.0f, 1.0f);
+
+                // エミッター中心（パーティクル発生元）への方向ベクトル
+                Vector3 toEmitter = (*particleIterator).emitterPosition - (*particleIterator).transform.translation_;
+                float distance = toEmitter.Length();
+
+                // 微小距離の場合は方向計算をスキップ
+                if (distance > 0.001f) {
+                    // 方向ベクトルを正規化
+                    toEmitter = toEmitter.Normalize();
+
+                    // 中心に向かう速度成分を計算
+                    Vector3 gatherVelocity = toEmitter * gatherStrength_ * gatherFactor * Frame::DeltaTime();
+
+                    // 現在の速度と合成（徐々にギャザー速度の影響を強くする）
+                    (*particleIterator).velocity = (*particleIterator).velocity * (1.0f - gatherFactor) + gatherVelocity * gatherFactor * 5.0f;
+                }
+            }
+
             (*particleIterator).Acce = (1.0f - t) * (*particleIterator).startAcce + t * (*particleIterator).endAcce;
+
             if (isFaceDirection_) {
                 // 固定された進行方向を使用して回転を設定
                 Vector3 forward = (*particleIterator).fixedDirection; // 初期に保存された進行方向
@@ -155,7 +178,7 @@ void ParticleManager::Draw() {
 
             srvManager_->SetGraphicsRootDescriptorTable(2, particleGroup->GetParticleGroupData().material.textureIndex);
 
-            particleCommon->GetDxCommon()->GetCommandList()->DrawIndexedInstanced(UINT(particleGroup->GetModelData().indices.size()), particleGroup->GetParticleGroupData().instanceCount, 0, 0,0);
+            particleCommon->GetDxCommon()->GetCommandList()->DrawIndexedInstanced(UINT(particleGroup->GetModelData().indices.size()), particleGroup->GetParticleGroupData().instanceCount, 0, 0, 0);
         }
     }
 }
@@ -190,7 +213,7 @@ Particle ParticleManager::MakeNewParticle(
 
     Particle particle;
     Vector3 randomTranslate;
-
+    particle.emitterPosition = translate;
     if (isEmitOnEdge_) {
         // 立方体の12本のエッジ上にパーティクルを生成する場合
         std::uniform_int_distribution<int> edgeSelector(0, 11);         // 12本のエッジからランダム選択

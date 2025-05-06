@@ -37,6 +37,9 @@ void ParticleEmitter::Update() {
         Manager_->SetFaceDirection(isFaceDirection_);
         Manager_->SetEndScale(isEndScale_);
         Manager_->SetOnEdge(isEmitOnEdge_);
+        Manager_->SetGatherMode(isGatherMode_);
+        Manager_->SetGatherStartRatio(gatherStartRatio_);
+        Manager_->SetGatherStrength(gatherStrength_);
         Emit();                         // パーティクルを発生させる
         elapsedTime_ -= emitFrequency_; // 過剰に進んだ時間を考慮
     }
@@ -55,6 +58,9 @@ void ParticleEmitter::UpdateOnce() {
         Manager_->SetFaceDirection(isFaceDirection_);
         Manager_->SetEndScale(isEndScale_);
         Manager_->SetOnEdge(isEmitOnEdge_);
+        Manager_->SetGatherMode(isGatherMode_);
+        Manager_->SetGatherStartRatio(gatherStartRatio_);
+        Manager_->SetGatherStrength(gatherStrength_);
         Emit(); // パーティクルを発生させる
         isActive_ = true;
     }
@@ -305,6 +311,11 @@ void ParticleEmitter::DebugParticleData() {
                 ImGui::Separator();
 
                 if (ImGui::TreeNode("位置")) {
+                 /*   ImGui::Checkbox("中心に集める", &isGatherMode_);
+                    if (isGatherMode_) {
+                        ImGui::DragFloat("強さ", &gatherStrength_,0.1f);
+                        ImGui::DragFloat("始まるタイミング", &gatherStartRatio_,0.1f);
+                    }*/
                     ImGui::Checkbox("外周", &isEmitOnEdge_);
                     ImGui::TreePop();
                 }

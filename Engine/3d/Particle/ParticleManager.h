@@ -55,6 +55,12 @@ class ParticleManager {
     void SetFaceDirection(bool flag) { isFaceDirection_ = flag; }
     void SetEndScale(bool isEndScale) { isEndScale_ = isEndScale; }
     void SetOnEdge(bool isOnEdge) { isEmitOnEdge_ = isOnEdge; }
+   
+    void SetGatherMode(bool isGather) { isGatherMode_ = isGather; }
+
+    void SetGatherStartRatio(float ratio) { gatherStartRatio_ = std::clamp(ratio, 0.0f, 1.0f); }
+
+    void SetGatherStrength(float strength) { gatherStrength_ = strength; }
 
     std::vector<std::string> GetParticleGroupsName() { return particleGroupNames_; }
 
@@ -78,6 +84,10 @@ class ParticleManager {
     bool isFaceDirection_ = false;
     bool isEndScale_ = false;
     bool isEmitOnEdge_ = false;
+    bool isGatherMode_ = false;     // 中心に集まるフラグ
+
+    float gatherStartRatio_ = 0.5f; // ライフタイム何割から中心に集まり始めるか (0.0～1.0)
+    float gatherStrength_ = 2.0f;   // 集まる力の強さ
 
   public:
     std::list<Particle> Emit(const Vector3 &position, uint32_t count, const Vector3 &scale,

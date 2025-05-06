@@ -73,6 +73,8 @@ class ParticleEmitter {
     float alphaMax_;
     float scaleMin_;
     float scaleMax_;
+    float gatherStartRatio_ = 0.5f;
+    float gatherStrength_ = 2.0f;
 
     Vector4 color_;
     Vector3 velocityMin_; // 速度の最小値
@@ -104,6 +106,9 @@ class ParticleEmitter {
     bool isAuto_ = false;
     bool isEndScale_ = false;
     bool isEmitOnEdge_ = false;
+    bool isGatherMode_ = false; // 中心に集まるフラグ
+
+    
 
     std::unique_ptr<ParticleManager> Manager_;
     std::unique_ptr<DataHandler> datas_;

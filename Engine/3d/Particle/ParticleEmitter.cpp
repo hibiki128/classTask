@@ -36,6 +36,7 @@ void ParticleEmitter::Update() {
         Manager_->SetSinMove(isSinMove_);
         Manager_->SetFaceDirection(isFaceDirection_);
         Manager_->SetEndScale(isEndScale_);
+        Manager_->SetOnEdge(isEmitOnEdge_);
         Emit();                         // パーティクルを発生させる
         elapsedTime_ -= emitFrequency_; // 過剰に進んだ時間を考慮
     }
@@ -53,6 +54,7 @@ void ParticleEmitter::UpdateOnce() {
         Manager_->SetSinMove(isSinMove_);
         Manager_->SetFaceDirection(isFaceDirection_);
         Manager_->SetEndScale(isEndScale_);
+        Manager_->SetOnEdge(isEmitOnEdge_);
         Emit(); // パーティクルを発生させる
         isActive_ = true;
     }
@@ -182,6 +184,7 @@ void ParticleEmitter::SaveToJson() {
     datas_->Save("isSinMove", isSinMove_);
     datas_->Save("isFaceDirection", isFaceDirection_);
     datas_->Save("isEndScale", isEndScale_);
+    datas_->Save("isEmitOnEdge", isEmitOnEdge_);
     particleGroupNames_ = Manager_->GetParticleGroupsName();
     int count = 0;
     for (auto &particleGroupName : particleGroupNames_) {
@@ -228,6 +231,7 @@ void ParticleEmitter::LoadFromJson() {
         isSinMove_ = datas_->Load<bool>("isSinMove", false);
         isFaceDirection_ = datas_->Load<bool>("isFaceDirection", false);
         isEndScale_ = datas_->Load<bool>("isEndScale", false);
+        isEmitOnEdge_ = datas_->Load<bool>("isEmitOnEdge", false);
         for (size_t i = 0; i < ParticleGroupManager::GetInstance()->GetParticleGroups().size(); i++) {
             std::string groupName = datas_->Load<std::string>("GroupName_" + std::to_string(i), "");
             if (groupName == "") {
@@ -295,6 +299,13 @@ void ParticleEmitter::DebugParticleData() {
                     ImGui::DragFloat("最小値", &lifeTimeMin_, 0.1f, 0.0f);
                     lifeTimeMin_ = std::clamp(lifeTimeMin_, 0.0f, lifeTimeMax_);
                     lifeTimeMax_ = std::clamp(lifeTimeMax_, lifeTimeMin_, 10.0f);
+                    ImGui::TreePop();
+                }
+
+                ImGui::Separator();
+
+                if (ImGui::TreeNode("位置")) {
+                    ImGui::Checkbox("外周", &isEmitOnEdge_);
                     ImGui::TreePop();
                 }
 
@@ -447,7 +458,7 @@ void ParticleEmitter::DebugParticleData() {
                 // エミッターにアタッチされているグループ名をセットとして扱う（高速検索のため）
                 std::set<std::string> emitterGroupNames(
                     particleGroupNames_.begin(),
-                   particleGroupNames_.end());
+                    particleGroupNames_.end());
 
                 // 全パーティクルグループを取得
                 std::vector<ParticleGroup *> allGroups = ParticleGroupManager::GetInstance()->GetParticleGroups();
@@ -462,7 +473,7 @@ void ParticleEmitter::DebugParticleData() {
                 std::vector<std::string> attachedNames;
                 std::vector<const char *> attachedItems;
 
-               // グループを分類する処理
+                // グループを分類する処理
                 for (const auto &group : allGroups) {
                     const std::string &name = group->GetGroupName();
                     if (emitterGroupNames.contains(name)) {

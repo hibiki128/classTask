@@ -54,6 +54,7 @@ class ParticleManager {
     void SetSinMove(bool isSinMove) { isSinMove_ = isSinMove; }
     void SetFaceDirection(bool flag) { isFaceDirection_ = flag; }
     void SetEndScale(bool isEndScale) { isEndScale_ = isEndScale; }
+    void SetOnEdge(bool isOnEdge) { isEmitOnEdge_ = isOnEdge; }
 
     std::vector<std::string> GetParticleGroupsName() { return particleGroupNames_; }
 
@@ -76,6 +77,7 @@ class ParticleManager {
     bool isSinMove_ = false;
     bool isFaceDirection_ = false;
     bool isEndScale_ = false;
+    bool isEmitOnEdge_ = false;
 
   public:
     std::list<Particle> Emit(const Vector3 &position, uint32_t count, const Vector3 &scale,

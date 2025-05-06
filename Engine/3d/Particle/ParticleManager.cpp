@@ -189,12 +189,60 @@ Particle ParticleManager::MakeNewParticle(
     std::uniform_real_distribution<float> distAlpha(alphaMin, alphaMax);
 
     Particle particle;
+    Vector3 randomTranslate;
 
-    // スケールを考慮したランダムな位置を生成
-    Vector3 randomTranslate = {
-        distribution(randomEngine) * scale.x,
-        distribution(randomEngine) * scale.y,
-        distribution(randomEngine) * scale.z};
+    if (isEmitOnEdge_) {
+        // 立方体の12本のエッジ上にパーティクルを生成する場合
+        std::uniform_int_distribution<int> edgeSelector(0, 11);         // 12本のエッジからランダム選択
+        std::uniform_real_distribution<float> edgePosition(0.0f, 1.0f); // エッジ上の位置（0〜1）
+
+        int selectedEdge = edgeSelector(randomEngine);
+        float position = edgePosition(randomEngine);
+
+        // 立方体の8つの頂点の相対座標（スケール適用前）
+        const Vector3 v0 = {-1.0f, -1.0f, -1.0f}; // 左下手前
+        const Vector3 v1 = {1.0f, -1.0f, -1.0f};  // 右下手前
+        const Vector3 v2 = {-1.0f, 1.0f, -1.0f};  // 左上手前
+        const Vector3 v3 = {1.0f, 1.0f, -1.0f};   // 右上手前
+        const Vector3 v4 = {-1.0f, -1.0f, 1.0f};  // 左下奥
+        const Vector3 v5 = {1.0f, -1.0f, 1.0f};   // 右下奥
+        const Vector3 v6 = {-1.0f, 1.0f, 1.0f};   // 左上奥
+        const Vector3 v7 = {1.0f, 1.0f, 1.0f};    // 右上奥
+
+        // エッジの定義（始点と終点のインデックス）
+        const std::pair<Vector3, Vector3> edges[] = {
+            {v0, v1}, {v1, v3}, {v3, v2}, {v2, v0}, // 前面
+            {v4, v5},
+            {v5, v7},
+            {v7, v6},
+            {v6, v4}, // 背面
+            {v0, v4},
+            {v1, v5},
+            {v2, v6},
+            {v3, v7} // 側面
+        };
+
+        // 選択されたエッジの始点と終点
+        const Vector3 &start = edges[selectedEdge].first;
+        const Vector3 &end = edges[selectedEdge].second;
+
+        // エッジ上の位置を線形補間で計算
+        randomTranslate = {
+            start.x + (end.x - start.x) * position,
+            start.y + (end.y - start.y) * position,
+            start.z + (end.z - start.z) * position};
+
+        // スケールを適用
+        randomTranslate.x *= scale.x;
+        randomTranslate.y *= scale.y;
+        randomTranslate.z *= scale.z;
+    } else {
+        // 通常のランダムな位置生成
+        randomTranslate = {
+            distribution(randomEngine) * scale.x,
+            distribution(randomEngine) * scale.y,
+            distribution(randomEngine) * scale.z};
+    }
 
     // 回転行列を適用してランダムな位置を回転
     Matrix4x4 rotationMatrix = MakeRotateXYZMatrix(rotation);

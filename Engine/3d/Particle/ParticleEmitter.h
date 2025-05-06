@@ -103,6 +103,7 @@ class ParticleEmitter {
     bool isFaceDirection_ = false;
     bool isAuto_ = false;
     bool isEndScale_ = false;
+    bool isEmitOnEdge_ = false;
 
     std::unique_ptr<ParticleManager> Manager_;
     std::unique_ptr<DataHandler> datas_;

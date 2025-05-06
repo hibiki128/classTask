@@ -191,6 +191,9 @@ void ParticleEmitter::SaveToJson() {
     datas_->Save("isFaceDirection", isFaceDirection_);
     datas_->Save("isEndScale", isEndScale_);
     datas_->Save("isEmitOnEdge", isEmitOnEdge_);
+    datas_->Save("isGatherMode", isGatherMode_);
+    datas_->Save("gatherStartRatio", gatherStartRatio_);
+    datas_->Save("gatherStrength", gatherStrength_);
     particleGroupNames_ = Manager_->GetParticleGroupsName();
     int count = 0;
     for (auto &particleGroupName : particleGroupNames_) {
@@ -238,6 +241,9 @@ void ParticleEmitter::LoadFromJson() {
         isFaceDirection_ = datas_->Load<bool>("isFaceDirection", false);
         isEndScale_ = datas_->Load<bool>("isEndScale", false);
         isEmitOnEdge_ = datas_->Load<bool>("isEmitOnEdge", false);
+        isGatherMode_ = datas_->Load<bool>("isGatherMode", false);
+        gatherStartRatio_ = datas_->Load<float>("gatherStartRatio", 0.0f);
+        gatherStrength_ = datas_->Load<float>("gatherStrength", 0.0f);
         for (size_t i = 0; i < ParticleGroupManager::GetInstance()->GetParticleGroups().size(); i++) {
             std::string groupName = datas_->Load<std::string>("GroupName_" + std::to_string(i), "");
             if (groupName == "") {
@@ -311,11 +317,11 @@ void ParticleEmitter::DebugParticleData() {
                 ImGui::Separator();
 
                 if (ImGui::TreeNode("位置")) {
-                 /*   ImGui::Checkbox("中心に集める", &isGatherMode_);
+                    ImGui::Checkbox("中心に集める", &isGatherMode_);
                     if (isGatherMode_) {
                         ImGui::DragFloat("強さ", &gatherStrength_,0.1f);
                         ImGui::DragFloat("始まるタイミング", &gatherStartRatio_,0.1f);
-                    }*/
+                    }
                     ImGui::Checkbox("外周", &isEmitOnEdge_);
                     ImGui::TreePop();
                 }

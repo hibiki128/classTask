@@ -42,9 +42,7 @@ void ParticleManager::Update(const ViewProjection &viewProjection) {
             t = std::clamp(t, 0.0f, 1.0f);
 
             // 拡縮処理
-            // 拡縮処理
             if (isSinMove_) {
-
                 // Sin波の周波数制御 (速度調整)
                 float waveScale = 0.5f * (sin(t * DirectX::XM_PI * 18.0f) + 1.0f); // 0 ～ 1 の範囲
 
@@ -54,17 +52,22 @@ void ParticleManager::Update(const ViewProjection &viewProjection) {
                 // Sin波スケールと最大スケールの積を適用
                 (*particleIterator).transform.scale_ =
                     (*particleIterator).startScale * waveScale * maxScale;
-            }
-
-            else {
+            } else {
                 // 通常の線形補間
                 (*particleIterator).transform.scale_ =
                     (1.0f - t) * (*particleIterator).startScale + t * (*particleIterator).endScale;
-                // アルファ値の計算
-                (*particleIterator).color.w = (*particleIterator).initialAlpha - ((*particleIterator).currentTime / (*particleIterator).lifeTime);
+
+                // ギャザーモードが有効でない場合のみ、通常のアルファ値計算を行う
+                if (!(isGatherMode_ && t >= gatherStartRatio_)) {
+                    // アルファ値の計算
+                    (*particleIterator).color.w = (*particleIterator).initialAlpha - ((*particleIterator).currentTime / (*particleIterator).lifeTime);
+                }
             }
 
+            // ギャザーモードとそれ以外の移動処理を分岐
+            bool isGathering = false;
             if (isGatherMode_ && t >= gatherStartRatio_) {
+                isGathering = true;
                 // ギャザー効果の強さを計算（ライフタイム終盤ほど強く）
                 float gatherFactor = (t - gatherStartRatio_) / (1.0f - gatherStartRatio_);
                 gatherFactor = std::clamp(gatherFactor, 0.0f, 1.0f);
@@ -73,52 +76,77 @@ void ParticleManager::Update(const ViewProjection &viewProjection) {
                 Vector3 toEmitter = (*particleIterator).emitterPosition - (*particleIterator).transform.translation_;
                 float distance = toEmitter.Length();
 
-                // 微小距離の場合は方向計算をスキップ
-                if (distance > 0.001f) {
-                    // 方向ベクトルを正規化
-                    toEmitter = toEmitter.Normalize();
+                // 中心に近づくほどアルファ値を下げる（フェードアウト効果）
+                // 距離が0に近づくほど透明に
+                float distanceBasedAlpha = distance / (distance + 0.5f); // 調整可能なソフトニング係数
+                (*particleIterator).color.w = (*particleIterator).initialAlpha * (1.0f - gatherFactor) * distanceBasedAlpha;
 
-                    // 中心に向かう速度成分を計算
-                    Vector3 gatherVelocity = toEmitter * gatherStrength_ * gatherFactor * Frame::DeltaTime();
-
-                    // 現在の速度と合成（徐々にギャザー速度の影響を強くする）
-                    (*particleIterator).velocity = (*particleIterator).velocity * (1.0f - gatherFactor) + gatherVelocity * gatherFactor * 5.0f;
+                // 中心に非常に近い場合はパーティクルを削除（震え防止）
+                if (distance < 0.05f) {
+                    // 非常に近い場合は生存時間を終了させて次の更新で削除されるようにする
+                    (*particleIterator).currentTime = (*particleIterator).lifeTime;
+                    ++particleIterator;
+                    continue;
                 }
+
+                // 距離に応じてギャザー速度を緩和（近いほど緩やかに）
+                float distanceFactor = std::min(1.0f, distance); // 距離が1以下の場合は距離自体を係数に
+
+                // 方向ベクトルを正規化
+                toEmitter = toEmitter.Normalize();
+
+                // 中心に向かう速度を計算（近づくほど減速）
+                float gatherSpeed = gatherStrength_ * gatherFactor * distanceFactor * 3.0f; // 調整済み係数
+                Vector3 gatherVelocity = toEmitter * gatherSpeed * Frame::DeltaTime();
+
+                // ギャザー中は通常の速度を無視して、エミッターに向かう速度のみを設定
+                (*particleIterator).velocity = gatherVelocity;
+
+                // ギャザー中のパーティクル位置を更新
+                (*particleIterator).transform.translation_ += (*particleIterator).velocity;
             }
 
-            (*particleIterator).Acce = (1.0f - t) * (*particleIterator).startAcce + t * (*particleIterator).endAcce;
+            // ギャザー中でない場合のみ通常の移動処理を行う
+            if (!isGathering) {
+                (*particleIterator).Acce = (1.0f - t) * (*particleIterator).startAcce + t * (*particleIterator).endAcce;
 
-            if (isFaceDirection_) {
-                // 固定された進行方向を使用して回転を設定
-                Vector3 forward = (*particleIterator).fixedDirection; // 初期に保存された進行方向
-                Vector3 initialUp = {0.0f, 1.0f, 0.0f};
+                if (isFaceDirection_) {
+                    // 固定された進行方向を使用して回転を設定
+                    Vector3 forward = (*particleIterator).fixedDirection; // 初期に保存された進行方向
+                    Vector3 initialUp = {0.0f, 1.0f, 0.0f};
 
-                // 回転軸を計算
-                Vector3 rotationAxis = initialUp.Cross(forward).Normalize();
-                float dotProduct = initialUp.Dot(forward);
-                float angle = acosf(std::clamp(dotProduct, -1.0f, 1.0f)); // 安全な範囲にクランプ
+                    // 回転軸を計算
+                    Vector3 rotationAxis = initialUp.Cross(forward).Normalize();
+                    float dotProduct = initialUp.Dot(forward);
+                    float angle = acosf(std::clamp(dotProduct, -1.0f, 1.0f)); // 安全な範囲にクランプ
 
-                // 回転を設定
-                (*particleIterator).transform.rotation_.x = rotationAxis.x * angle;
-                (*particleIterator).transform.rotation_.y = rotationAxis.y * angle;
-                (*particleIterator).transform.rotation_.z = rotationAxis.z * angle;
+                    // 回転を設定
+                    (*particleIterator).transform.rotation_.x = rotationAxis.x * angle;
+                    (*particleIterator).transform.rotation_.y = rotationAxis.y * angle;
+                    (*particleIterator).transform.rotation_.z = rotationAxis.z * angle;
 
-            } else if (isRandomRotate_) {
-                // ランダム回転の場合の処理
-                (*particleIterator).transform.rotation_ += (*particleIterator).rotateVelocity;
-            } else {
-                // 通常の回転補間
-                (*particleIterator).transform.rotation_ =
-                    (1.0f - t) * (*particleIterator).startRote + t * (*particleIterator).endRote;
+                } else if (isRandomRotate_) {
+                    // ランダム回転の場合の処理
+                    (*particleIterator).transform.rotation_ += (*particleIterator).rotateVelocity;
+                } else {
+                    // 通常の回転補間
+                    (*particleIterator).transform.rotation_ =
+                        (1.0f - t) * (*particleIterator).startRote + t * (*particleIterator).endRote;
+                }
+
+                // 加速度処理
+                if (isAcceMultipy_) {
+                    (*particleIterator).velocity *= (*particleIterator).Acce;
+                } else {
+                    (*particleIterator).velocity += (*particleIterator).Acce;
+                }
+
+                // パーティクルの移動
+                (*particleIterator).transform.translation_ +=
+                    (*particleIterator).velocity * Frame::DeltaTime();
             }
-            if (isAcceMultipy_) {
-                (*particleIterator).velocity *= (*particleIterator).Acce;
-            } else {
-                (*particleIterator).velocity += (*particleIterator).Acce;
-            }
-            // パーティクルの移動
-            (*particleIterator).transform.translation_ +=
-                (*particleIterator).velocity * Frame::DeltaTime();
+
+            // 時間更新はギャザーモードに関わらず行う
             (*particleIterator).currentTime += Frame::DeltaTime();
 
             // ワールド行列の計算
@@ -178,7 +206,7 @@ void ParticleManager::Draw() {
 
             srvManager_->SetGraphicsRootDescriptorTable(2, particleGroup->GetParticleGroupData().material.textureIndex);
 
-            particleCommon->GetDxCommon()->GetCommandList()->DrawIndexedInstanced(UINT(particleGroup->GetModelData().indices.size()), particleGroup->GetParticleGroupData().instanceCount, 0, 0, 0);
+            particleCommon->GetDxCommon()->GetCommandList()->DrawIndexedInstanced(UINT(particleGroup->GetModelData().indices.size()), particleGroup->GetParticleGroupData().instanceCount, 0, 0,0);
         }
     }
 }

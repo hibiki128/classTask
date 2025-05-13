@@ -1,4 +1,5 @@
 #include "BaseObjectManager.h"
+#include"ImGui/ImGuizmoManager.h"
 
 BaseObjectManager *BaseObjectManager::instance = nullptr;
 
@@ -16,11 +17,14 @@ void BaseObjectManager::Finalize() {
 
 void BaseObjectManager::DeleteObject() {
     baseObjects_.clear();
+
 }
 
 void BaseObjectManager::AddObject(std::unique_ptr<BaseObject> baseObject) {
     const std::string &name = baseObject->GetName();
+    ImGuizmoManager::GetInstance()->AddTarget(baseObject->GetName(),baseObject.get());
     baseObjects_.emplace(name, std::move(baseObject));
+
 }
 
 void BaseObjectManager::Update() {

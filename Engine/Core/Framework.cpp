@@ -56,6 +56,12 @@ void Framework::Initialize() {
 #endif // _DEBUG
        /// -----------------------
 
+        /// ---------ImGuizmo---------
+#ifdef _DEBUG
+    imGuizmoManager_ = ImGuizmoManager::GetInstance();
+#endif // _DEBUG
+       /// -----------------------
+
     // offscreenのSRV作成
     dxCommon->CreateOffscreenSRV();
     // depthのSRV作成

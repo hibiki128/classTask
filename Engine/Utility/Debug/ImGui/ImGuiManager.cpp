@@ -1,10 +1,12 @@
 #include "ImGuiManager.h"
 #ifdef _DEBUG
+#include "ImGuizmo.h"
+#include "ImGuizmoManager.h"
+#include "SceneManager.h"
 #include "imgui.h"
 #include "imgui_impl_win32.h"
 #include <externals/icon/IconsFontAwesome5.h>
 #include <imgui_impl_dx12.h>
-#include"SceneManager.h"
 
 ImGuiManager *ImGuiManager::instance = nullptr;
 
@@ -64,6 +66,7 @@ void ImGuiManager::Initialize(WinApp *winApp) {
         srvManager_->GetDescriptorHeap(),
         srvManager_->GetCPUDescriptorHandle(srvIndex),
         srvManager_->GetGPUDescriptorHandle(srvIndex));
+    imGuizmoManager_ = ImGuizmoManager::GetInstance();
 }
 
 void ImGuiManager::SetupTheme() {
@@ -379,8 +382,9 @@ void ImGuiManager::ShowMainMenu() {
                     baseObjectManager_->AddObject(std::move(object));
                 }
 
-                  if (ImGui::MenuItem(ICON_FA_TRASH_ALT " オブジェクト全削除")) {
+                if (ImGui::MenuItem(ICON_FA_TRASH_ALT " オブジェクト全削除")) {
                     baseObjectManager_->DeleteObject();
+                    imGuizmoManager_->DeleteTarget();
                 }
 
                 ImGui::EndMenu();
@@ -521,7 +525,7 @@ void ImGuiManager::ShowObjectSettingWindow() {
     ImGui::Begin("オブジェクト設定", &showObjectView_, flags);
 
     currentScene_->AddObjectSetting();
-    baseObjectManager_->DrawImGui();
+    // baseObjectManager_->DrawImGui();
 
     ImGui::End();
 }
@@ -565,13 +569,16 @@ void ImGuiManager::FixAspectRatio() {
 void ImGuiManager::ShowSceneWindow() {
     // ImGuiウィンドウ開始前にNextWindowSizeは設定しない（手動サイズ変更を許可）
     ImGuiWindowFlags flags = ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoScrollbar;
-
     // フォーカスされていない場合は描画を最適化
     if (!isShowMainUI_) {
         flags |= ImGuiWindowFlags_NoBringToFrontOnFocus;
     }
 
     ImGui::Begin("Scene", nullptr, flags);
+
+    // ウィンドウ内の位置を取得（ImGuizmoのためにシーンウィンドウの絶対位置を計算）
+    ImVec2 sceneWindowPos = ImGui::GetWindowPos();
+    ImVec2 contentPos = ImGui::GetCursorScreenPos();
 
     // 以下は既存の処理を最適化
     // キャッシュされた値を使用し、毎フレーム計算しないようにする
@@ -583,7 +590,6 @@ void ImGuiManager::ShowSceneWindow() {
     if (contentRegion.x != lastContentRegion.x ||
         contentRegion.y != lastContentRegion.y ||
         ImGui::IsWindowFocused()) {
-
         lastContentRegion = contentRegion;
 
         // 横幅ベースで16:9にしたときの高さ
@@ -621,12 +627,27 @@ void ImGuiManager::ShowSceneWindow() {
         backgroundColor = lastBgColor;
     }
 
+    // シーンテクスチャの中央配置のための計算
+    ImVec2 sceneOffset;
+    sceneOffset.x = (contentRegion.x - sceneTextureSize_.x) * 0.5f;
+    sceneOffset.y = (contentRegion.y - sceneTextureSize_.y) * 0.5f;
+
+    // テクスチャ描画位置を調整
+    ImGui::SetCursorPos(ImVec2(ImGui::GetCursorPosX() + sceneOffset.x, ImGui::GetCursorPosY() + sceneOffset.y));
+
     // レンダーテクスチャをImGuiウィンドウに描画
     ImGui::ImageWithBg(
         static_cast<ImTextureID>(SrvManager::GetInstance()->GetGPUDescriptorHandle(srvIndex).ptr),
         sceneTextureSize_, ImVec2(0.0f, 0.0f), ImVec2(1.0f, 1.0f),
         backgroundColor);
 
+    // ImGuizmoのために正確なシーン位置を計算
+    ImVec2 actualScenePos = ImVec2(
+        contentPos.x + sceneOffset.x,
+        contentPos.y + sceneOffset.y);
+        
+    imGuizmoManager_->Update(actualScenePos, sceneTextureSize_);
+    
     ImGui::End();
 }
 

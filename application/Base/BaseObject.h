@@ -1,23 +1,22 @@
 #pragma once
+#include "Data/DataHandler.h"
 #include "ObjColor.h"
-#include"Object/Object3d.h"
+#include "Object/Object3d.h"
 #include "ViewProjection/ViewProjection.h"
 #include "WorldTransform.h"
-#include "externals/nlohmann/json.hpp"
 #include "collider/Collider.h"
+#include "externals/nlohmann/json.hpp"
 #include <string>
-#include"Data/DataHandler.h"
 
 class BaseObject : public Collider {
   private:
     /// ===================================================
     /// private variaus
     /// ===================================================
-     
+
     std::unique_ptr<DataHandler> TransformDatas_;
     std::unique_ptr<DataHandler> AnimaDatas_;
-    
-    
+
   protected:
     /// ===================================================
     /// protected variaus
@@ -47,7 +46,7 @@ class BaseObject : public Collider {
     // 初期化、更新、描画
     virtual void Init(const std::string className);
     virtual void Update();
-    virtual void Draw(const ViewProjection &viewProjection, Vector3 offSet = {0.0f,0.0f,0.0f});
+    virtual void Draw(const ViewProjection &viewProjection, Vector3 offSet = {0.0f, 0.0f, 0.0f});
 
     virtual void CreateModel(const std::string modelname);
     virtual void CreatePrimitiveModel(const PrimitiveType &type);
@@ -60,19 +59,19 @@ class BaseObject : public Collider {
 
     // 中心座標取得
     virtual Vector3 GetWorldPosition() const;
-    virtual const WorldTransform &GetWorldTransform() const { return transform_; }
+    virtual WorldTransform &GetWorldTransform() { return transform_; }
 
     /// ===================================================
     /// getter
     /// ===================================================
     const WorldTransform &GetTransform() { return transform_; }
-    std::string& GetName() { return objectName_; }
+    std::string &GetName() { return objectName_; }
     Object3d *GetObject3d() { return obj3d_.get(); }
     Vector3 &GetWorldPosition() { return transform_.translation_; }
     Vector3 &GetWorldRotation() { return transform_.rotation_; }
     Vector3 &GetWorldScale() { return transform_.scale_; }
     bool AnimaIsFinish() { return obj3d_->IsFinish(); }
-    bool& GetLighting() { return isLighting_; }
+    bool &GetLighting() { return isLighting_; }
     bool &GetLoop() { return isLoop_; }
 
     /// ===================================================

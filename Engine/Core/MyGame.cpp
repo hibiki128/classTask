@@ -32,6 +32,8 @@ void MyGame::Update() {
 
 #ifdef _DEBUG
     imGuiManager_->Begin();
+    imGuizmoManager_->BeginFrame();
+    imGuizmoManager_->SetViewProjection(sceneManager_->GetBaseScene()->GetViewProjection());
     imGuiManager_->ShowMainMenu();
     if (imGuiManager_->GetIsShowMainUI()) {
         imGuiManager_->SetCurrentScene(sceneManager_->GetBaseScene());
@@ -42,6 +44,7 @@ void MyGame::Update() {
         LightGroup::GetInstance()->imgui();
     }
     imGuiManager_->End();
+   
 #endif // _DEBUG
 
     // -----------------------

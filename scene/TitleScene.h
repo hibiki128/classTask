@@ -64,6 +64,5 @@ class TitleScene : public BaseScene {
     Easing ease_;
     std::unique_ptr<DebugCamera> debugCamera_;
 
-    std::unique_ptr<ParticleEmitter> emitter_;
-    std::unique_ptr<BaseObject> test;
+ //  std::unique_ptr<BaseObject> obj_;
 };

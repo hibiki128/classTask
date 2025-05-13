@@ -17,6 +17,7 @@
 #include "Engine/offscreen/OffScreen.h"
 #include <line/DrawLine3D.h>
 #include"ImGui/ImGuiManager.h"
+#include"ImGui/ImGuizmoManager.h"
 #include"Object/BaseObjectManager.h"
 #include"Particle/ParticleGroupManager.h"
 
@@ -83,6 +84,7 @@ class Framework {
     TextureManager *textureManager_ = nullptr;
     ModelManager *modelManager_ = nullptr;
     ImGuiManager *imGuiManager_ = nullptr;
+    ImGuizmoManager *imGuizmoManager_ = nullptr;
     BaseObjectManager *baseObjectManager_ = nullptr;
     ParticleGroupManager *particleGroupManager_ = nullptr;
 

@@ -7,6 +7,8 @@
 
 #include "Object/BaseObjectManager.h"
 
+
+class ImGuizmoManager;
 class ImGuiManager {
   private:
     /// ====================================
@@ -19,6 +21,8 @@ class ImGuiManager {
     ~ImGuiManager() = default;
     ImGuiManager(ImGuiManager &) = delete;
     ImGuiManager &operator=(ImGuiManager &) = delete;
+
+    ImGuizmoManager *imGuizmoManager_ = nullptr;
 
   public:
     /// ====================================
@@ -75,6 +79,15 @@ class ImGuiManager {
 
     bool &GetIsShowMainUI();
     void SetCurrentScene(BaseScene *currentScene) { currentScene_ = currentScene; };
+
+    void SetImGuizmoManager(ImGuizmoManager *manager) {
+        imGuizmoManager_ = manager;
+    }
+
+    // 必要に応じてImGuizmoManagerへのアクセサを追加
+    ImGuizmoManager *GetImGuizmoManager() const {
+        return imGuizmoManager_;
+    }
 
   private:
     /// ====================================

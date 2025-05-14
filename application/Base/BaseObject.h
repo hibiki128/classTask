@@ -50,7 +50,7 @@ class BaseObject : public Collider {
 
     virtual void CreateModel(const std::string modelname);
     virtual void CreatePrimitiveModel(const PrimitiveType &type);
-    virtual void CreateCollider();
+    virtual void AddCollider();
 
     virtual void DebugImGui();
 
@@ -97,6 +97,7 @@ class BaseObject : public Collider {
     void ShowFileSelector();
 
     std::vector<std::string> GetGltfFiles();
+    std::vector<Collider *> colliders_;
 
     bool isCollider = false;
 };

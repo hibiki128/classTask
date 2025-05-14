@@ -68,8 +68,8 @@ void BaseObject::CreatePrimitiveModel(const PrimitiveType &type) {
     obj3d_->CreatePrimitiveModel(type);
 }
 
-void BaseObject::CreateCollider() {
-    Collider::Initialize(objectName_);
+void BaseObject::AddCollider() {
+    colliders_.push_back(&Collider::AddCollider(objectName_));
     isCollider = true;
 }
 
@@ -79,6 +79,9 @@ void BaseObject::DebugImGui() {
         DebugTransform();
         if (isCollider) {
             DebugCollider();
+        }
+        if (ImGui::Button("コライダー追加")) {
+            AddCollider();
         }
         ImGui::EndTabBar();
     }
@@ -127,7 +130,9 @@ void BaseObject::DebugTransform() {
 }
 
 void BaseObject::DebugCollider() {
-    Collider::OffsetImgui();
+    for (auto &collider : colliders_) {
+        collider->OffsetImgui();
+    }
 }
 
 Vector3 BaseObject::GetCenterPosition() const {

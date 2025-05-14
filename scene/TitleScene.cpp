@@ -13,39 +13,18 @@ void TitleScene::Initialize() {
 
     debugCamera_ = std::make_unique<DebugCamera>();
     debugCamera_->Initialize(&vp_);
-
-    ParticleEditor::GetInstance()->AddParticleEmitter("hit");
-    emitter_ = std::make_unique<ParticleEmitter>();
-    emitter_ = ParticleEditor::GetInstance()->GetEmitter("hit");
-
-    test = std::make_unique<BaseObject>();
-    test->Init("test");
-    test->CreatePrimitiveModel(PrimitiveType::Sphere);
-    test->SetTexture("debug/uvChecker.png");
-
-    ease_.time = 0.0f;
-    ease_.maxTime = 1.0f;
-    ease_.amplitude = 0.3f;
-    ease_.period = 0.2f;
 }
 
 void TitleScene::Finalize() {
 }
 
 void TitleScene::Update() {
+
     // カメラ更新
     CameraUpdate();
 
     // シーン切り替え
     ChangeScene();
-
-    ease_.time += Frame::DeltaTime();
-    if (ease_.time >= ease_.maxTime - 0.3f) {
-        ease_.time = 0.0f;
-    }
-    test->GetWorldScale() = EaseAmplitudeScale<Vector3>({1.0f, 1.0f, 1.0f}, ease_.time, ease_.maxTime, ease_.amplitude, ease_.period);
-
-    test->Update();
 }
 
 void TitleScene::Draw() {
@@ -59,13 +38,13 @@ void TitleScene::Draw() {
 
     objCommon_->DrawCommonSetting();
     //-----3DObjectの描画開始-----
-    test->Draw(vp_);
+
     //--------------------------
 
     /// Particleの描画準備
     ptCommon_->DrawCommonSetting();
     //------Particleの描画開始-------
-    emitter_->Draw(vp_);
+
     //-----------------------------
 
     /// Spriteの描画準備
@@ -119,11 +98,9 @@ void TitleScene::AddObjectSetting() {
         };
         ImGui::EndTabBar();
     }
-    test->DebugImGui();
 }
 
 void TitleScene::AddParticleSetting() {
-    emitter_->Debug();
 }
 
 void TitleScene::CameraUpdate() {

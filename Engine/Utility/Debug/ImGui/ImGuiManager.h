@@ -7,6 +7,8 @@
 
 #include "Object/BaseObjectManager.h"
 
+class ImGuizmoManager;
+class OffScreen;
 class ImGuiManager {
   private:
     /// ====================================
@@ -19,6 +21,8 @@ class ImGuiManager {
     ~ImGuiManager() = default;
     ImGuiManager(ImGuiManager &) = delete;
     ImGuiManager &operator=(ImGuiManager &) = delete;
+
+    ImGuizmoManager *imGuizmoManager_ = nullptr;
 
   public:
     /// ====================================
@@ -61,7 +65,7 @@ class ImGuiManager {
     /// <summary>
     /// メインUI表示
     /// </summary>
-    void ShowMainUI();
+    void ShowMainUI(OffScreen *offscreen);
 
     /// <summary>
     /// メニュー表示
@@ -73,8 +77,24 @@ class ImGuiManager {
     /// </summary>
     void ShowDockSpace();
 
+    void DisplayFPS();
+
     bool &GetIsShowMainUI();
     void SetCurrentScene(BaseScene *currentScene) { currentScene_ = currentScene; };
+
+    void SetImGuizmoManager(ImGuizmoManager *manager) {
+        imGuizmoManager_ = manager;
+    }
+
+    // 必要に応じてImGuizmoManagerへのアクセサを追加
+    ImGuizmoManager *GetImGuizmoManager() const {
+        return imGuizmoManager_;
+    }
+
+    /// <summary>
+    /// シーン表示
+    /// </summary>
+    void ShowSceneWindow();
 
   private:
     /// ====================================
@@ -87,11 +107,6 @@ class ImGuiManager {
     void CreateDescriptorHeap();
 
     /// <summary>
-    /// シーン表示
-    /// </summary>
-    void ShowSceneWindow();
-
-    /// <summary>
     /// ヒエラルキー表示
     /// </summary>
     void ShowSceneSettingWindow();
@@ -100,12 +115,25 @@ class ImGuiManager {
 
     void ShowParticleSettingWindow();
 
+    void ShowFPSWindow();
+
+    void ShowOffScreenSettingWindow(OffScreen *offscreen);
+
+    void ShowLightSettingWindow();
+
     void FixAspectRatio();
+
+    void BackupDockLayout();
+
+    void RestoreDockLayout();
+
 
   private:
     /// ====================================
     /// private variaus
     /// ====================================
+
+    std::string dockLayoutBackup_;
 
     // SRV用デスクリプタヒープ
     Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> srvHeap_;
@@ -136,6 +164,9 @@ class ImGuiManager {
     bool showSceneView_ = true;
     bool showObjectView_ = true;
     bool showParticleView_ = true;
+    bool showFPSView_ = true;
+    bool showOfScreenView_ = true;
+    bool showLightView_ = true;
 
     BaseObjectManager *baseObjectManager_ = nullptr;
 };

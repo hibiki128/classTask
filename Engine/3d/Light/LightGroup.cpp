@@ -59,7 +59,6 @@ void LightGroup::Draw() {
 }
 
 void LightGroup::imgui() {
-    ImGui::Begin("ライト設定");
 
     // 共通のタブバーを一つだけ作成
     if (ImGui::BeginTabBar("LightTypeTabs")) {
@@ -151,8 +150,6 @@ void LightGroup::imgui() {
 
         ImGui::EndTabBar();
     }
-
-    ImGui::End();
 }
 
 void LightGroup::SaveDirectionalLight() {

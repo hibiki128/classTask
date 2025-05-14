@@ -73,6 +73,11 @@ void Framework::Initialize() {
     input->Init(winApp->GetHInstance(), winApp->GetHwnd());
     ///--------------------------
 
+    ///-----------PipeLineManager-----------
+    pipeLineManager_ = PipeLineManager::GetInstance();
+    pipeLineManager_->Initialize(dxCommon);
+    ///-------------------------------------
+
     ///-----------TextureManager----------
     textureManager_ = TextureManager::GetInstance();
     textureManager_->Initialize(srvManager);
@@ -152,19 +157,23 @@ void Framework::Finalize() {
     // WindowsAPIの終了処理
     winApp->Finalize();
 
-    /// -------TextureManager-------
+    ///-------PipeLineManager-------
+    pipeLineManager_->Finalize();
+    ///-----------------------------
+
+    ///-------TextureManager-------
     textureManager_->Finalize();
     ///-----------------------------
 
-    /// -------ModelCommon-------
+    ///-------ModelCommon-------
     modelManager_->Finalize();
     ///---------------------------
 
-    /// -------PrimitiveModel-------
+    ///-------PrimitiveModel-------
     primitiveModel->Finalize();
     ///-----------------------------
 
-    /// -------ParticleGroupManager-------
+    ///-------ParticleGroupManager-------
     particleGroupManager_->Finalize();
     ///---------------------------------
 

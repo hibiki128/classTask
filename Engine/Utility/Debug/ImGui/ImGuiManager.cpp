@@ -8,6 +8,7 @@
 #include <externals/icon/IconsFontAwesome5.h>
 #include <imgui_impl_dx12.h>
 #include <Engine/Frame/Frame.h>
+#include"Engine/Offscreen/OffScreen.h"
 
 ImGuiManager *ImGuiManager::instance = nullptr;
 
@@ -278,8 +279,8 @@ void ImGuiManager::ShowMainMenu() {
                 ImGui::MenuItem(ICON_FA_CUBE " オブジェクトビュー", nullptr, &showObjectView_);
                 ImGui::MenuItem(ICON_FA_STAR " パーティクルビュー", nullptr, &showParticleView_);
                 ImGui::MenuItem(ICON_FA_DATABASE " FPSビュー", nullptr, &showFPSView_);
-                // ImGui::MenuItem(ICON_FA_SITEMAP " ヒエラルキー", nullptr, &showHierarchy_);
-                // ImGui::MenuItem(ICON_FA_SLIDERS_H " インスペクター", nullptr, &showInspector_);
+                ImGui::MenuItem(ICON_FA_STAR_OF_DAVID " オフスクリーンビュー", nullptr, &showOfScreenView_);
+                ImGui::MenuItem(ICON_FA_LIGHTBULB " ライトビュー", nullptr, &showLightView_);
                 // ImGui::MenuItem(ICON_FA_FOLDER " プロジェクト", nullptr, &showProject_);
                 ImGui::EndMenu();
             }
@@ -288,12 +289,16 @@ void ImGuiManager::ShowMainMenu() {
             ImGui::Separator();
             if (isShowMainUI_) {
                 if (ImGui::MenuItem(ICON_FA_GAMEPAD " ゲームモードに切替", "F5")) {
+                    // Dock状態を保存！
+                    BackupDockLayout();
                     isShowMainUI_ = false;
                 }
             } else {
                 if (ImGui::MenuItem(ICON_FA_WRENCH " エディターモードに切替", "F5")) {
                     isShowMainUI_ = true;
                     WinApp::GetInstance()->IsFullScreen() = false;
+                    // Dock状態を復元！
+                    RestoreDockLayout();
                 }
             }
             ImGui::Separator();
@@ -500,12 +505,6 @@ void ImGuiManager::ShowSceneSettingWindow() {
     // パフォーマンス改善: 軽量化フラグを追加
     ImGuiWindowFlags flags = ImGuiWindowFlags_None;
 
-    // ゲームプレイ中など重要でないときは折りたたまれた状態で開始
-    if (!isShowMainUI_) {
-        ImGui::SetNextWindowCollapsed(true, ImGuiCond_Once);
-        flags |= ImGuiWindowFlags_NoBringToFrontOnFocus; // フォーカス時に前面に出さない
-    }
-
     ImGui::Begin("シーン設定", &showSceneView_, flags);
 
     currentScene_->AddSceneSetting();
@@ -518,11 +517,7 @@ void ImGuiManager::ShowObjectSettingWindow() {
         return; // 表示しない場合は早期リターン
 
     ImGuiWindowFlags flags = ImGuiWindowFlags_None;
-    if (!isShowMainUI_) {
-        ImGui::SetNextWindowCollapsed(true, ImGuiCond_Once);
-        flags |= ImGuiWindowFlags_NoBringToFrontOnFocus;
-    }
-
+  
     ImGui::Begin("オブジェクト設定", &showObjectView_, flags);
 
     currentScene_->AddObjectSetting();
@@ -536,11 +531,7 @@ void ImGuiManager::ShowParticleSettingWindow() {
         return; // 表示しない場合は早期リターン
 
     ImGuiWindowFlags flags = ImGuiWindowFlags_None;
-    if (!isShowMainUI_) {
-        ImGui::SetNextWindowCollapsed(true, ImGuiCond_Once);
-        flags |= ImGuiWindowFlags_NoBringToFrontOnFocus;
-    }
-
+   
     ImGui::Begin("パーティクル設定", &showParticleView_, flags);
 
     currentScene_->AddParticleSetting();
@@ -553,14 +544,36 @@ void ImGuiManager::ShowFPSWindow() {
         return; // 表示しない場合は早期リターン
 
     ImGuiWindowFlags flags = ImGuiWindowFlags_None;
-    if (!isShowMainUI_) {
-        ImGui::SetNextWindowCollapsed(true, ImGuiCond_Once);
-        flags |= ImGuiWindowFlags_NoBringToFrontOnFocus;
-    }
-
+   
     ImGui::Begin("FPS", &showFPSView_, flags);
 
     DisplayFPS();
+
+    ImGui::End();
+}
+
+void ImGuiManager::ShowOffScreenSettingWindow(OffScreen* offscreen) {
+    if (!showOfScreenView_)
+        return; // 表示しない場合は早期リターン
+
+    ImGuiWindowFlags flags = ImGuiWindowFlags_None;
+    
+    ImGui::Begin("オフスクリーン設定", &showOfScreenView_, flags);
+
+    offscreen->Setting();
+
+    ImGui::End();
+}
+
+void ImGuiManager::ShowLightSettingWindow() {
+    if (!showLightView_)
+        return; // 表示しない場合は早期リターン
+
+    ImGuiWindowFlags flags = ImGuiWindowFlags_None;
+   
+    ImGui::Begin("ライト設定", &showLightView_, flags);
+
+    LightGroup::GetInstance()->imgui();
 
     ImGui::End();
 }
@@ -669,9 +682,8 @@ void ImGuiManager::ShowSceneWindow() {
     ImGui::End();
 }
 
-void ImGuiManager::ShowMainUI() {
-    // シーンウィンドウ
-    ShowSceneWindow();
+void ImGuiManager::ShowMainUI(OffScreen* offscreen) {
+
     // ヒエラルキーウィンドウ
     ShowSceneSettingWindow();
     // インスペクターウィンドウ
@@ -680,6 +692,10 @@ void ImGuiManager::ShowMainUI() {
     ShowParticleSettingWindow();
     // FPSを描画
     ShowFPSWindow();
+    // オフスクリーンウィンドウを描画
+    ShowOffScreenSettingWindow(offscreen);
+    // ライトウィンドウを描画
+    ShowLightSettingWindow();
 }
 
 bool &ImGuiManager::GetIsShowMainUI() {
@@ -720,10 +736,6 @@ void ImGuiManager::DisplayFPS() {
     float fps = Frame::GetFPS();
     float deltaTime = Frame::DeltaTime() * 1000.0f; // ミリ秒単位に変換
 
-    // FPSを表示するウィンドウを固定位置に設定
-    ImGui::SetNextWindowPos(ImVec2((WinApp::kClientWidth - 150), 20), ImGuiCond_Always);
-    ImGui::SetNextWindowBgAlpha(0.5f); // 半透明の背景
-
     // FPSを色付きで表示
     ImVec4 color;
     if (fps >= 59.0f) {
@@ -737,4 +749,21 @@ void ImGuiManager::DisplayFPS() {
     ImGui::TextColored(color, "FPS: %.1f", fps);
     ImGui::TextColored(color, "Frame: %.2f ms", deltaTime);
 #endif // _DEBUG
+}
+
+// 現在のDockレイアウトを保存
+void ImGuiManager::BackupDockLayout() {
+    ImGuiContext *context = ImGui::GetCurrentContext();
+    if (context) {
+        // Dockingレイアウトを文字列として保存
+        dockLayoutBackup_ = ImGui::SaveIniSettingsToMemory();
+    }
+}
+
+// 保存したレイアウトを復元
+void ImGuiManager::RestoreDockLayout() {
+    if (!dockLayoutBackup_.empty()) {
+        // メモリ上の設定を再適用
+        ImGui::LoadIniSettingsFromMemory(dockLayoutBackup_.c_str(), dockLayoutBackup_.size());
+    }
 }

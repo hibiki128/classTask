@@ -636,6 +636,7 @@
     <FxCompile Include="resources\shaders\OffScreen\Cinematic.PS.hlsl">
       <Filter>リソース ファイル\OffScreen</Filter>
     </FxCompile>
+    <FxCompile Include="resources\shaders\Object\Skinning.CS.hlsl" />
   </ItemGroup>
   <ItemGroup>
     <Text Include="externals\imgui\LICENSE.txt">

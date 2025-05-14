@@ -20,6 +20,7 @@
 #include"ImGui/ImGuizmoManager.h"
 #include"Object/BaseObjectManager.h"
 #include"Particle/ParticleGroupManager.h"
+#include"PipeLine/PipeLineManager.h"
 
 class Framework {
   public: // メンバ関数
@@ -82,6 +83,7 @@ class Framework {
     ImGuizmoManager *imGuizmoManager_ = nullptr;
     BaseObjectManager *baseObjectManager_ = nullptr;
     ParticleGroupManager *particleGroupManager_ = nullptr;
+    PipeLineManager *pipeLineManager_ = nullptr;
 
     SpriteCommon *spriteCommon = nullptr;
     Object3dCommon *object3dCommon = nullptr;
@@ -92,7 +94,6 @@ class Framework {
 
     std::unique_ptr<CollisionManager> collisionManager_;
     std::unique_ptr<OffScreen> offscreen_;
-    std::unique_ptr<OffScreen> offscreen2_;
 
     bool endRequest_;
 };

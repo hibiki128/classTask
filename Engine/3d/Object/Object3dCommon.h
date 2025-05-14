@@ -51,22 +51,8 @@ public: // メンバ関数
 	void SetBlendMode(BlendMode blendMode);
 
 private:
-	DirectXCommon* dxCommon_;
-	std::unique_ptr<PipeLineManager> psoManager_ = nullptr;
+        DirectXCommon *dxCommon_;
 
-	// ルートシグネチャ
-	Microsoft::WRL::ComPtr<ID3D12RootSignature> rootSignature = nullptr;
-
-	// グラフィックスパイプライン
-	Microsoft::WRL::ComPtr<ID3D12PipelineState> graphicsPipelineState[5];
-
-	// ルートシグネチャ
-	Microsoft::WRL::ComPtr<ID3D12RootSignature> skinningRootSignature = nullptr;
-
-	// グラフィックスパイプライン
-	Microsoft::WRL::ComPtr<ID3D12PipelineState> skinningGraphicsPipelineState = nullptr;
-
-	BlendMode blendMode_ = BlendMode::kNormal;
-
+		PipeLineManager* psoManager_ = nullptr;
 };
 

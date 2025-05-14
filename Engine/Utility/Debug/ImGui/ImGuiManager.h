@@ -7,8 +7,8 @@
 
 #include "Object/BaseObjectManager.h"
 
-
 class ImGuizmoManager;
+class OffScreen;
 class ImGuiManager {
   private:
     /// ====================================
@@ -65,7 +65,7 @@ class ImGuiManager {
     /// <summary>
     /// メインUI表示
     /// </summary>
-    void ShowMainUI();
+    void ShowMainUI(OffScreen *offscreen);
 
     /// <summary>
     /// メニュー表示
@@ -91,6 +91,11 @@ class ImGuiManager {
         return imGuizmoManager_;
     }
 
+    /// <summary>
+    /// シーン表示
+    /// </summary>
+    void ShowSceneWindow();
+
   private:
     /// ====================================
     /// private method
@@ -100,11 +105,6 @@ class ImGuiManager {
     /// ヒープ作成
     /// </summary>
     void CreateDescriptorHeap();
-
-    /// <summary>
-    /// シーン表示
-    /// </summary>
-    void ShowSceneWindow();
 
     /// <summary>
     /// ヒエラルキー表示
@@ -117,12 +117,23 @@ class ImGuiManager {
 
     void ShowFPSWindow();
 
+    void ShowOffScreenSettingWindow(OffScreen *offscreen);
+
+    void ShowLightSettingWindow();
+
     void FixAspectRatio();
+
+    void BackupDockLayout();
+
+    void RestoreDockLayout();
+
 
   private:
     /// ====================================
     /// private variaus
     /// ====================================
+
+    std::string dockLayoutBackup_;
 
     // SRV用デスクリプタヒープ
     Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> srvHeap_;
@@ -154,6 +165,8 @@ class ImGuiManager {
     bool showObjectView_ = true;
     bool showParticleView_ = true;
     bool showFPSView_ = true;
+    bool showOfScreenView_ = true;
+    bool showLightView_ = true;
 
     BaseObjectManager *baseObjectManager_ = nullptr;
 };

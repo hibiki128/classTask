@@ -38,7 +38,6 @@ void MyGame::Update() {
     if (imGuiManager_->GetIsShowMainUI()) {
         imGuiManager_->SetCurrentScene(sceneManager_->GetBaseScene());
         imGuiManager_->ShowDockSpace();
-        Framework::DisplayFPS();
         imGuiManager_->ShowMainUI();
         offscreen_->Setting();
         LightGroup::GetInstance()->imgui();
@@ -60,9 +59,9 @@ void MyGame::Draw() {
     if (sceneManager_->GetTransitionEnd()) {
         collisionManager_->Draw(*sceneManager_->GetBaseScene()->GetViewProjection());
     }
-    sceneManager_->Draw();
     object3dCommon->DrawCommonSetting();
     baseObjectManager_->Draw(*sceneManager_->GetBaseScene()->GetViewProjection());
+    sceneManager_->Draw();
 
 
 #ifdef _DEBUG

@@ -13,10 +13,6 @@ void TitleScene::Initialize() {
 
     debugCamera_ = std::make_unique<DebugCamera>();
     debugCamera_->Initialize(&vp_);
-
-    /*obj_ = std::make_unique<BaseObject>();
-    obj_->CreatePrimitiveModel(PrimitiveType::Sphere);
-    BaseObject*/
 }
 
 void TitleScene::Finalize() {
@@ -42,7 +38,7 @@ void TitleScene::Draw() {
 
     objCommon_->DrawCommonSetting();
     //-----3DObjectの描画開始-----
-   
+
     //--------------------------
 
     /// Particleの描画準備

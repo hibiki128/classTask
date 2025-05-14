@@ -1,4 +1,6 @@
+#define NOMINMAX
 #include "ImGuizmoManager.h"
+#include "Input.h"
 
 ImGuizmoManager *ImGuizmoManager::instance = nullptr;
 
@@ -37,13 +39,11 @@ BaseObject *ImGuizmoManager::GetSelectedTarget() {
 }
 
 void ImGuizmoManager::Update(const ImVec2 &scenePosition, const ImVec2 &sceneSize) {
-    // === ウィンドウは常に表示 ===
     ImGui::Begin("トランスフォームエディター");
 
     BaseObject *targetTransform = nullptr;
 
     if (!transformMap.empty()) {
-        // === Comboで対象選択 ===
         std::vector<const char *> names;
         int currentIndex = 0;
         int i = 0;
@@ -55,17 +55,14 @@ void ImGuizmoManager::Update(const ImVec2 &scenePosition, const ImVec2 &sceneSiz
         }
 
         if (ImGui::Combo("選択", &currentIndex, names.data(), static_cast<int>(names.size()))) {
-            // 新しい選択を適用
             selectedName = names[currentIndex];
         }
 
-        // 選択中のTransformを取得
         targetTransform = GetSelectedTarget();
     } else {
         ImGui::Text("Transformが登録されていません。");
     }
 
-    // === 操作モード切り替え ===
     if (ImGui::RadioButton("位置", currentOperation == ImGuizmo::TRANSLATE))
         currentOperation = ImGuizmo::TRANSLATE;
     ImGui::SameLine();
@@ -85,18 +82,97 @@ void ImGuizmoManager::Update(const ImVec2 &scenePosition, const ImVec2 &sceneSiz
 
     ImGui::Separator();
 
-    // === 選択中のTransformを表示・操作 ===
     if (targetTransform) {
         targetTransform->DebugImGui();
     }
 
-    ImGui::End(); // ウィンドウは必ず閉じる
+    ImGui::End();
 
-    // === ImGuizmoの処理は必要条件を満たすときのみ ===
-    if (!viewProjection || !targetTransform)
+    if (!viewProjection)
         return;
 
-    // === ImGuizmoによる操作 ===
+    // === マウスピック処理 ===
+    float mouseX = Input::GetInstance()->GetMousePos().x;
+    float mouseY = Input::GetInstance()->GetMousePos().y;
+    bool leftClicked = Input::GetInstance()->IsTriggerMouse(0);
+
+    static std::string lastPickedName;
+    static bool gizmoActive = false;
+
+    // シーンウィンドウ内か判定
+    if (mouseX >= scenePosition.x && mouseX <= scenePosition.x + sceneSize.x &&
+        mouseY >= scenePosition.y && mouseY <= scenePosition.y + sceneSize.y) {
+
+        if (leftClicked) {
+            // 画面座標をNDC(-1~1)に変換
+            float ndcX = 2.0f * (mouseX - scenePosition.x) / sceneSize.x - 1.0f;
+            float ndcY = 1.0f - 2.0f * (mouseY - scenePosition.y) / sceneSize.y;
+
+            // 最も近いオブジェクトを1つだけ判定（AABBの2D投影で簡易判定）
+            float minDistSq = std::numeric_limits<float>::max();
+            std::string pickedName;
+            for (const auto &pair : transformMap) {
+                BaseObject *obj = pair.second;
+                Vector3 pos = obj->GetWorldPosition();
+
+                // ワールド座標をスクリーン座標に変換
+                Vector3 screenPos;
+                {
+                    // ビュー射影変換
+                    Vector3 v = pos;
+                    float x = v.x * viewProjection->matView_.m[0][0] + v.y * viewProjection->matView_.m[1][0] + v.z * viewProjection->matView_.m[2][0] + viewProjection->matView_.m[3][0];
+                    float y = v.x * viewProjection->matView_.m[0][1] + v.y * viewProjection->matView_.m[1][1] + v.z * viewProjection->matView_.m[2][1] + viewProjection->matView_.m[3][1];
+                    float z = v.x * viewProjection->matView_.m[0][2] + v.y * viewProjection->matView_.m[1][2] + v.z * viewProjection->matView_.m[2][2] + viewProjection->matView_.m[3][2];
+                    float w = v.x * viewProjection->matView_.m[0][3] + v.y * viewProjection->matView_.m[1][3] + v.z * viewProjection->matView_.m[2][3] + viewProjection->matView_.m[3][3];
+                    // 射影
+                    float px = x * viewProjection->matProjection_.m[0][0] + y * viewProjection->matProjection_.m[1][0] + z * viewProjection->matProjection_.m[2][0] + w * viewProjection->matProjection_.m[3][0];
+                    float py = x * viewProjection->matProjection_.m[0][1] + y * viewProjection->matProjection_.m[1][1] + z * viewProjection->matProjection_.m[2][1] + w * viewProjection->matProjection_.m[3][1];
+                    float pz = x * viewProjection->matProjection_.m[0][2] + y * viewProjection->matProjection_.m[1][2] + z * viewProjection->matProjection_.m[2][2] + w * viewProjection->matProjection_.m[3][2];
+                    float pw = x * viewProjection->matProjection_.m[0][3] + y * viewProjection->matProjection_.m[1][3] + z * viewProjection->matProjection_.m[2][3] + w * viewProjection->matProjection_.m[3][3];
+                    if (pw != 0.0f) {
+                        screenPos.x = px / pw;
+                        screenPos.y = py / pw;
+                        screenPos.z = pz / pw;
+                    } else {
+                        screenPos.x = screenPos.y = screenPos.z = 0.0f;
+                    }
+                }
+                // NDC→ウィンドウ座標
+                float sx = scenePosition.x + (screenPos.x * 0.5f + 0.5f) * sceneSize.x;
+                float sy = scenePosition.y + (0.5f - screenPos.y * 0.5f) * sceneSize.y;
+
+                float dx = mouseX - sx;
+                float dy = mouseY - sy;
+                float distSq = dx * dx + dy * dy;
+
+                // 半径はGetRadius()で取得、2D投影で十分
+                float radius = obj->GetRadius();
+                float screenRadius = radius * 100.0f; // 適当なスケール（必要に応じて調整）
+
+                if (distSq < screenRadius * screenRadius && distSq < minDistSq) {
+                    minDistSq = distSq;
+                    pickedName = pair.first;
+                }
+            }
+            if (!pickedName.empty()) {
+                selectedName = pickedName;
+                gizmoActive = true;
+                lastPickedName = pickedName;
+            } else {
+                gizmoActive = false;
+            }
+        }
+    }
+
+    // === ImGuizmoの処理は必要条件を満たすときのみ ===
+    targetTransform = GetSelectedTarget();
+    if (!targetTransform)
+        return;
+
+    // ギズモがアクティブな時のみImGuizmoを有効化
+    if (!gizmoActive)
+        return;
+
     float matrix[16];
     ConvertMatrix4x4ToFloat16(targetTransform->GetWorldTransform().matWorld_, matrix);
 
@@ -116,10 +192,9 @@ void ImGuizmoManager::Update(const ImVec2 &scenePosition, const ImVec2 &sceneSiz
         matrix);
 
     if (manipulated) {
-        // マトリックス更新
         ConvertFloat16ToMatrix4x4(matrix, targetTransform->GetWorldTransform().matWorld_);
         DecomposeMatrix(&targetTransform->GetWorldTransform());
-        targetTransform->GetWorldTransform().TransferMatrix(); // 定数バッファへ転送
+        targetTransform->GetWorldTransform().TransferMatrix();
     }
 }
 

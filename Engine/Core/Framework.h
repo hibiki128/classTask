@@ -62,11 +62,6 @@ class Framework {
     /// </summary>
     /// <returns></returns>
     virtual bool IsEndRequest() { return endRequest_; }
-
-    /// <summary>
-    ///  FPS表示
-    /// </summary>
-    void DisplayFPS();
   private:
 
   protected:

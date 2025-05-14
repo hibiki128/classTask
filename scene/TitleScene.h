@@ -63,6 +63,4 @@ class TitleScene : public BaseScene {
     ViewProjection vp_;
     Easing ease_;
     std::unique_ptr<DebugCamera> debugCamera_;
-
- //  std::unique_ptr<BaseObject> obj_;
 };

@@ -7,6 +7,7 @@
 #include "imgui_impl_win32.h"
 #include <externals/icon/IconsFontAwesome5.h>
 #include <imgui_impl_dx12.h>
+#include <Engine/Frame/Frame.h>
 
 ImGuiManager *ImGuiManager::instance = nullptr;
 
@@ -276,7 +277,7 @@ void ImGuiManager::ShowMainMenu() {
                 ImGui::MenuItem(ICON_FA_BOOK_OPEN " シーンビュー", nullptr, &showSceneView_);
                 ImGui::MenuItem(ICON_FA_CUBE " オブジェクトビュー", nullptr, &showObjectView_);
                 ImGui::MenuItem(ICON_FA_STAR " パーティクルビュー", nullptr, &showParticleView_);
-                // ImGui::MenuItem(ICON_FA_TERMINAL " コンソール", nullptr, &showConsole_);
+                ImGui::MenuItem(ICON_FA_DATABASE " FPSビュー", nullptr, &showFPSView_);
                 // ImGui::MenuItem(ICON_FA_SITEMAP " ヒエラルキー", nullptr, &showHierarchy_);
                 // ImGui::MenuItem(ICON_FA_SLIDERS_H " インスペクター", nullptr, &showInspector_);
                 // ImGui::MenuItem(ICON_FA_FOLDER " プロジェクト", nullptr, &showProject_);
@@ -547,6 +548,23 @@ void ImGuiManager::ShowParticleSettingWindow() {
     ImGui::End();
 }
 
+void ImGuiManager::ShowFPSWindow() {
+    if (!showFPSView_)
+        return; // 表示しない場合は早期リターン
+
+    ImGuiWindowFlags flags = ImGuiWindowFlags_None;
+    if (!isShowMainUI_) {
+        ImGui::SetNextWindowCollapsed(true, ImGuiCond_Once);
+        flags |= ImGuiWindowFlags_NoBringToFrontOnFocus;
+    }
+
+    ImGui::Begin("FPS", &showFPSView_, flags);
+
+    DisplayFPS();
+
+    ImGui::End();
+}
+
 void ImGuiManager::FixAspectRatio() {
 
     // 横幅ベースで16:9に合わせた高さ
@@ -660,6 +678,8 @@ void ImGuiManager::ShowMainUI() {
     ShowObjectSettingWindow();
     // プロジェクトウィンドウを描画
     ShowParticleSettingWindow();
+    // FPSを描画
+    ShowFPSWindow();
 }
 
 bool &ImGuiManager::GetIsShowMainUI() {
@@ -692,3 +712,29 @@ void ImGuiManager::ShowDockSpace() {
 }
 
 #endif //_DEBUG
+
+void ImGuiManager::DisplayFPS() {
+#ifdef _DEBUG
+    ImGuiIO &io = ImGui::GetIO();
+    // FPSを取得
+    float fps = Frame::GetFPS();
+    float deltaTime = Frame::DeltaTime() * 1000.0f; // ミリ秒単位に変換
+
+    // FPSを表示するウィンドウを固定位置に設定
+    ImGui::SetNextWindowPos(ImVec2((WinApp::kClientWidth - 150), 20), ImGuiCond_Always);
+    ImGui::SetNextWindowBgAlpha(0.5f); // 半透明の背景
+
+    // FPSを色付きで表示
+    ImVec4 color;
+    if (fps >= 59.0f) {
+        color = ImVec4(0.0f, 1.0f, 0.0f, 1.0f); // 60FPS付近なら緑色
+    } else if (fps >= 30.0f) {
+        color = ImVec4(1.0f, 1.0f, 0.0f, 1.0f); // 30-59FPSなら黄色
+    } else {
+        color = ImVec4(1.0f, 0.0f, 0.0f, 1.0f); // 30FPS未満なら赤色
+    }
+
+    ImGui::TextColored(color, "FPS: %.1f", fps);
+    ImGui::TextColored(color, "Frame: %.2f ms", deltaTime);
+#endif // _DEBUG
+}

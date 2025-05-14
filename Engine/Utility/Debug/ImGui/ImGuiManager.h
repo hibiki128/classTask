@@ -77,6 +77,8 @@ class ImGuiManager {
     /// </summary>
     void ShowDockSpace();
 
+    void DisplayFPS();
+
     bool &GetIsShowMainUI();
     void SetCurrentScene(BaseScene *currentScene) { currentScene_ = currentScene; };
 
@@ -112,6 +114,8 @@ class ImGuiManager {
     void ShowObjectSettingWindow();
 
     void ShowParticleSettingWindow();
+
+    void ShowFPSWindow();
 
     void FixAspectRatio();
 
@@ -149,6 +153,7 @@ class ImGuiManager {
     bool showSceneView_ = true;
     bool showObjectView_ = true;
     bool showParticleView_ = true;
+    bool showFPSView_ = true;
 
     BaseObjectManager *baseObjectManager_ = nullptr;
 };

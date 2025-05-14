@@ -216,35 +216,3 @@ void Framework::PlaySounds() {
 
 void Framework::Draw() {
 }
-
-void Framework::DisplayFPS() {
-#ifdef _DEBUG
-    ImGuiIO &io = ImGui::GetIO();
-
-    // FPSを取得
-    float fps = Frame::GetFPS(); // FPSの取得
-
-    // FPSを表示するウィンドウを固定位置に設定
-    ImGui::SetNextWindowPos(ImVec2((WinApp::kClientWidth - 50), 20), ImGuiCond_Always);
-    ImGui::SetNextWindowBgAlpha(0.0f); // 背景を透明に設定
-
-    // ウィンドウフラグを設定
-    ImGui::Begin("FPS Overlay", nullptr,
-                 ImGuiWindowFlags_NoTitleBar |           // タイトルバーを非表示
-                     ImGuiWindowFlags_NoResize |         // リサイズを禁止
-                     ImGuiWindowFlags_NoMove |           // ウィンドウの移動を禁止
-                     ImGuiWindowFlags_NoScrollbar |      // スクロールバーを非表示
-                     ImGuiWindowFlags_NoCollapse |       // 折りたたみボタンを非表示
-                     ImGuiWindowFlags_AlwaysAutoResize | // 自動サイズ調整
-                     ImGuiWindowFlags_NoBackground       // 背景を非表示
-    );
-
-    // FPSを緑色で表示
-    ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32(50, 255, 50, 255)); // 緑色に設定
-    ImGui::Text("%.1f", fps);                                         // FPSを表示
-    ImGui::PopStyleColor();
-
-    ImGui::End();
-
-#endif // _DEBUG
-}

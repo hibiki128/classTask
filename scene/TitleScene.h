@@ -56,7 +56,6 @@ class TitleScene : public BaseScene {
   private:
     Audio *audio_;
     Input *input_;
-    Object3dCommon *objCommon_;
     SpriteCommon *spCommon_;
     ParticleCommon *ptCommon_;
 

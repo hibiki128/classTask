@@ -2,20 +2,26 @@
 #include "Object3dCommon.h"
 #include "cassert"
 #include "myMath.h"
-#include <line/DrawLine3D.h>
-#include <Texture/TextureManager.h>
 #include <Model/ModelManager.h>
+#include <Texture/TextureManager.h>
+#include <line/DrawLine3D.h>
 
-void Object3d::CreateModel(const std::string &filePath) {
-    this->obj3dCommon = Object3dCommon::GetInstance();
+void Object3d::Initialize() {
+    objectCommon_ = std::make_unique<Object3dCommon>();
+    objectCommon_->Initialize();
+
+    dxCommon_ = DirectXCommon::GetInstance();
+
+    lightGroup = LightGroup::GetInstance();
 
     CreateTransformationMatrix();
 
     CreateMaterial();
+}
+
+void Object3d::CreateModel(const std::string &filePath) {
 
     filePath_ = filePath;
-
-    lightGroup = LightGroup::GetInstance();
 
     ModelManager::GetInstance()->LoadModel(filePath_);
 
@@ -36,20 +42,11 @@ void Object3d::CreateModel(const std::string &filePath) {
 }
 
 void Object3d::CreatePrimitiveModel(const PrimitiveType &type) {
-
-    this->obj3dCommon = Object3dCommon::GetInstance();
-
-    CreateTransformationMatrix();
-
-    CreateMaterial();
-
-    lightGroup = LightGroup::GetInstance();
     model = ModelManager::GetInstance()->FindModel(ModelManager::GetInstance()->CreatePrimitiveModel(type));
     materialData->color = model->GetModelData().material.color;
     materialData->uvTransform = model->GetModelData().material.uvTransform;
     materialData->textureFilePath = model->GetModelData().material.textureFilePath;
     materialData->textureIndex = model->GetModelData().material.textureIndex;
-
 }
 
 void Object3d::Update(const WorldTransform &worldTransform, const ViewProjection &viewProjection) {
@@ -119,6 +116,8 @@ void Object3d::Draw(const WorldTransform &worldTransform, const ViewProjection &
             return;
     }*/
 
+    objectCommon_->SetBlendMode(blendMode_);
+
     if (color) {
         materialData->color = color->GetColor();
     }
@@ -128,22 +127,22 @@ void Object3d::Draw(const WorldTransform &worldTransform, const ViewProjection &
     if (model->IsGltf()) {
         if (currentModelAnimation_->GetAnimator()->HaveAnimation()) {
             HaveAnimation = true;
-            Object3dCommon::GetInstance()->skinningDrawCommonSetting();
+            objectCommon_->skinningDrawCommonSetting();
         } else {
             HaveAnimation = false;
         }
     }
 
-    obj3dCommon->GetDxCommon()->GetCommandList()->SetGraphicsRootConstantBufferView(0, materialResource->GetGPUVirtualAddress());
+    dxCommon_->GetCommandList()->SetGraphicsRootConstantBufferView(0, materialResource->GetGPUVirtualAddress());
     // wvp用のCBufferの場所を設定
-    obj3dCommon->GetDxCommon()->GetCommandList()->SetGraphicsRootConstantBufferView(1, transformationMatrixResource->GetGPUVirtualAddress());
+    dxCommon_->GetCommandList()->SetGraphicsRootConstantBufferView(1, transformationMatrixResource->GetGPUVirtualAddress());
     SrvManager::GetInstance()->SetGraphicsRootDescriptorTable(2, materialData->textureIndex);
     if (materialData->enableLighting != 0 && lightGroup) {
         lightGroup->Draw();
     }
     // マテリアルCBufferの場所を設定
     if (model) {
-        model->Draw();
+        model->Draw(objectCommon_.get());
     }
 }
 
@@ -205,7 +204,7 @@ void Object3d::SetShininess(float shininess) {
 }
 
 void Object3d::CreateTransformationMatrix() {
-    transformationMatrixResource = obj3dCommon->GetDxCommon()->CreateBufferResource(sizeof(TransformationMatrix));
+    transformationMatrixResource = dxCommon_->CreateBufferResource(sizeof(TransformationMatrix));
     // 書き込むかめのアドレスを取得
     transformationMatrixResource->Map(0, nullptr, reinterpret_cast<void **>(&transformationMatrixData));
     // 単位行列を書き込んでおく
@@ -216,7 +215,7 @@ void Object3d::CreateTransformationMatrix() {
 
 void Object3d::CreateMaterial() {
     // Sprite用のマテリアルリソースをつくる
-    materialResource = obj3dCommon->GetDxCommon()->CreateBufferResource(sizeof(Material));
+    materialResource = dxCommon_->CreateBufferResource(sizeof(Material));
     // 書き込むためのアドレスを取得
     materialResource->Map(0, nullptr, reinterpret_cast<void **>(&materialData));
     // 色の設定

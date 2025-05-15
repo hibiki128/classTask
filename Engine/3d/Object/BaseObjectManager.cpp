@@ -24,7 +24,6 @@ void BaseObjectManager::AddObject(std::unique_ptr<BaseObject> baseObject) {
     const std::string &name = baseObject->GetName();
     ImGuizmoManager::GetInstance()->AddTarget(baseObject->GetName(),baseObject.get());
     baseObjects_.emplace(name, std::move(baseObject));
-
 }
 
 void BaseObjectManager::Update() {
@@ -41,7 +40,7 @@ void BaseObjectManager::Draw(const ViewProjection &viewProjection, Vector3 offSe
 
 void BaseObjectManager::DrawImGui() {
     for (auto &[name, obj] : baseObjects_) {
-        obj->DebugImGui();
+        obj->ImGui();
     }
 }
 

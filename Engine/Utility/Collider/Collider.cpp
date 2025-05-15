@@ -13,12 +13,13 @@ Collider::~Collider() {
     counter--; // カウンターをデクリメント
 }
 
-void Collider::Initialize(const std::string className) {
+Collider &Collider::AddCollider(const std::string &objName) {
+    // CollisionManager にこのコライダーを登録
     CollisionManager::AddCollider(this);
 
     counter++;
 
-    // 初期化
+    // 各コライダー形状の初期化
     SphereOffset_.center = {0.0f, 0.0f, 0.0f};
     SphereOffset_.radius = 0.0f;
     AABBOffset_.min = {0.0f, 0.0f, 0.0f};
@@ -27,9 +28,16 @@ void Collider::Initialize(const std::string className) {
     OBBOffset_.scaleCenter = {0.0f, 0.0f, 0.0f};
     OBBOffset_.size = {1.0f, 1.0f, 1.0f};
 
-    className_ = className;
+    // オブジェクト名を設定
+    objName_ = objName;
+
+    // JSONから設定をロード
     LoadFromJson();
+
+    // 自分自身を参照で返す
+    return *this;
 }
+
 
 void Collider::UpdateWorldTransform() {
 
@@ -225,7 +233,7 @@ void Collider::DrawSphereAtCenter(const ViewProjection &viewProjection, const Ve
 }
 
 void Collider::OffsetImgui() {
-    if (ImGui::BeginTabItem("コライダー")) {
+    if (ImGui::CollapsingHeader("コライダー")) {
         ImGui::Checkbox("可視化", &isVisible_);
         ImGui::Checkbox("コライダーの有無", &isCollisionEnabled_);
 
@@ -257,8 +265,6 @@ void Collider::OffsetImgui() {
             std::string message = std::format("Collider saved.");
             MessageBoxA(nullptr, message.c_str(), "Object", 0);
         }
-
-        ImGui::EndTabItem();
     }
 }
 
@@ -369,7 +375,7 @@ void Collider::SaveToJson() {
 
 void Collider::LoadFromJson() {
     // 各種フラグをJSONから読み込み
-    ColliderDatas_ = std::make_unique<DataHandler>("Collider", className_);
+    ColliderDatas_ = std::make_unique<DataHandler>("Collider", objName_);
     isVisible_ = ColliderDatas_->Load<bool>("isVisible", true);
     isCollisionEnabled_ = ColliderDatas_->Load<bool>("isCollisionEnabled", true);
     isSphere_ = ColliderDatas_->Load<bool>("isSphere", true);

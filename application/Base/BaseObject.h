@@ -50,9 +50,9 @@ class BaseObject : public Collider {
 
     virtual void CreateModel(const std::string modelname);
     virtual void CreatePrimitiveModel(const PrimitiveType &type);
-    virtual void CreateCollider();
+    virtual void AddCollider();
 
-    virtual void DebugImGui();
+    virtual void ImGui();
 
     Vector3 GetCenterPosition() const override;
     Vector3 GetCenterRotation() const override;
@@ -86,17 +86,23 @@ class BaseObject : public Collider {
     void SetParent(const WorldTransform &wt) { transform_.parent_ = &wt; }
     void SetAnima(const std::string &filePath) { obj3d_->SetAnimation(filePath); }
     void AddAnimation(std::string filePath) { obj3d_->AddAnimation(filePath); }
+    void SetBlendMode(BlendMode blendMode) { obj3d_->SetBlendMode(blendMode); }
 
   private:
-    void DebugTransform();
+    void DebugObject();
     void DebugCollider();
     void SaveToJson();
     void LoadFromJson();
     void AnimaSaveToJson();
     void AnimaLoadFromJson();
     void ShowFileSelector();
-
+    // ブレンドモードの選択UI
+    void ShowBlendModeCombo(BlendMode &currentMode);
+   
     std::vector<std::string> GetGltfFiles();
+    std::vector<Collider *> colliders_;
 
     bool isCollider = false;
+    std::string texturePath_;
+    BlendMode blendMode_;
 };

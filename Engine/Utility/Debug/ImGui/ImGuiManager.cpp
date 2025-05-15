@@ -321,7 +321,6 @@ void ImGuiManager::ShowMainMenu() {
                     std::unique_ptr<BaseObject> object = std::make_unique<BaseObject>();
                     object->Init(name);
                     object->CreatePrimitiveModel(PrimitiveType::Cube);
-                    object->SetTexture("debug/uvChecker.png");
                     baseObjectManager_->AddObject(std::move(object));
                 }
 
@@ -330,7 +329,6 @@ void ImGuiManager::ShowMainMenu() {
                     std::unique_ptr<BaseObject> object = std::make_unique<BaseObject>();
                     object->Init(name);
                     object->CreatePrimitiveModel(PrimitiveType::Sphere);
-                    object->SetTexture("debug/uvChecker.png");
                     baseObjectManager_->AddObject(std::move(object));
                 }
 
@@ -339,7 +337,6 @@ void ImGuiManager::ShowMainMenu() {
                     std::unique_ptr<BaseObject> object = std::make_unique<BaseObject>();
                     object->Init(name);
                     object->CreatePrimitiveModel(PrimitiveType::Plane);
-                    object->SetTexture("debug/uvChecker.png");
                     baseObjectManager_->AddObject(std::move(object));
                 }
 
@@ -348,7 +345,6 @@ void ImGuiManager::ShowMainMenu() {
                     std::unique_ptr<BaseObject> object = std::make_unique<BaseObject>();
                     object->Init(name);
                     object->CreatePrimitiveModel(PrimitiveType::Cylinder);
-                    object->SetTexture("debug/uvChecker.png");
                     baseObjectManager_->AddObject(std::move(object));
                 }
 
@@ -357,7 +353,6 @@ void ImGuiManager::ShowMainMenu() {
                     std::unique_ptr<BaseObject> object = std::make_unique<BaseObject>();
                     object->Init(name);
                     object->CreatePrimitiveModel(PrimitiveType::Ring);
-                    object->SetTexture("debug/uvChecker.png");
                     baseObjectManager_->AddObject(std::move(object));
                 }
 
@@ -366,7 +361,6 @@ void ImGuiManager::ShowMainMenu() {
                     std::unique_ptr<BaseObject> object = std::make_unique<BaseObject>();
                     object->Init(name);
                     object->CreatePrimitiveModel(PrimitiveType::Triangle);
-                    object->SetTexture("debug/uvChecker.png");
                     baseObjectManager_->AddObject(std::move(object));
                 }
 
@@ -375,7 +369,6 @@ void ImGuiManager::ShowMainMenu() {
                     std::unique_ptr<BaseObject> object = std::make_unique<BaseObject>();
                     object->Init(name);
                     object->CreatePrimitiveModel(PrimitiveType::Pyramid);
-                    object->SetTexture("debug/uvChecker.png");
                     baseObjectManager_->AddObject(std::move(object));
                 }
 
@@ -384,7 +377,6 @@ void ImGuiManager::ShowMainMenu() {
                     std::unique_ptr<BaseObject> object = std::make_unique<BaseObject>();
                     object->Init(name);
                     object->CreatePrimitiveModel(PrimitiveType::Cone);
-                    object->SetTexture("debug/uvChecker.png");
                     baseObjectManager_->AddObject(std::move(object));
                 }
 

@@ -19,6 +19,7 @@
 
 #include <unordered_set>
 #include <Primitive/PrimitiveModel.h>
+#include"Object/Object3dCommon.h"
 class Model
 {
 private:
@@ -65,7 +66,7 @@ public:
 	/// <summary>
 	/// 描画
 	/// </summary>
-	void Draw();
+	void Draw(Object3dCommon* objCommon);
 
 	void SetSrv(SrvManager* srvManager) { srvManager_ = srvManager; }
 	void SetAnimator(Animator* animator) { animator_ = animator; }

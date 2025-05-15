@@ -146,7 +146,7 @@ void ImGuizmoManager::Update(const ImVec2 &scenePosition, const ImVec2 &sceneSiz
                 float distSq = dx * dx + dy * dy;
 
                 // 半径はGetRadius()で取得、2D投影で十分
-                float radius = obj->GetRadius();
+                float radius = obj->GetWorldScale().x;
                 float screenRadius = radius * 100.0f; // 適当なスケール（必要に応じて調整）
 
                 if (distSq < screenRadius * screenRadius && distSq < minDistSq) {

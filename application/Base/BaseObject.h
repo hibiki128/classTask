@@ -95,9 +95,11 @@ class BaseObject : public Collider {
     void AnimaSaveToJson();
     void AnimaLoadFromJson();
     void ShowFileSelector();
+    void SelectTexture(std::string &selectedTexturePath);
 
     std::vector<std::string> GetGltfFiles();
     std::vector<Collider *> colliders_;
 
     bool isCollider = false;
+    std::string texturePath_;
 };

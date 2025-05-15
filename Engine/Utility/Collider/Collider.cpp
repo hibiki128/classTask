@@ -233,7 +233,7 @@ void Collider::DrawSphereAtCenter(const ViewProjection &viewProjection, const Ve
 }
 
 void Collider::OffsetImgui() {
-    if (ImGui::BeginTabItem("コライダー")) {
+    if (ImGui::CollapsingHeader("コライダー")) {
         ImGui::Checkbox("可視化", &isVisible_);
         ImGui::Checkbox("コライダーの有無", &isCollisionEnabled_);
 
@@ -265,8 +265,6 @@ void Collider::OffsetImgui() {
             std::string message = std::format("Collider saved.");
             MessageBoxA(nullptr, message.c_str(), "Object", 0);
         }
-
-        ImGui::EndTabItem();
     }
 }
 

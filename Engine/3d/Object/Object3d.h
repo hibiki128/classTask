@@ -125,6 +125,7 @@ class Object3d {
     const Vector3 &GetPosition() const { return position; }
     const Vector3 &GetRotation() const { return rotation; }
     const Vector3 &GetSize() const { return size; }
+    const std::string GetTexture() const { return materialData->textureFilePath; }
     const bool &GetHaveAnimation() const { return HaveAnimation; }
     bool IsFinish() { return currentModelAnimation_->IsFinish(); }
 

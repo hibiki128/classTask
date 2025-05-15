@@ -1,6 +1,9 @@
 #include "BaseObject.h"
+#include "ShowFolder/ShowFolder.h"
 
 void BaseObject::Init(const std::string objectName) {
+    obj3d_ = std::make_unique<Object3d>();
+    obj3d_->Initialize();
     objectName_ = objectName;
     /// ワールドトランスフォームの初期化
     transform_.Initialize();
@@ -56,7 +59,6 @@ Vector3 BaseObject::GetWorldPosition() const {
 }
 
 void BaseObject::CreateModel(const std::string modelname) {
-    obj3d_ = std::make_unique<Object3d>();
     obj3d_->CreateModel(modelname);
 
     LoadFromJson();
@@ -64,7 +66,6 @@ void BaseObject::CreateModel(const std::string modelname) {
 }
 
 void BaseObject::CreatePrimitiveModel(const PrimitiveType &type) {
-    obj3d_ = std::make_unique<Object3d>();
     obj3d_->CreatePrimitiveModel(type);
     LoadFromJson();
 }
@@ -74,16 +75,22 @@ void BaseObject::AddCollider() {
     isCollider = true;
 }
 
-void BaseObject::DebugImGui() {
+void BaseObject::ImGui() {
 
     if (ImGui::BeginTabBar(objectName_.c_str())) {
         if (ImGui::BeginTabItem(objectName_.c_str())) {
-            DebugTransform();
+            DebugObject();
             if (isCollider) {
                 DebugCollider();
             }
             if (ImGui::Button("コライダー追加")) {
                 AddCollider();
+            }
+            if (ImGui::Button("セーブ")) {
+                SaveToJson();
+                AnimaSaveToJson();
+                std::string message = std::format("ObjectData saved.");
+                MessageBoxA(nullptr, message.c_str(), "Object", 0);
             }
             ImGui::EndTabItem();
         }
@@ -91,7 +98,7 @@ void BaseObject::DebugImGui() {
     }
 }
 
-void BaseObject::DebugTransform() {
+void BaseObject::DebugObject() {
     if (ImGui::CollapsingHeader("トランスフォーム")) {
         ImGui::DragFloat3("位置", &transform_.translation_.x, 0.1f);
         float rotationDegrees[3] = {
@@ -105,17 +112,20 @@ void BaseObject::DebugTransform() {
             transform_.rotation_.z = degreesToRadians(rotationDegrees[2]);
         }
         ImGui::DragFloat3("大きさ", &transform_.scale_.x, 0.1f);
-        if (ImGui::CollapsingHeader("テクスチャ選択")) {
-            SelectTexture(texturePath_);
+    }
+    if (ImGui::CollapsingHeader("モデル")) {
+        if (ImGui::TreeNode("テクスチャ選択")) {
+            ShowTextureFile(texturePath_);
             if (ImGui::Button("適応")) {
                 SetTexture(texturePath_);
                 texturePath_.clear();
             }
+            ImGui::TreePop();
         }
-        if (ImGui::Button("セーブ")) {
-            SaveToJson();
-            std::string message = std::format("Transform saved.");
-            MessageBoxA(nullptr, message.c_str(), "Object", 0);
+        if (ImGui::TreeNode("ブレンドモード")) {
+            ShowBlendModeCombo(blendMode_);
+            SetBlendMode(blendMode_);
+            ImGui::TreePop();
         }
     }
     if (obj3d_->GetHaveAnimation()) {
@@ -128,11 +138,6 @@ void BaseObject::DebugTransform() {
             if (ImGui::TreeNode("アニメーションセット")) {
                 ShowFileSelector();
                 ImGui::TreePop();
-            }
-            if (ImGui::Button("セーブ")) {
-                AnimaSaveToJson();
-                std::string message = std::format("Anima saved.");
-                MessageBoxA(nullptr, message.c_str(), "Object", 0);
             }
         }
     }
@@ -157,6 +162,7 @@ void BaseObject::SaveToJson() {
     TransformDatas_->Save<Vector3>("rotation", transform_.rotation_);
     TransformDatas_->Save<Vector3>("scale", transform_.scale_);
     TransformDatas_->Save<std::string>("texturePath", obj3d_->GetTexture());
+    TransformDatas_->Save<int>("blendMode", static_cast<int>(blendMode_));
 }
 
 void BaseObject::LoadFromJson() {
@@ -165,9 +171,13 @@ void BaseObject::LoadFromJson() {
     transform_.rotation_ = TransformDatas_->Load<Vector3>("rotation", {0.0f, 0.0f, 0.0f});
     transform_.scale_ = TransformDatas_->Load<Vector3>("scale", {1.0f, 1.0f, 1.0f});
     SetTexture(TransformDatas_->Load<std::string>("texturePath", "debug/uvChecker.png"));
+    SetBlendMode(static_cast<BlendMode>(TransformDatas_->Load<int>("blendMode", 0)));
 }
 
 void BaseObject::AnimaSaveToJson() {
+    if (!AnimaDatas_) {
+        return;
+    }
     AnimaDatas_->Save<bool>("Loop", isLoop_);
 }
 
@@ -204,74 +214,24 @@ void BaseObject::ShowFileSelector() {
     }
 }
 
-void BaseObject::SelectTexture(std::string &selectedTexturePath) {
-    // テクスチャファイル選択
-    static std::filesystem::path baseDirTex = "resources/images/";
-    static std::filesystem::path currentDirTex = "resources/images";
-    static std::string selectedFolderTex = "";
-    static std::string selectedFileTex = "";
+void BaseObject::ShowBlendModeCombo(BlendMode &currentMode) {
+    // コンボボックスに表示する項目（日本語）
+    static const char *blendModeItems[] = {
+        "なし",      // kNone
+        "通常",      // kNormal
+        "加算",      // kAdd
+        "減算",      // kSubtract
+        "乗算",      // kMultiply
+        "スクリーン" // kScreen
+    };
 
-    // 「戻る」ボタン（テクスチャ用）
-    if (currentDirTex != "resources/images") {
-        if (ImGui::Button("< 戻る(Tex)")) {
-            currentDirTex = currentDirTex.parent_path();
-            selectedFolderTex = "";
-            selectedFileTex = "";
-        }
-    }
+    // 現在の選択状態（enumをintにキャスト）
+    int currentIndex = static_cast<int>(currentMode);
 
-    // フォルダ一覧
-    std::vector<std::string> foldersTex;
-    std::vector<std::string> texFiles;
-
-    for (const auto &entry : std::filesystem::directory_iterator(currentDirTex)) {
-        if (entry.is_directory()) {
-            foldersTex.push_back(entry.path().filename().string());
-        } else if (entry.path().extension() == ".png" || entry.path().extension() == ".jpg") {
-            texFiles.push_back(entry.path().filename().string());
-        }
-    }
-
-    // フォルダ選択 (クリックで移動)
-    if (!foldersTex.empty()) {
-        ImGui::Text("フォルダ");
-        ImGui::Separator();
-        for (auto &folder : foldersTex) {
-            std::string folderNameTex = folder + " (Tex)"; // フォルダ名に "(Tex)" を追加
-            if (ImGui::Selectable(folderNameTex.c_str(), selectedFolderTex == folder)) {
-                selectedFolderTex = folderNameTex;
-                currentDirTex = currentDirTex / folder; // フォルダ移動
-                selectedFileTex = "";                   // 新しいフォルダを開いたらファイル選択をリセット
-            }
-            ImGui::Separator();
-        }
-    }
-
-    // `.png`, `.jpg` テクスチャファイル選択
-    if (!texFiles.empty()) {
-        ImGui::Text("テクスチャファイル:");
-        if (ImGui::BeginCombo("ファイル選択 ", selectedFileTex.empty() ? "なし" : selectedFileTex.c_str())) {
-            for (const auto &file : texFiles) {
-                bool isSelected = (file == selectedFileTex);
-                if (ImGui::Selectable(file.c_str(), isSelected)) {
-                    selectedFileTex = file;
-
-                    // `baseDirTex` からの相対パスを取得
-                    std::filesystem::path relativePath = (currentDirTex / file).lexically_relative(baseDirTex);
-
-                    // Windowsのバックスラッシュをスラッシュに変換
-                    std::string pathStr = relativePath.string();
-                    std::replace(pathStr.begin(), pathStr.end(), '\\', '/');
-
-                    // 選択されたテクスチャパスを設定
-                    selectedTexturePath = pathStr;
-                }
-                if (isSelected) {
-                    ImGui::SetItemDefaultFocus();
-                }
-            }
-            ImGui::EndCombo();
-        }
+    // コンボボックス表示
+    if (ImGui::Combo("ブレンドモード", &currentIndex, blendModeItems, IM_ARRAYSIZE(blendModeItems))) {
+        // ユーザーが選択を変更したときに反映
+        currentMode = static_cast<BlendMode>(currentIndex);
     }
 }
 

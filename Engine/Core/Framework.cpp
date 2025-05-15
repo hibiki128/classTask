@@ -99,12 +99,6 @@ void Framework::Initialize() {
     spriteCommon->Initialize();
     ///----------------------------------
 
-    ///----------Object3dCommon-----------
-    // 3Dオブジェクト共通部の初期化
-    object3dCommon = Object3dCommon::GetInstance();
-    object3dCommon->Initialize();
-    ///-----------------------------------
-
     ///----------ParticleCommon------------
     particleCommon = ParticleCommon::GetInstance();
     particleCommon->Initialize(dxCommon);
@@ -186,7 +180,6 @@ void Framework::Finalize() {
     audio->Finalize();
     LightGroup::GetInstance()->Finalize();
     particleEditor->Finalize();
-    object3dCommon->Finalize();
     spriteCommon->Finalize();
     particleCommon->Finalize();
     dxCommon->Finalize();

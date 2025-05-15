@@ -40,7 +40,7 @@ void Model::CreatePrimitiveModel(ModelCommon *modelCommon, const PrimitiveType &
     CreateIndexResource();
 }
 
-void Model::Draw() {
+void Model::Draw(Object3dCommon *objCommon) {
     D3D12_VERTEX_BUFFER_VIEW influenceBufferView;
     uint32_t SrvIndex;
     if (isGltf) {
@@ -68,7 +68,7 @@ void Model::Draw() {
     modelCommon_->GetDxCommon()->GetCommandList()->DrawIndexedInstanced(UINT(modelData.indices.size()), 1, 0, 0, 0);
     if (animator_) {
         if (animator_->HaveAnimation()) {
-            Object3dCommon::GetInstance()->DrawCommonSetting();
+            objCommon->DrawCommonSetting();
         }
     }
 }

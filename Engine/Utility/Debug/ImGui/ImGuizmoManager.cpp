@@ -83,7 +83,7 @@ void ImGuizmoManager::Update(const ImVec2 &scenePosition, const ImVec2 &sceneSiz
     ImGui::Separator();
 
     if (targetTransform) {
-        targetTransform->DebugImGui();
+        targetTransform->ImGui();
     }
 
     ImGui::End();

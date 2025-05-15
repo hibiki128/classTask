@@ -86,7 +86,6 @@ class Framework {
     PipeLineManager *pipeLineManager_ = nullptr;
 
     SpriteCommon *spriteCommon = nullptr;
-    Object3dCommon *object3dCommon = nullptr;
     ParticleCommon *particleCommon = nullptr;
     ParticleEditor *particleEditor = nullptr;
 

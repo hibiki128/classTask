@@ -4,7 +4,6 @@
 
 void TitleScene::Initialize() {
     audio_ = Audio::GetInstance();
-    objCommon_ = Object3dCommon::GetInstance();
     spCommon_ = SpriteCommon::GetInstance();
     ptCommon_ = ParticleCommon::GetInstance();
     input_ = Input::GetInstance();
@@ -36,11 +35,6 @@ void TitleScene::Draw() {
 
     //-------------------------
 
-    objCommon_->DrawCommonSetting();
-    //-----3DObjectの描画開始-----
-
-    //--------------------------
-
     /// Particleの描画準備
     ptCommon_->DrawCommonSetting();
     //------Particleの描画開始-------
@@ -66,11 +60,6 @@ void TitleScene::DrawForOffScreen() {
     //-----Spriteの描画開始-----
 
     //------------------------
-
-    objCommon_->DrawCommonSetting();
-    //-----3DObjectの描画開始-----
-
-    //--------------------------
 
     /// Particleの描画準備
     ptCommon_->DrawCommonSetting();

@@ -178,6 +178,7 @@ copy "$(WindowsSdkDIr)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     <ClCompile Include="scene\SelectScene.cpp" />
     <ClCompile Include="scene\TitleScene.cpp" />
     <ClCompile Include="Engine\3d\Animation\Skin.cpp" />
+    <ClCompile Include="Engine\Utility\ShowFolder\ShowFolder.cpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include=".editorconfig" />
@@ -281,6 +282,7 @@ copy "$(WindowsSdkDIr)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     <ClInclude Include="scene\SelectScene.h" />
     <ClInclude Include="scene\TitleScene.h" />
     <ClInclude Include="Engine\3d\Animation\Skin.h" />
+    <ClInclude Include="Engine\Utility\ShowFolder\ShowFolder.h" />
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="resources\shaders\Object\Skinning.CS.hlsl">

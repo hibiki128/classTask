@@ -29,8 +29,9 @@ void ImGuiManager::Initialize(WinApp *winApp) {
 
     // パフォーマンス関連の設定
     io.ConfigMemoryCompactTimer = 300.0f; // メモリ圧縮の間隔を長く
-    io.IniFilename = "imgui.ini";         // 設定ファイルの保存場所
+    io.IniFilename = nullptr;             // 設定ファイルの保存場所
                                           // 設定ファイルの保存場所
+    LoadLayoutForCurrentMode();
 
     io.Fonts->Clear(); // 既存のフォントをクリア
 
@@ -185,6 +186,7 @@ ImGuiManager *ImGuiManager::GetInstance() {
 }
 
 void ImGuiManager::Finalize() {
+    SaveCurrentLayout();
     // 後始末
     ImGui_ImplDX12_Shutdown();
     ImGui_ImplWin32_Shutdown();
@@ -290,7 +292,8 @@ void ImGuiManager::ShowMainMenu() {
             if (isShowMainUI_) {
                 if (ImGui::MenuItem(ICON_FA_GAMEPAD " ゲームモードに切替", "F5")) {
                     // Dock状態を保存！
-                    BackupDockLayout();
+                    SwitchToGameMode();
+                    //BackupDockLayout();
                     isShowMainUI_ = false;
                 }
             } else {
@@ -298,7 +301,8 @@ void ImGuiManager::ShowMainMenu() {
                     isShowMainUI_ = true;
                     WinApp::GetInstance()->IsFullScreen() = false;
                     // Dock状態を復元！
-                    RestoreDockLayout();
+                   // RestoreDockLayout();
+                    SwitchToEditorMode();
                 }
             }
             ImGui::Separator();
@@ -758,4 +762,66 @@ void ImGuiManager::RestoreDockLayout() {
         // メモリ上の設定を再適用
         ImGui::LoadIniSettingsFromMemory(dockLayoutBackup_.c_str(), dockLayoutBackup_.size());
     }
+}
+
+void ImGuiManager::SwitchToEditorMode() {
+    if (!isEditorMode_) {
+        // ゲームモードからエディターモードへの切替
+        SaveCurrentLayout(); // 現在のゲームモードレイアウトを保存
+        isEditorMode_ = true;
+        LoadLayoutForCurrentMode(); // エディターモードのレイアウトをロード
+    }
+}
+
+void ImGuiManager::SwitchToGameMode() {
+    if (isEditorMode_) {
+        // エディターモードからゲームモードへの切替
+        SaveCurrentLayout(); // 現在のエディターモードレイアウトを保存
+        isEditorMode_ = false;
+        LoadLayoutForCurrentMode(); // ゲームモードのレイアウトをロード
+    }
+}
+
+void ImGuiManager::SaveCurrentLayout() {
+    // 現在のモードに応じたファイルにレイアウトを保存
+    const char *iniFilePath = isEditorMode_ ? editorIniFilePath_.c_str() : gameIniFilePath_.c_str();
+
+    // メモリからiniデータを取得
+    size_t size = 0;
+    const char *iniData = ImGui::SaveIniSettingsToMemory(&size);
+
+    // ファイルに書き込み
+    FILE *f = nullptr;
+    if (fopen_s(&f, iniFilePath, "wt") == 0 && f) {
+        fwrite(iniData, sizeof(char), size, f);
+        fclose(f);
+    }
+}
+
+void ImGuiManager::LoadLayoutForCurrentMode() {
+    // モードに応じたiniファイルをロード
+    const char *iniFilePath = isEditorMode_ ? editorIniFilePath_.c_str() : gameIniFilePath_.c_str();
+
+    // ファイルが存在する場合はロード
+    FILE *f = nullptr;
+    if (fopen_s(&f, iniFilePath, "rt") == 0 && f) {
+        // ファイルサイズを取得
+        fseek(f, 0, SEEK_END);
+        size_t size = ftell(f);
+        fseek(f, 0, SEEK_SET);
+
+        // バッファを確保してファイル内容を読み込む
+        char *buf = new char[size + 1];
+        if (buf) {
+            size_t read_size = fread(buf, 1, size, f);
+            buf[read_size] = 0;
+
+            // 読み込んだデータをImGuiに適用
+            ImGui::LoadIniSettingsFromMemory(buf, read_size);
+
+            delete[] buf;
+        }
+        fclose(f);
+    }
+    // ファイルが存在しない場合は新規に作成される
 }

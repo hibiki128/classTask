@@ -56,6 +56,8 @@ class Collider {
     /// <param name="other"></param>
     virtual void OnCollisionOut([[maybe_unused]] Collider *other) {};
 
+    void SaveToJson();
+
 #pragma region ゲッター
     /// <summary>
     /// getter
@@ -114,7 +116,6 @@ class Collider {
   private:
     void MakeOBBOrientations(OBB &obb, const Vector3 &rotate);
     void UpdateOBB();
-    void SaveToJson();
     void LoadFromJson();
 
 #pragma region デバッグ描画

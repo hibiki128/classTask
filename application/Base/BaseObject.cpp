@@ -24,6 +24,7 @@ void BaseObject::Update() {
     if (obj3d_->GetHaveAnimation()) {
         obj3d_->AnimationUpdate(isLoop_);
     }
+    SetBlendMode(blendMode_);
 }
 
 void BaseObject::Draw(const ViewProjection &viewProjection, Vector3 offSet) {
@@ -89,6 +90,9 @@ void BaseObject::ImGui() {
             if (ImGui::Button("セーブ")) {
                 SaveToJson();
                 AnimaSaveToJson();
+                for (auto &collider : colliders_) {
+                    collider->SaveToJson();
+                }
                 std::string message = std::format("ObjectData saved.");
                 MessageBoxA(nullptr, message.c_str(), "Object", 0);
             }
@@ -124,7 +128,6 @@ void BaseObject::DebugObject() {
         }
         if (ImGui::TreeNode("ブレンドモード")) {
             ShowBlendModeCombo(blendMode_);
-            SetBlendMode(blendMode_);
             ImGui::TreePop();
         }
     }
@@ -171,7 +174,7 @@ void BaseObject::LoadFromJson() {
     transform_.rotation_ = TransformDatas_->Load<Vector3>("rotation", {0.0f, 0.0f, 0.0f});
     transform_.scale_ = TransformDatas_->Load<Vector3>("scale", {1.0f, 1.0f, 1.0f});
     SetTexture(TransformDatas_->Load<std::string>("texturePath", "debug/uvChecker.png"));
-    SetBlendMode(static_cast<BlendMode>(TransformDatas_->Load<int>("blendMode", 0)));
+    blendMode_ = static_cast<BlendMode>(TransformDatas_->Load<int>("blendMode", 0));
 }
 
 void BaseObject::AnimaSaveToJson() {

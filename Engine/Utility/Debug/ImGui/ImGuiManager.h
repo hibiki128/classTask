@@ -127,6 +127,10 @@ class ImGuiManager {
 
     void RestoreDockLayout();
 
+    void SwitchToEditorMode();
+    void SwitchToGameMode();
+    void SaveCurrentLayout();
+    void LoadLayoutForCurrentMode();
 
   private:
     /// ====================================
@@ -167,6 +171,10 @@ class ImGuiManager {
     bool showFPSView_ = true;
     bool showOfScreenView_ = true;
     bool showLightView_ = true;
+    bool isEditorMode_ = true; // エディターモードフラグ
 
     BaseObjectManager *baseObjectManager_ = nullptr;
+
+    std::string editorIniFilePath_ = "imgui_editor.ini";
+    std::string gameIniFilePath_ = "imgui_game.ini";
 };

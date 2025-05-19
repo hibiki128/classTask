@@ -146,4 +146,12 @@ class PipeLineManager {
     // キー文字列を生成するヘルパー関数
     std::string MakePipelineKey(PipelineType type, BlendMode blendMode, ShaderMode shaderMode);
     std::string MakeRootSignatureKey(PipelineType type, ShaderMode shaderMode);
+
+    D3D12_STATIC_SAMPLER_DESC CreateCommonSamplerDesc();
+
+    Microsoft::WRL::ComPtr<ID3D12RootSignature> CreateCommonRootSignature(bool hasCBV);
+
+    Microsoft::WRL::ComPtr<ID3D12PipelineState> CreateFullScreenPostEffectPipeline(const std::wstring& psPath,Microsoft::WRL::ComPtr<ID3D12RootSignature>rootSignature);
+
+    D3D12_DEPTH_STENCIL_DESC SettingDepthStencilDesc(bool depth);
 };

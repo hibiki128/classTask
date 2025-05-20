@@ -206,7 +206,7 @@ void ParticleManager::Draw() {
 
             srvManager_->SetGraphicsRootDescriptorTable(2, particleGroup->GetParticleGroupData().material.textureIndex);
 
-            particleCommon->GetDxCommon()->GetCommandList()->DrawIndexedInstanced(UINT(particleGroup->GetModelData().indices.size()), particleGroup->GetParticleGroupData().instanceCount, 0, 0, 0);
+            particleCommon->GetDxCommon()->GetCommandList()->DrawIndexedInstanced(UINT(particleGroup->GetModelData().mesh.indices.size()), particleGroup->GetParticleGroupData().instanceCount, 0, 0, 0);
         }
     }
 }

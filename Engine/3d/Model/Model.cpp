@@ -13,7 +13,6 @@ void Model::Initialize(ModelCommon *modelCommon) {
     srvManager_ = SrvManager::GetInstance();
     material_ = std::make_unique<Material>();
     mesh_ = std::make_unique<Mesh>();
-
 }
 
 void Model::CreateModel(const std::string &directorypath, const std::string &filename) {
@@ -23,6 +22,7 @@ void Model::CreateModel(const std::string &directorypath, const std::string &fil
 
     // モデル読み込み
     modelData = LoadModelFile(directorypath_, filename_);
+    mesh_->GetMeshData() = modelData.mesh;
     mesh_->Initialize();
     material_->GetMaterialData() = modelData.material;
     material_->LoadTexture();
@@ -53,8 +53,7 @@ void Model::Draw(Object3dCommon *objCommon) {
     }
     D3D12_VERTEX_BUFFER_VIEW vbvs[2] = {
         vertexBufferView,
-        influenceBufferView
-    };
+        influenceBufferView};
     modelCommon_->GetDxCommon()->GetCommandList()->IASetIndexBuffer(&indexBufferView);
     if (isGltf) {
         if (!animator_->HaveAnimation()) {

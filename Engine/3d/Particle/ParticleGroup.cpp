@@ -14,7 +14,6 @@ void ParticleGroup::Update() {
 
 ParticleGroupData ParticleGroup::CreateParticleGroup(const std::string &groupName, const std::string &filename, const std::string &texturePath) {
     particleGroupData_.groupName = groupName;
-    //particleGroupData_.material.modelFilePath = filename;
     modelFilePath_ = filename;
     ModelManager::GetInstance()->LoadModel(filename);
     model_ = ModelManager::GetInstance()->FindModel(filename);

@@ -21,7 +21,7 @@ void ParticleCommon::Initialize(DirectXCommon *dxCommon) {
 }
 
 void ParticleCommon::DrawCommonSetting() {
-    psoManager_->DrawCommonSetting(PipelineType::kParticle);
+    psoManager_->DrawCommonSetting(PipelineType::kParticle,BlendMode::kAdd);
 }
 
 void ParticleCommon::SetBlendMode(BlendMode blendMode) {

@@ -16,7 +16,8 @@ void Object3d::Initialize() {
 
     CreateTransformationMatrix();
 
-    CreateMaterial();
+    material_ = std::make_unique<Material>();
+    material_->Initialize();
 }
 
 void Object3d::CreateModel(const std::string &filePath) {
@@ -28,8 +29,8 @@ void Object3d::CreateModel(const std::string &filePath) {
     // モデルを検索してセットする
     model = ModelManager::GetInstance()->FindModel(filePath_);
 
-    materialData->textureFilePath = model->GetModelData().material.textureFilePath;
-    materialData->textureIndex = model->GetModelData().material.textureIndex;
+    material_->GetMaterialDataGPU()->textureFilePath = model->GetModelData().material.textureFilePath;
+    material_->GetMaterialDataGPU()->textureIndex = model->GetModelData().material.textureIndex;
     if (model->IsGltf()) {
         currentModelAnimation_ = std::make_unique<ModelAnimation>();
         currentModelAnimation_->SetModelData(model->GetModelData());
@@ -43,10 +44,10 @@ void Object3d::CreateModel(const std::string &filePath) {
 
 void Object3d::CreatePrimitiveModel(const PrimitiveType &type) {
     model = ModelManager::GetInstance()->FindModel(ModelManager::GetInstance()->CreatePrimitiveModel(type));
-    materialData->color = model->GetModelData().material.color;
-    materialData->uvTransform = model->GetModelData().material.uvTransform;
-    materialData->textureFilePath = model->GetModelData().material.textureFilePath;
-    materialData->textureIndex = model->GetModelData().material.textureIndex;
+    material_->GetMaterialDataGPU()->color = model->GetModelData().material.color;
+    material_->GetMaterialDataGPU()->uvTransform = model->GetModelData().material.uvTransform;
+    material_->GetMaterialDataGPU()->textureFilePath = model->GetModelData().material.textureFilePath;
+    material_->GetMaterialDataGPU()->textureIndex = model->GetModelData().material.textureIndex;
 }
 
 void Object3d::Update(const WorldTransform &worldTransform, const ViewProjection &viewProjection) {
@@ -118,10 +119,6 @@ void Object3d::Draw(const WorldTransform &worldTransform, const ViewProjection &
 
     objectCommon_->SetBlendMode(blendMode_);
 
-    if (color) {
-        materialData->color = color->GetColor();
-    }
-    materialData->enableLighting = Lighting;
     Update(worldTransform, viewProjection);
 
     if (model->IsGltf()) {
@@ -133,11 +130,10 @@ void Object3d::Draw(const WorldTransform &worldTransform, const ViewProjection &
         }
     }
 
-    dxCommon_->GetCommandList()->SetGraphicsRootConstantBufferView(0, materialResource->GetGPUVirtualAddress());
     // wvp用のCBufferの場所を設定
     dxCommon_->GetCommandList()->SetGraphicsRootConstantBufferView(1, transformationMatrixResource->GetGPUVirtualAddress());
-    SrvManager::GetInstance()->SetGraphicsRootDescriptorTable(2, materialData->textureIndex);
-    if (materialData->enableLighting != 0 && lightGroup) {
+    material_->Draw(color->GetColor(), Lighting);
+    if (material_->GetMaterialDataGPU()->enableLighting != 0 && lightGroup) {
         lightGroup->Draw();
     }
     // マテリアルCBufferの場所を設定
@@ -178,8 +174,8 @@ void Object3d::SetModel(const std::string &filePath) {
     ModelManager::GetInstance()->LoadModel(filePath);
     model = ModelManager::GetInstance()->FindModel(filePath);
 
-    materialData->textureFilePath = model->GetModelData().material.textureFilePath;
-    materialData->textureIndex = model->GetModelData().material.textureIndex;
+    material_->GetMaterialDataGPU()->textureFilePath = model->GetModelData().material.textureFilePath;
+    material_->GetMaterialDataGPU()->textureIndex = model->GetModelData().material.textureIndex;
     if (model->IsGltf()) {
 
         currentModelAnimation_->SetModelData(model->GetModelData());
@@ -193,14 +189,14 @@ void Object3d::SetModel(const std::string &filePath) {
 }
 
 void Object3d::SetTexture(const std::string &filePath) {
-    materialData->textureFilePath = filePath;
+    material_->GetMaterialDataGPU()->textureFilePath = filePath;
     TextureManager::GetInstance()->LoadTexture(filePath);
-    materialData->textureIndex = TextureManager::GetInstance()->GetTextureIndexByFilePath(filePath);
-    model->SetMaterialData({materialData->textureFilePath, materialData->textureIndex});
+    material_->GetMaterialDataGPU()->textureIndex = TextureManager::GetInstance()->GetTextureIndexByFilePath(filePath);
+    model->SetMaterialData(*material_->GetMaterialDataGPU());
 }
 
 void Object3d::SetShininess(float shininess) {
-    materialData->shininess = shininess;
+    material_->GetMaterialDataGPU()->shininess = shininess;
 }
 
 void Object3d::CreateTransformationMatrix() {
@@ -211,17 +207,4 @@ void Object3d::CreateTransformationMatrix() {
     transformationMatrixData->WVP = MakeIdentity4x4();
     transformationMatrixData->World = MakeIdentity4x4();
     transformationMatrixData->WorldInverseTranspose = MakeIdentity4x4();
-}
-
-void Object3d::CreateMaterial() {
-    // Sprite用のマテリアルリソースをつくる
-    materialResource = dxCommon_->CreateBufferResource(sizeof(Material));
-    // 書き込むためのアドレスを取得
-    materialResource->Map(0, nullptr, reinterpret_cast<void **>(&materialData));
-    // 色の設定
-    materialData->color = Vector4(1.0f, 1.0f, 1.0f, 1.0f);
-    // Lightingの設定
-    materialData->enableLighting = true;
-    materialData->uvTransform = MakeIdentity4x4();
-    materialData->shininess = 20.0f;
 }

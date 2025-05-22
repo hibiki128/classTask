@@ -194,22 +194,33 @@ void ParticleManager::Update(const ViewProjection &viewProjection) {
 }
 
 void ParticleManager::Draw() {
-
     for (auto &[groupName, particleGroup] : particleGroups_) {
-        particleCommon->GetDxCommon()->GetCommandList()->IASetIndexBuffer(&particleGroup->GetIndexBufferView());
-        particleCommon->GetDxCommon()->GetCommandList()->IASetVertexBuffers(0, 1, &particleGroup->GetVertexBufferView());
+        // 複数メッシュ対応
+        const auto &meshes = particleGroup->GetModelData().meshes;
+        for (size_t meshIndex = 0; meshIndex < meshes.size(); ++meshIndex) {
+            // 現在のメッシュに対応するBufferViewをローカルで取得
+            D3D12_INDEX_BUFFER_VIEW indexBufferView = particleGroup->GetIndexBufferView();
+            D3D12_VERTEX_BUFFER_VIEW vertexBufferView = particleGroup->GetVertexBufferView();
 
-        if (particleGroup->GetParticleGroupData().instanceCount > 0) {
-            particleCommon->GetDxCommon()->GetCommandList()->SetGraphicsRootConstantBufferView(0, particleGroup->GetmaterialResource()->GetGPUVirtualAddress());
+            // メッシュごとにインデックス・バッファ・ビューをセット
+            particleCommon->GetDxCommon()->GetCommandList()->IASetIndexBuffer(&indexBufferView);
+            particleCommon->GetDxCommon()->GetCommandList()->IASetVertexBuffers(0, 1, &vertexBufferView);
 
-            srvManager_->SetGraphicsRootDescriptorTable(1, particleGroup->GetParticleGroupData().instancingSRVIndex);
-
-            srvManager_->SetGraphicsRootDescriptorTable(2, particleGroup->GetParticleGroupData().material.textureIndex);
-
-            particleCommon->GetDxCommon()->GetCommandList()->DrawIndexedInstanced(UINT(particleGroup->GetModelData().mesh.indices.size()), particleGroup->GetParticleGroupData().instanceCount, 0, 0, 0);
+            if (particleGroup->GetParticleGroupData().instanceCount > 0) {
+                // マテリアルごとにCBVをセット
+                particleCommon->GetDxCommon()->GetCommandList()->SetGraphicsRootConstantBufferView(0, particleGroup->GetmaterialResource()->GetGPUVirtualAddress());
+                srvManager_->SetGraphicsRootDescriptorTable(1, particleGroup->GetParticleGroupData().instancingSRVIndex);
+                // メッシュごとのマテリアルのテクスチャインデックスをセット
+                srvManager_->SetGraphicsRootDescriptorTable(2, particleGroup->GetParticleGroupData().materials[meshIndex].textureIndex);
+                particleCommon->GetDxCommon()->GetCommandList()->DrawIndexedInstanced(
+                    UINT(meshes[meshIndex].indices.size()),
+                    particleGroup->GetParticleGroupData().instanceCount,
+                    0, 0, 0);
+            }
         }
     }
 }
+
 
 void ParticleManager::AddParticleGroup(ParticleGroup *particleGroup) {
     assert(particleGroup);

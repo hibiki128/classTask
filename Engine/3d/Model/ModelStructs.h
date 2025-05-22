@@ -41,6 +41,7 @@ struct MaterialData {
 struct MeshData {
     std::vector<VertexData> vertices;
     std::vector<uint32_t> indices;
+    uint32_t materialIndex = 0;
 };
 
 struct Node {
@@ -69,6 +70,7 @@ struct Skeleton {
 struct VertexWeightData {
     float weight;
     uint32_t vertexIndex;
+    uint32_t meshIndex;
 };
 
 struct JointWeightData {
@@ -77,8 +79,8 @@ struct JointWeightData {
 };
 
 struct ModelData {
-    MeshData mesh;
-    MaterialData material;
+    std::vector<MeshData> meshes;
+    std::vector<MaterialData> materials;
     std::map<std::string, JointWeightData> skinClusterData;
     Node rootNode;
 };
@@ -152,7 +154,7 @@ struct Particle {
 
 struct ParticleGroupData {
     // マテリアルデータ
-    MaterialData material;
+    std::vector<MaterialData> materials;
     // パーティクルのリスト (std::list<Particle> 型)
     std::list<Particle> particles;
     // インスタンシングデータ用SRVインデックス

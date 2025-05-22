@@ -1,4 +1,5 @@
 #pragma once
+#include "Material/Material.h"
 #include "Matrix4x4.h"
 #include "Model.h"
 #include "ObjColor.h"
@@ -12,7 +13,6 @@
 #include "light/LightGroup.h"
 #include "string"
 #include "vector"
-#include"Material/Material.h"
 
 class ModelCommon;
 class Object3d {
@@ -31,18 +31,16 @@ class Object3d {
     };
 
     DirectXCommon *dxCommon_ = nullptr;
- 
+
     // バッファリソース
     Microsoft::WRL::ComPtr<ID3D12Resource> transformationMatrixResource;
     // バッファリソース内のデータを指すポインタ
     TransformationMatrix *transformationMatrixData = nullptr;
 
-    //// バッファリソース
-    //Microsoft::WRL::ComPtr<ID3D12Resource> materialResource = nullptr;
-    //// バッファリソース内のデータを指すポインタ
-    //Material *materialData = nullptr;
-
-    std::unique_ptr<Material> material_;
+    // マルチマテリアル対応：マテリアル配列
+    std::vector<std::unique_ptr<Material>> materials_;
+    // 後方互換性のため単一マテリアルへの参照も保持
+   // std::unique_ptr<Material> material_;
 
     Transform transform;
 
@@ -119,9 +117,26 @@ class Object3d {
     const Vector3 &GetPosition() const { return position; }
     const Vector3 &GetRotation() const { return rotation; }
     const Vector3 &GetSize() const { return size; }
-    const std::string GetTexture() const { return material_->GetMaterialDataGPU()->textureFilePath; }
+    const std::string GetTexture() const {
+        //// 後方互換性：単一マテリアルがある場合はそれを、なければ最初のマテリアルを返す
+        //if (material_) {
+        //    return material_->GetMaterialDataGPU()->textureFilePath;
+        //} else if (!materials_.empty()) {
+        //    return materials_[0]->GetMaterialDataGPU()->textureFilePath;
+        //}
+        return "";
+    }
     const bool &GetHaveAnimation() const { return HaveAnimation; }
     bool IsFinish() { return currentModelAnimation_->IsFinish(); }
+
+    // マルチマテリアル用のgetter
+    size_t GetMaterialCount() const { return materials_.size(); }
+    const std::string GetTexture(uint32_t materialIndex) const {
+        if (materialIndex < materials_.size()) {
+            return materials_[materialIndex]->GetMaterialDataGPU()->textureFilePath;
+        }
+        return "";
+    }
 
     /// <summary>
     /// setter
@@ -133,9 +148,33 @@ class Object3d {
     void SetSize(const Vector3 &size) { this->size = size; }
     void SetModel(const std::string &filePath);
     void SetTexture(const std::string &filePath);
-    void SetUVTransform(const Matrix4x4 &mat) { material_->GetMaterialDataGPU()->uvTransform = mat; }
-    void SetColor(const Vector4 &color) { material_->GetMaterialDataGPU()->color = color; }
+    void SetUVTransform(const Matrix4x4 &mat) {
+        //// 後方互換性：単一マテリアルがある場合はそれに、なければ全てのマテリアルに適用
+        //if (material_) {
+        //    material_->GetMaterialDataGPU()->uvTransform = mat;
+        //} else {
+        //    SetAllMaterialsUVTransform(mat);
+        //}
+    }
+    void SetColor(const Vector4 &color) {
+        //// 後方互換性：単一マテリアルがある場合はそれに、なければ全てのマテリアルに適用
+        //if (material_) {
+        //    material_->GetMaterialDataGPU()->color = color;
+        //} else {
+        //    SetAllMaterialsColor(color);
+        //}
+    }
     void SetBlendMode(BlendMode blendMode) { blendMode_ = blendMode; }
+
+    // マルチマテリアル用のsetter
+    void SetTexture(const std::string &filePath, uint32_t materialIndex);
+    void SetAllTexturesIndex(const std::string &filePath);
+    void SetMaterialColor(uint32_t materialIndex, const Vector4 &color);
+    void SetAllMaterialsColor(const Vector4 &color);
+    void SetMaterialUVTransform(uint32_t materialIndex, const Matrix4x4 &uvTransform);
+    void SetAllMaterialsUVTransform(const Matrix4x4 &uvTransform);
+    void SetMaterialShininess(uint32_t materialIndex, float shininess);
+    void SetAllMaterialsShininess(float shininess);
 
     /// <summary>
     /// 光沢度の設定
@@ -150,9 +189,16 @@ class Object3d {
     void CreateTransformationMatrix();
 
     /// <summary>
-    /// マテリアルデータ作成
+    /// マテリアル初期化（マルチマテリアル対応）
     /// </summary>
-   // void CreateMaterial();
+    void InitializeMaterials();
+
+    /// <summary>
+    /// マテリアルインデックス検証
+    /// </summary>
+    /// <param name="materialIndex"></param>
+    /// <returns></returns>
+    bool IsValidMaterialIndex(uint32_t materialIndex) const;
 
     Vector3 ExtractTranslation(const Matrix4x4 &matrix) {
         return Vector3(matrix.m[3][0], matrix.m[3][1], matrix.m[3][2]);

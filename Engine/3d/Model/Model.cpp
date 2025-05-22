@@ -257,27 +257,35 @@ ModelData Model::LoadModelFile(const std::string &directoryPath, const std::stri
     // メッシュの処理
     for (uint32_t meshIndex = 0; meshIndex < scene->mNumMeshes; ++meshIndex) {
         aiMesh *mesh = scene->mMeshes[meshIndex];
-        assert(mesh->HasNormals());        // 法線がないMeshは今回は非対応
-        assert(mesh->HasTextureCoords(0)); // TexcoordがないMeshは今回は非対応
+        assert(mesh->HasNormals()); // 法線がないMeshは今回は非対応（これは残す）
 
         MeshData &currentMesh = modelData.meshes[meshIndex];
         currentMesh.vertices.resize(mesh->mNumVertices);
+
+        bool hasTexcoord = mesh->HasTextureCoords(0); // Texcoordの有無を確認
 
         // 頂点データの処理
         for (uint32_t vertexIndex = 0; vertexIndex < mesh->mNumVertices; ++vertexIndex) {
             aiVector3D &position = mesh->mVertices[vertexIndex];
             aiVector3D &normal = mesh->mNormals[vertexIndex];
-            aiVector3D &texcoord = mesh->mTextureCoords[0][vertexIndex];
-            // 右手系->左手系への変換を忘れずに
+
+            // 右手系→左手系変換
             currentMesh.vertices[vertexIndex].position = {-position.x, position.y, position.z, 1.0f};
             currentMesh.vertices[vertexIndex].normal = {-normal.x, normal.y, normal.z};
-            currentMesh.vertices[vertexIndex].texcoord = {texcoord.x, texcoord.y};
+
+            if (hasTexcoord) {
+                aiVector3D &texcoord = mesh->mTextureCoords[0][vertexIndex];
+                currentMesh.vertices[vertexIndex].texcoord = {texcoord.x, texcoord.y};
+            } else {
+                // Texcoord が無い場合は (0.0, 0.0) を代入
+                currentMesh.vertices[vertexIndex].texcoord = {0.0f, 0.0f};
+            }
         }
 
         // インデックスの処理
         for (uint32_t faceIndex = 0; faceIndex < mesh->mNumFaces; ++faceIndex) {
             aiFace &face = mesh->mFaces[faceIndex];
-            assert(face.mNumIndices == 3);
+            assert(face.mNumIndices == 3); // トライアングルのみ対応
             for (uint32_t element = 0; element < face.mNumIndices; ++element) {
                 uint32_t vertexIndex = face.mIndices[element];
                 currentMesh.indices.push_back(vertexIndex);
@@ -309,18 +317,14 @@ ModelData Model::LoadModelFile(const std::string &directoryPath, const std::stri
                 jointWeightData.inverseBindPoseMatrix = Inverse(bindPoseMatrix);
             }
 
-            // ウェイト情報の格納（メッシュ固有のバーテックスインデックスを考慮）
+            // ウェイト情報の格納
             JointWeightData &jointWeightData = modelData.skinClusterData[jointName];
             for (uint32_t weightIndex = 0; weightIndex < bone->mNumWeights; ++weightIndex) {
-                // メッシュインデックスを含めたバーテックス識別のため、
-                // 必要に応じてグローバルバーテックスインデックスに変換
                 uint32_t globalVertexIndex = bone->mWeights[weightIndex].mVertexId;
 
-                jointWeightData.vertexWeights.push_back({
-                    bone->mWeights[weightIndex].mWeight,
-                    globalVertexIndex,
-                    meshIndex // どのメッシュの頂点かを識別するため
-                });
+                jointWeightData.vertexWeights.push_back({bone->mWeights[weightIndex].mWeight,
+                                                         globalVertexIndex,
+                                                         meshIndex});
             }
         }
 
@@ -328,7 +332,7 @@ ModelData Model::LoadModelFile(const std::string &directoryPath, const std::stri
         currentMesh.materialIndex = mesh->mMaterialIndex;
     }
 
-    // 処理後にクリア
+    // jointNamesクリア
     jointNames.clear();
 
     // マテリアル配列のサイズを事前に確保
@@ -343,7 +347,7 @@ ModelData Model::LoadModelFile(const std::string &directoryPath, const std::stri
         if (material->GetTextureCount(aiTextureType_DIFFUSE) != 0) {
             aiString textureFilePath;
             material->GetTexture(aiTextureType_DIFFUSE, 0, &textureFilePath);
-            currentMaterial.textureFilePath =  textureFilePath.C_Str();
+            currentMaterial.textureFilePath = textureFilePath.C_Str();
         } else {
             // テクスチャがない場合はデフォルトのテクスチャを設定
             currentMaterial.textureFilePath = "debug/white1x1.png";
@@ -375,6 +379,22 @@ ModelData Model::LoadModelFile(const std::string &directoryPath, const std::stri
         defaultMaterial.shininess = 32.0f;
         defaultMaterial.uvTransform = MakeIdentity4x4();
         modelData.materials.push_back(defaultMaterial);
+    }
+
+    // ここでgltfのときだけjointIndicesを +1 する調整
+    if (isGltf) {
+        // skinClusterDataをコピーし、dummy jointを先頭に追加する例
+        std::map<std::string, JointWeightData> newSkinClusterData;
+
+        // ダミーのJointWeightDataは空で良い
+        newSkinClusterData["dummy_joint"] = JointWeightData{};
+
+        for (const auto &[jointName, jointWeightData] : modelData.skinClusterData) {
+            newSkinClusterData[jointName] = jointWeightData;
+        }
+
+        // skinClusterDataを置き換える
+        modelData.skinClusterData = std::move(newSkinClusterData);
     }
 
     modelData.rootNode = ReadNode(scene->mRootNode);

@@ -39,8 +39,6 @@ class Object3d {
 
     // マルチマテリアル対応：マテリアル配列
     std::vector<std::unique_ptr<Material>> materials_;
-    // 後方互換性のため単一マテリアルへの参照も保持
-   // std::unique_ptr<Material> material_;
 
     Transform transform;
 
@@ -117,27 +115,14 @@ class Object3d {
     const Vector3 &GetPosition() const { return position; }
     const Vector3 &GetRotation() const { return rotation; }
     const Vector3 &GetSize() const { return size; }
-    const std::string GetTexture() const {
-        //// 後方互換性：単一マテリアルがある場合はそれを、なければ最初のマテリアルを返す
-        //if (material_) {
-        //    return material_->GetMaterialDataGPU()->textureFilePath;
-        //} else if (!materials_.empty()) {
-        //    return materials_[0]->GetMaterialDataGPU()->textureFilePath;
-        //}
-        return "";
+    const std::string GetTexture(uint32_t index) const {
+        return materials_[index]->GetMaterialDataGPU()->textureFilePath;
     }
     const bool &GetHaveAnimation() const { return HaveAnimation; }
     bool IsFinish() { return currentModelAnimation_->IsFinish(); }
 
     // マルチマテリアル用のgetter
     size_t GetMaterialCount() const { return materials_.size(); }
-    const std::string GetTexture(uint32_t materialIndex) const {
-        if (materialIndex < materials_.size()) {
-            return materials_[materialIndex]->GetMaterialDataGPU()->textureFilePath;
-        }
-        return "";
-    }
-
     /// <summary>
     /// setter
     /// </summary>
@@ -147,22 +132,11 @@ class Object3d {
     void SetRotation(const Vector3 &rotation) { this->rotation = rotation; }
     void SetSize(const Vector3 &size) { this->size = size; }
     void SetModel(const std::string &filePath);
-    void SetTexture(const std::string &filePath);
-    void SetUVTransform(const Matrix4x4 &mat) {
-        //// 後方互換性：単一マテリアルがある場合はそれに、なければ全てのマテリアルに適用
-        //if (material_) {
-        //    material_->GetMaterialDataGPU()->uvTransform = mat;
-        //} else {
-        //    SetAllMaterialsUVTransform(mat);
-        //}
+    void SetUVTransform(const Matrix4x4 &mat,uint32_t index) {
+        materials_[index]->GetMaterialDataGPU()->uvTransform = mat;
     }
-    void SetColor(const Vector4 &color) {
-        //// 後方互換性：単一マテリアルがある場合はそれに、なければ全てのマテリアルに適用
-        //if (material_) {
-        //    material_->GetMaterialDataGPU()->color = color;
-        //} else {
-        //    SetAllMaterialsColor(color);
-        //}
+    void SetColor(const Vector4 &color,uint32_t index) {
+        materials_[index]->GetMaterialDataGPU()->color = color;
     }
     void SetBlendMode(BlendMode blendMode) { blendMode_ = blendMode; }
 

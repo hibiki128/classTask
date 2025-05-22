@@ -189,24 +189,6 @@ void Object3d::SetModel(const std::string &filePath) {
     }
 }
 
-void Object3d::SetTexture(const std::string &filePath) {
-    //// 後方互換性：単一マテリアルがある場合はそれに適用
-    //if (material_) {
-    //    material_->GetMaterialDataGPU()->textureFilePath = filePath;
-    //    TextureManager::GetInstance()->LoadTexture(filePath);
-    //    material_->GetMaterialDataGPU()->textureIndex = TextureManager::GetInstance()->GetTextureIndexByFilePath(filePath);
-
-    //    // モデルにも反映（後方互換性）
-    //    if (model && model->GetMaterialCount() > 0) {
-    //        auto &modelMaterials = model->GetMaterialData();
-    //        modelMaterials[0] = *material_->GetMaterialDataGPU();
-    //    }
-    //} else {
-    //    // 全てのマテリアルに適用
-    //    SetAllTexturesIndex(filePath);
-    //}
-}
-
 void Object3d::SetTexture(const std::string &filePath, uint32_t materialIndex) {
     if (!IsValidMaterialIndex(materialIndex)) {
         return;

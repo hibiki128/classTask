@@ -15,7 +15,7 @@ void TitleScene::Initialize() {
 
     obj_ = std::make_unique<BaseObject>();
     obj_->Init("test");
-    obj_->CreateModel("animation/walk.gltf");
+    obj_->CreateModel("debug/multiMesh.obj");
     BaseObjectManager::GetInstance()->AddObject(std::move(obj_));
 }
 

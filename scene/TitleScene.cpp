@@ -15,11 +15,13 @@ void TitleScene::Initialize() {
 
     obj_ = std::make_unique<BaseObject>();
     obj_->Init("test");
-    obj_->CreateModel("debug/multiMesh.obj");
+    obj_->CreateModel("animation/walk.gltf");
     BaseObjectManager::GetInstance()->AddObject(std::move(obj_));
+
 }
 
 void TitleScene::Finalize() {
+    BaseScene::Finalize();
 }
 
 void TitleScene::Update() {
@@ -33,6 +35,8 @@ void TitleScene::Update() {
 
 void TitleScene::Draw() {
     /// -------描画処理開始-------
+
+    BaseObjectManager::GetInstance()->DrawWireframe(vp_);
 
     /// Spriteの描画準備
     spCommon_->DrawCommonSetting();

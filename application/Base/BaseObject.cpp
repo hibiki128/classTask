@@ -50,6 +50,19 @@ void BaseObject::Draw(const ViewProjection &viewProjection, Vector3 offSet) {
     transform_.translation_ = currentPosition;
 }
 
+void BaseObject::DrawWireframe(const ViewProjection &viewProjection, Vector3 offSet) {
+    // オフセットを加える前の現在の位置を取得
+    Vector3 currentPosition = transform_.translation_;
+
+    // オフセットを加えて新しい位置を計算
+    Vector3 newPosition = currentPosition + offSet;
+
+    // 新しい位置を設定
+    transform_.translation_ = newPosition;
+
+    obj3d_->DrawWireframe(transform_, viewProjection);
+}
+
 Vector3 BaseObject::GetWorldPosition() const {
     Vector3 worldPos;
     // ワールド行列の平行移動成分を取得

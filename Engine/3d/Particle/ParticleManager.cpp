@@ -93,6 +93,9 @@ void ParticleManager::Update(const ViewProjection &viewProjection) {
                 (*particleIterator).transform.translation_ +=
                     (*particleIterator).velocity * Frame::DeltaTime();
             }
+
+            (*particleIterator).velocity.y -= particleSetting.gravity * Frame::DeltaTime();
+
             (*particleIterator).currentTime += Frame::DeltaTime();
 
             Matrix4x4 worldMatrix{};
@@ -288,6 +291,7 @@ Particle ParticleManager::MakeNewParticle(std::mt19937 &randomEngine, const Part
     particle.initialAlpha = distAlpha(randomEngine);
     particle.lifeTime = distLifeTime(randomEngine);
     particle.currentTime = 0.0f;
+
     return particle;
 }
 

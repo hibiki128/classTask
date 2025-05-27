@@ -21,6 +21,7 @@ struct ParticleSetting {
     Vector3 velocityMax;
     float lifeTimeMin;
     float lifeTimeMax;
+    float gravity;
     Vector3 particleStartScale;
     Vector3 particleEndScale;
     Vector3 startAcce;

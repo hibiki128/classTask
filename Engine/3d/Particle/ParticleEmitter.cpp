@@ -145,6 +145,7 @@ void ParticleEmitter::SaveToJson() {
         datas_->Save(groupName + "_isGatherMode", setting.isGatherMode);
         datas_->Save(groupName + "_gatherStartRatio", setting.gatherStartRatio);
         datas_->Save(groupName + "_gatherStrength", setting.gatherStrength);
+        datas_->Save(groupName + "_gravity", setting.gravity);
         Manager_->SetParticleSetting(groupName, setting);
     }
 }
@@ -199,6 +200,7 @@ void ParticleEmitter::LoadFromJson() {
         setting.isGatherMode = datas_->Load<bool>(groupName + "_isGatherMode", false);
         setting.gatherStartRatio = datas_->Load<float>(groupName + "_gatherStartRatio", 0.0f);
         setting.gatherStrength = datas_->Load<float>(groupName + "_gatherStrength", 0.0f);
+        setting.gravity = datas_->Load<float>(groupName + "_gravity", 0.0f);
         particleSettings_[groupName] = setting;
     }
 }
@@ -248,6 +250,7 @@ ParticleSetting ParticleEmitter::DefaultSetting() {
     setting.isGatherMode = false;
     setting.gatherStartRatio = 0.0f;
     setting.gatherStrength = 0.0f;
+    setting.gravity = 0.0f;
     return setting;
 }
 
@@ -348,6 +351,7 @@ void ParticleEmitter::DebugParticleData() {
                         ImGui::DragFloat3("最初", &setting.startAcce.x, 0.001f);
                         ImGui::DragFloat3("最後", &setting.endAcce.x, 0.001f);
                         ImGui::Checkbox("乗算", &setting.isAcceMultiply);
+                        ImGui::DragFloat("重力", &setting.gravity, 0.01f, -FLT_MAX, FLT_MAX);
                         ImGui::TreePop();
                     }
 

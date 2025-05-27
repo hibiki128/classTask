@@ -5,19 +5,20 @@
 #include "Vector3.h"
 #include "Vector4.h"
 #include "ViewProjection/ViewProjection.h"
-#include "random"
 #include <Matrix4x4.h>
 #include <ModelStructs.h>
 #include <ParticleGroup.h>
 #include <WorldTransform.h>
+#include <random>
+#include <unordered_map> // 追加
 
 struct ParticleSetting {
     Vector3 translate;
     Vector3 rotation;
-    Vector3 scale; // スケールを引数として受け取る
+    Vector3 scale;
     uint32_t count;
     Vector3 velocityMin;
-    Vector3 velocityMax; // 速度の範囲
+    Vector3 velocityMax;
     float lifeTimeMin;
     float lifeTimeMax;
     Vector3 particleStartScale;
@@ -53,68 +54,30 @@ struct ParticleSetting {
 };
 
 class ParticleManager {
-
   public:
-    /// <summary>
-    /// 初期化
-    /// </summary>
     void Initialize(SrvManager *srvManager);
-
-    /// <summary>
-    /// 更新
-    /// </summary>
     void Update(const ViewProjection &viewProjeciton);
-
-    /// <summary>
-    /// 描画
-    /// </summary>
     void Draw();
-
-    /// <summary>
-    /// パーティクルグループの生成
-    /// </summary>
-    /// <param name="name"></param>
-    /// <param name="textureFilePath"></param>
     void AddParticleGroup(ParticleGroup *particleGroup);
+    void RemoveParticleGroup(const std::string &name);
 
-    void RemoveParticleGroup(const std::string &name) {
-        // マップやセットなどからグループ本体を削除
-        particleGroups_.erase(name);
-
-        // 名前リスト（vector）からも削除
-        auto it = std::find(particleGroupNames_.begin(), particleGroupNames_.end(), name);
-        if (it != particleGroupNames_.end()) {
-            particleGroupNames_.erase(it);
-        }
-    }
-
-    void SetParticleSetting(const ParticleSetting &particleSetting) {
-        particleSetting_ = particleSetting;
-        SetGatherStartRatio(particleSetting.gatherStartRatio);
-        SetGatherStrength(particleSetting.gatherStrength);
-    }
-
-    std::vector<std::string> GetParticleGroupsName() { return particleGroupNames_; }
+    // グループごとのParticleSetting
+    void SetParticleSetting(const std::string &groupName, const ParticleSetting &setting);
+    ParticleSetting &GetParticleSetting(const std::string &groupName);
+    std::vector<std::string> GetParticleGroupsName();
 
   private:
     ParticleCommon *particleCommon = nullptr;
-
     SrvManager *srvManager_;
     std::unordered_map<std::string, ParticleGroup *> particleGroups_;
+    std::unordered_map<std::string, ParticleSetting> particleSettings_; // ここがポイント
     std::vector<std::string> particleGroupNames_;
-
     std::random_device seedGenerator;
     std::mt19937 randomEngine;
-
-    ParticleSetting particleSetting_ = {};
 
   public:
     std::list<Particle> Emit();
 
   private:
-    Particle MakeNewParticle(std::mt19937 &randomEngine);
-
-    void SetGatherStartRatio(float ratio) { particleSetting_.gatherStartRatio = std::clamp(ratio, 0.0f, 1.0f); }
-
-    void SetGatherStrength(float strength) { particleSetting_.gatherStrength = strength; }
+    Particle MakeNewParticle(std::mt19937 &randomEngine, const ParticleSetting &setting);
 };

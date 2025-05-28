@@ -5,6 +5,7 @@
 #include <Model/ModelManager.h>
 #include <Texture/TextureManager.h>
 #include <line/DrawLine3D.h>
+#include <Engine/Frame/Frame.h>
 
 void Object3d::Initialize() {
     objectCommon_ = std::make_unique<Object3dCommon>();
@@ -112,143 +113,115 @@ void Object3d::DrawWireframe(const WorldTransform &worldTransform, const ViewPro
     if (!model) {
         return;
     }
-    // モデルデータを取得
+
     const ModelData &modelData = model->GetModelData();
 
-    // ワイヤーフレームの線の色（デフォルトで白色）
-    Vector4 wireframeColor = {1.0f, 1.0f, 1.0f, 1.0f};
+    // ====== フラグで切り替え可能 ======
+    static bool gamingMode = true;
 
-    // 虹色用の変数（時間ベース）
-     static float timeCounter = 0.0f;
-     timeCounter += 0.02f; // フレームごとに増加
-     if (timeCounter > 1.0f) timeCounter = 0.0f;
+    // ====== 時間カウンター（時間ベースで変化）======
+    static float timeCounter = 0.0f;
+    timeCounter += Frame::DeltaTime()/10.0f; // 毎フレーム時間加算
+    if (timeCounter > 100.0f)
+        timeCounter = 0.0f; // オーバーフロー防止
 
+    // ====== HSV -> RGB変換関数 ======
+    auto HSVtoRGB = [](float h, float s, float v) -> Vector4 {
+        float c = v * s;
+        float x = c * (1.0f - abs(fmod(h * 6.0f, 2.0f) - 1.0f));
+        float m = v - c;
+        float r, g, b;
 
-    // 虹色計算用のヘルパー関数（HSVからRGBへの変換）
+        if (h < 1.0f / 6.0f) {
+            r = c;
+            g = x;
+            b = 0;
+        } else if (h < 2.0f / 6.0f) {
+            r = x;
+            g = c;
+            b = 0;
+        } else if (h < 3.0f / 6.0f) {
+            r = 0;
+            g = c;
+            b = x;
+        } else if (h < 4.0f / 6.0f) {
+            r = 0;
+            g = x;
+            b = c;
+        } else if (h < 5.0f / 6.0f) {
+            r = x;
+            g = 0;
+            b = c;
+        } else {
+            r = c;
+            g = 0;
+            b = x;
+        }
 
-     auto HSVtoRGB = [](float h, float s, float v) -> Vector4 {
-         float c = v * s;
-         float x = c * (1.0f - abs(fmod(h * 6.0f, 2.0f) - 1.0f));
-         float m = v - c;
-         float r, g, b;
+        return {r + m, g + m, b + m, 1.0f};
+    };
 
-         if (h < 1.0f / 6.0f) {
-             r = c;
-             g = x;
-             b = 0;
-         } else if (h < 2.0f / 6.0f) {
-             r = x;
-             g = c;
-             b = 0;
-         } else if (h < 3.0f / 6.0f) {
-             r = 0;
-             g = c;
-             b = x;
-         } else if (h < 4.0f / 6.0f) {
-             r = 0;
-             g = x;
-             b = c;
-         } else if (h < 5.0f / 6.0f) {
-             r = x;
-             g = 0;
-             b = c;
-         } else {
-             r = c;
-             g = 0;
-             b = x;
-         }
-
-         return {r + m, g + m, b + m, 1.0f};
-     };
-
-    // 位置ベースの虹色用関数（左上から右下へのグラデーション）
-    auto GetPositionBasedColor = [&](const Vector3& worldPos) -> Vector4 {
-        // ワールド座標をスクリーン座標に変換
+    // ====== グラデーション用関数（時間ベース） ======
+    auto GetTimeGradientColor = [&](const Vector3 &worldPos) -> Vector4 {
+        // ワールド座標をビュー射影してNDC空間に変換
         Vector4 clipPos = Transformation(Vector4{worldPos.x, worldPos.y, worldPos.z, 1.0f},
-                                       (viewProjection.matView_*viewProjection.matProjection_));
+                                         viewProjection.matView_ * viewProjection.matProjection_);
 
-        // NDC座標に変換（-1.0 ～ 1.0の範囲）
-        Vector2 ndcPos = {clipPos.x / clipPos.w, clipPos.y / clipPos.w};
+        Vector2 ndc = {clipPos.x / clipPos.w, clipPos.y / clipPos.w};
+        Vector2 screenUV = {(ndc.x + 1.0f) * 0.5f, (1.0f - ndc.y) * 0.5f};
 
-        // スクリーン座標に正規化（0.0 ～ 1.0の範囲）
-        Vector2 screenPos = {(ndcPos.x + 1.0f) * 0.5f, (1.0f - ndcPos.y) * 0.5f};
+        // 左上→右下への距離（0〜1）
+        float distance = (screenUV.x + screenUV.y) / 2.0f;
 
-        // 左上(0,0)から右下(1,1)への距離で色相を計算
-        float distance = sqrt(screenPos.x * screenPos.x + screenPos.y * screenPos.y) / sqrt(2.0f);
-        float hue = fmod(distance, 1.0f);
-
+        // 時間に距離のオフセットを加えて色相を決定（流れるように見える）
+        float hue = fmod(timeCounter + distance * 0.5f, 1.0f); // 0.5f は速度調整
         return HSVtoRGB(hue, 1.0f, 1.0f);
     };
-    
 
-    
-
-    // 各メッシュに対してワイヤーフレームを生成
     for (const auto &mesh : modelData.meshes) {
         const std::vector<VertexData> &vertices = mesh.vertices;
         const std::vector<uint32_t> &indices = mesh.indices;
-        // インデックスがない場合は頂点を順番に結ぶ
-        if (indices.empty()) {
-            // 頂点を3つずつ取って三角形として処理
-            for (size_t i = 0; i + 2 < vertices.size(); i += 3) {
-                // 虹色の色相を計算（各三角形で異なる色）
-                 float hue = fmod(timeCounter + (float)i * 0.1f, 1.0f);
-                 Vector4 rainbowColor = HSVtoRGB(hue, 1.0f, 1.0f);
 
-                // 三角形の3つの頂点をワールド座標に変換
+        auto drawTriangle = [&](const Vector3 &v0, const Vector3 &v1, const Vector3 &v2) {
+            if (gamingMode) {
+                // ゲーミング虹色モード：時間ベースグラデーション
+                Vector4 c0 = GetTimeGradientColor(v0);
+                Vector4 c1 = GetTimeGradientColor(v1);
+                Vector4 c2 = GetTimeGradientColor(v2);
+                DrawLine3D::GetInstance()->SetPoints(v0, v1, c0);
+                DrawLine3D::GetInstance()->SetPoints(v1, v2, c1);
+                DrawLine3D::GetInstance()->SetPoints(v2, v0, c2);
+            } else {
+                // 通常モード：白色
+                Vector4 wireframeColor = {1.0f, 1.0f, 1.0f, 1.0f};
+                DrawLine3D::GetInstance()->SetPoints(v0, v1, wireframeColor);
+                DrawLine3D::GetInstance()->SetPoints(v1, v2, wireframeColor);
+                DrawLine3D::GetInstance()->SetPoints(v2, v0, wireframeColor);
+            }
+        };
+
+        if (indices.empty()) {
+            for (size_t i = 0; i + 2 < vertices.size(); i += 3) {
                 Vector4 v0_4 = Transformation(Vector4{vertices[i].position.x, vertices[i].position.y, vertices[i].position.z, 1.0f}, worldTransform.matWorld_);
                 Vector4 v1_4 = Transformation(Vector4{vertices[i + 1].position.x, vertices[i + 1].position.y, vertices[i + 1].position.z, 1.0f}, worldTransform.matWorld_);
                 Vector4 v2_4 = Transformation(Vector4{vertices[i + 2].position.x, vertices[i + 2].position.y, vertices[i + 2].position.z, 1.0f}, worldTransform.matWorld_);
-                Vector3 v0 = {v0_4.x, v0_4.y, v0_4.z};
-                Vector3 v1 = {v1_4.x, v1_4.y, v1_4.z};
-                Vector3 v2 = {v2_4.x, v2_4.y, v2_4.z};
-                // 位置ベースの虹色（各頂点の画面位置で色を決定）
-                 Vector4 color0 = GetPositionBasedColor(v0);
-                 Vector4 color1 = GetPositionBasedColor(v1);
-                 Vector4 color2 = GetPositionBasedColor(v2);
 
-                // 三角形の3つの辺を描画
-                //DrawLine3D::GetInstance()->SetPoints(v0, v1, wireframeColor);
-                //DrawLine3D::GetInstance()->SetPoints(v1, v2, wireframeColor);
-                //DrawLine3D::GetInstance()->SetPoints(v2, v0, wireframeColor);
-                 DrawLine3D::GetInstance()->SetPoints(v0, v1, color0); // 位置ベース虹色版
-                 DrawLine3D::GetInstance()->SetPoints(v1, v2, color1); // 位置ベース虹色版
-                 DrawLine3D::GetInstance()->SetPoints(v2, v0, color2); // 位置ベース虹色版
+                drawTriangle({v0_4.x, v0_4.y, v0_4.z}, {v1_4.x, v1_4.y, v1_4.z}, {v2_4.x, v2_4.y, v2_4.z});
             }
         } else {
-            // インデックスがある場合はインデックスを使って三角形を描画
             for (size_t i = 0; i + 2 < indices.size(); i += 3) {
-                // 虹色の色相を計算（各三角形で異なる色）
-                 float hue = fmod(timeCounter + (float)i * 0.1f, 1.0f);
-                 Vector4 rainbowColor = HSVtoRGB(hue, 1.0f, 1.0f);
-
-                // インデックスから頂点を取得
                 uint32_t idx0 = indices[i];
                 uint32_t idx1 = indices[i + 1];
                 uint32_t idx2 = indices[i + 2];
-                // インデックスが有効範囲内かチェック
-                if (idx0 >= vertices.size() || idx1 >= vertices.size() || idx2 >= vertices.size()) {
+
+                if (idx0 >= vertices.size() || idx1 >= vertices.size() || idx2 >= vertices.size())
                     continue;
-                }
-                // 三角形の3つの頂点をワールド座標に変換
+
                 Vector4 v0_4 = Transformation(Vector4{vertices[idx0].position.x, vertices[idx0].position.y, vertices[idx0].position.z, 1.0f}, worldTransform.matWorld_);
                 Vector4 v1_4 = Transformation(Vector4{vertices[idx1].position.x, vertices[idx1].position.y, vertices[idx1].position.z, 1.0f}, worldTransform.matWorld_);
                 Vector4 v2_4 = Transformation(Vector4{vertices[idx2].position.x, vertices[idx2].position.y, vertices[idx2].position.z, 1.0f}, worldTransform.matWorld_);
-                Vector3 v0 = {v0_4.x, v0_4.y, v0_4.z};
-                Vector3 v1 = {v1_4.x, v1_4.y, v1_4.z};
-                Vector3 v2 = {v2_4.x, v2_4.y, v2_4.z};
-                // 位置ベースの虹色（各頂点の画面位置で色を決定）
-                 Vector4 color0 = GetPositionBasedColor(v0);
-                 Vector4 color1 = GetPositionBasedColor(v1);
-                 Vector4 color2 = GetPositionBasedColor(v2);
 
-                // 三角形の3つの辺を描画
-                //DrawLine3D::GetInstance()->SetPoints(v0, v1, wireframeColor);
-                //DrawLine3D::GetInstance()->SetPoints(v1, v2, wireframeColor);
-                //DrawLine3D::GetInstance()->SetPoints(v2, v0, wireframeColor);
-                 DrawLine3D::GetInstance()->SetPoints(v0, v1, color0); // 位置ベース虹色版
-                 DrawLine3D::GetInstance()->SetPoints(v1, v2, color1); // 位置ベース虹色版
-                 DrawLine3D::GetInstance()->SetPoints(v2, v0, color2); // 位置ベース虹色版
+                drawTriangle({v0_4.x, v0_4.y, v0_4.z}, {v1_4.x, v1_4.y, v1_4.z}, {v2_4.x, v2_4.y, v2_4.z});
             }
         }
     }

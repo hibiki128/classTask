@@ -1,6 +1,6 @@
 {
     "groupName": "test2",
     "modelfilePath": "",
-    "primitiveType": 1,
-    "textrueName": "debug/monsterBall.png"
+    "primitiveType": 4,
+    "textrueName": "debug/gradationLine.png"
 }

@@ -1,9 +1,9 @@
 #pragma once
 #include "PipeLine/PipeLineManager.h"
 #include "ViewProjection/ViewProjection.h"
-#include <Matrix4x4.h>
-#include <Vector3.h>
-#include <Vector4.h>
+#include <type/Matrix4x4.h>
+#include <type/Vector3.h>
+#include <type/Vector4.h>
 #include <cstdint>
 #include <d3d12.h>
 #include <memory>

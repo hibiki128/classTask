@@ -49,6 +49,13 @@ class ParticleEmitter {
     void SetActive(bool isActive) { isActive_ = isActive; }
     void SetFrequency(float frequency) { emitFrequency_ = frequency; }
     void SetName(const std::string &name) { name_ = name; }
+    void SetTrailEnabled(const std::string &groupName, bool enabled);
+    void SetTrailInterval(const std::string &groupName, float interval);
+    void SetMaxTrailParticles(const std::string &groupName, int maxTrails);
+    void SetTrailLifeScale(const std::string &groupName, float scale);
+    void SetTrailScaleMultiplier(const std::string &groupName, const Vector3 &multiplier);
+    void SetTrailColorMultiplier(const std::string &groupName, const Vector4 &multiplier);
+    void SetTrailVelocityInheritance(const std::string &groupName, bool inherit, float scale = 0.3f);
 
   private:
     // パーティクルを発生させるEmit関数
@@ -66,7 +73,6 @@ class ParticleEmitter {
     float emitFrequency_; // パーティクルの発生頻度
 
     bool isVisible_ = false;
-    bool isBillBoard_ = false;
     bool isActive_ = false;
     bool isAuto_ = false;
 

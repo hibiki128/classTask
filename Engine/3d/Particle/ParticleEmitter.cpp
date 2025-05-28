@@ -104,7 +104,6 @@ void ParticleEmitter::SaveToJson() {
     datas_->Save("GroupNames", particleGroupNames_);
     datas_->Save("emitFrequency", emitFrequency_);
     datas_->Save("isVisible", isVisible_);
-    datas_->Save("isBillBoard", isBillBoard_);
     datas_->Save("isActive", isActive_);
     datas_->Save("isAuto", isAuto_);
     for (const auto &[groupName, setting] : particleSettings_) {
@@ -146,6 +145,15 @@ void ParticleEmitter::SaveToJson() {
         datas_->Save(groupName + "_gatherStartRatio", setting.gatherStartRatio);
         datas_->Save(groupName + "_gatherStrength", setting.gatherStrength);
         datas_->Save(groupName + "_gravity", setting.gravity);
+        datas_->Save(groupName + "_isBillboard", setting.isBillboard);
+        datas_->Save(groupName + "_enableTrail", setting.enableTrail);
+        datas_->Save(groupName + "_trailSpawnInterval", setting.trailSpawnInterval);
+        datas_->Save(groupName + "_maxTrailParticles", setting.maxTrailParticles);
+        datas_->Save(groupName + "_trailLifeScale", setting.trailLifeScale);
+        datas_->Save(groupName + "_trailScaleMultiplier", setting.trailScaleMultiplier);
+        datas_->Save(groupName + "_trailColorMultiplier", setting.trailColorMultiplier);
+        datas_->Save(groupName + "_trailInheritVelocity", setting.trailInheritVelocity);
+        datas_->Save(groupName + "_trailVelocityScale", setting.trailVelocityScale);
         Manager_->SetParticleSetting(groupName, setting);
     }
 }
@@ -157,7 +165,6 @@ void ParticleEmitter::LoadFromJson() {
     particleGroupNames_ = datas_->Load<std::vector<std::string>>("GroupNames", {});
     emitFrequency_ = datas_->Load<float>("emitFrequency", 0.1f);
     isVisible_ = datas_->Load<bool>("isVisible", true);
-    isBillBoard_ = datas_->Load<bool>("isBillBoard", false);
     isActive_ = datas_->Load<bool>("isActive", false);
     isAuto_ = datas_->Load<bool>("isAuto", false);
 
@@ -201,6 +208,16 @@ void ParticleEmitter::LoadFromJson() {
         setting.gatherStartRatio = datas_->Load<float>(groupName + "_gatherStartRatio", 0.0f);
         setting.gatherStrength = datas_->Load<float>(groupName + "_gatherStrength", 0.0f);
         setting.gravity = datas_->Load<float>(groupName + "_gravity", 0.0f);
+        setting.isBillboard = datas_->Load<float>(groupName + "_isBillboard", false);
+        setting.enableTrail = datas_->Load<bool>(groupName + "_enableTrail", false);
+        setting.trailSpawnInterval = datas_->Load<float>(groupName + "_trailSpawnInterval", 0.05f);
+        setting.maxTrailParticles = datas_->Load<int>(groupName + "_maxTrailParticles", 20);
+        setting.trailLifeScale = datas_->Load<float>(groupName + "_trailLifeScale", 0.5f);
+        setting.trailScaleMultiplier = datas_->Load<Vector3>(groupName + "_trailScaleMultiplier", {0.8f, 0.8f, 0.8f});
+        setting.trailColorMultiplier = datas_->Load<Vector4>(groupName + "_trailColorMultiplier", {1.0f, 1.0f, 1.0f, 0.7f});
+        setting.trailInheritVelocity = datas_->Load<bool>(groupName + "_trailInheritVelocity", true);
+        setting.trailVelocityScale = datas_->Load<float>(groupName + "_trailVelocityScale", 0.3f);
+
         particleSettings_[groupName] = setting;
     }
 }
@@ -213,10 +230,10 @@ void ParticleEmitter::LoadParticleGroup() {
 
 ParticleSetting ParticleEmitter::DefaultSetting() {
     ParticleSetting setting;
-    setting.translate ={0, 0, 0};
+    setting.translate = {0, 0, 0};
     setting.rotation = {0, 0, 0};
-    setting.scale ={1, 1, 1};
-    setting.count =  1;
+    setting.scale = {1, 1, 1};
+    setting.count = 1;
     setting.lifeTimeMin = 1.0f;
     setting.lifeTimeMax = 3.0f;
     setting.alphaMin = 1.0f;
@@ -224,20 +241,20 @@ ParticleSetting ParticleEmitter::DefaultSetting() {
     setting.scaleMin = 1.0f;
     setting.scaleMax = 1.0f;
     setting.velocityMin = {-1, -1, -1};
-    setting.velocityMax =  {1, 1, 1};
-    setting.particleStartScale =  {1, 1, 1};
+    setting.velocityMax = {1, 1, 1};
+    setting.particleStartScale = {1, 1, 1};
     setting.particleEndScale = {0, 0, 0};
-    setting.startAcce =  {1, 1, 1};
-    setting.endAcce =  {1, 1, 1};
-    setting.startRote ={0, 0, 0};
+    setting.startAcce = {1, 1, 1};
+    setting.endAcce = {1, 1, 1};
+    setting.startRote = {0, 0, 0};
     setting.endRote = {0, 0, 0};
     setting.rotateStartMax = {0, 0, 0};
-    setting.rotateStartMin =  {0, 0, 0};
-    setting.rotateVelocityMin =  {-0.07f, -0.07f, -0.07f};
+    setting.rotateStartMin = {0, 0, 0};
+    setting.rotateVelocityMin = {-0.07f, -0.07f, -0.07f};
     setting.rotateVelocityMax = {0.07f, 0.07f, 0.07f};
     setting.allScaleMin = {0, 0, 0};
     setting.allScaleMax = {1, 1, 1};
-    setting.isRandomSize =  false;
+    setting.isRandomSize = false;
     setting.isRandomAllSize = false;
     setting.isRandomColor = false;
     setting.isRandomRotate = false;
@@ -251,6 +268,14 @@ ParticleSetting ParticleEmitter::DefaultSetting() {
     setting.gatherStartRatio = 0.0f;
     setting.gatherStrength = 0.0f;
     setting.gravity = 0.0f;
+    setting.enableTrail = false;
+    setting.trailSpawnInterval = 0.05f;
+    setting.maxTrailParticles = 20;
+    setting.trailLifeScale = 0.5f;
+    setting.trailScaleMultiplier = {0.8f, 0.8f, 0.8f};
+    setting.trailColorMultiplier = {1.0f, 1.0f, 1.0f, 0.7f};
+    setting.trailInheritVelocity = true;
+    setting.trailVelocityScale = 0.3f;
     return setting;
 }
 
@@ -456,6 +481,40 @@ void ParticleEmitter::DebugParticleData() {
 
                     ImGui::Separator();
 
+                    if (ImGui::TreeNode("トレイル設定")) {
+                        if (ImGui::Checkbox("トレイルを有効にする", &setting.enableTrail)) {
+                            SetTrailEnabled(selectedGroup, setting.enableTrail);
+                        }
+                        if (setting.enableTrail) {
+                            if (ImGui::DragFloat("トレイル生成間隔", &setting.trailSpawnInterval, 0.001f, 0.001f, 1.0f)) {
+                                SetTrailInterval(selectedGroup, setting.trailSpawnInterval);
+                            }
+                            if (ImGui::DragInt("最大トレイルパーティクル数", &setting.maxTrailParticles, 1, 1, 100)) {
+                                SetMaxTrailParticles(selectedGroup, setting.maxTrailParticles);
+                            }
+                            if (ImGui::DragFloat("トレイル生存時間スケール", &setting.trailLifeScale, 0.01f, 0.1f, 2.0f)) {
+                                SetTrailLifeScale(selectedGroup, setting.trailLifeScale);
+                            }
+                            if (ImGui::DragFloat3("トレイルスケール倍率", &setting.trailScaleMultiplier.x, 0.01f, 0.1f, 2.0f)) {
+                                SetTrailScaleMultiplier(selectedGroup, setting.trailScaleMultiplier);
+                            }
+                            if (ImGui::DragFloat4("トレイル色彩倍率", &setting.trailColorMultiplier.x, 0.01f, 0.0f, 2.0f)) {
+                                SetTrailColorMultiplier(selectedGroup, setting.trailColorMultiplier);
+                            }
+                            if (ImGui::Checkbox("トレイル速度継承", &setting.trailInheritVelocity)) {
+                                SetTrailVelocityInheritance(selectedGroup, setting.trailInheritVelocity, setting.trailVelocityScale);
+                            }
+                            if (setting.trailInheritVelocity) {
+                                if (ImGui::DragFloat("トレイル速度スケール", &setting.trailVelocityScale, 0.01f, 0.0f, 2.0f)) {
+                                    SetTrailVelocityInheritance(selectedGroup, setting.trailInheritVelocity, setting.trailVelocityScale);
+                                }
+                            }
+                        }
+                        ImGui::TreePop();
+                    }
+
+                    ImGui::Separator();
+
                     // Alphaを折りたたみ可能にする
                     if (ImGui::TreeNode("透明度")) {
                         ImGui::Text("透明度の設定:");
@@ -476,7 +535,7 @@ void ParticleEmitter::DebugParticleData() {
 
                 // その他の設定セクション
                 if (ImGui::CollapsingHeader("各状態の設定")) {
-                    ImGui::Checkbox("ビルボード", &isBillBoard_);
+                    ImGui::Checkbox("ビルボード", &setting.isBillboard);
                     ImGui::Checkbox("ランダムカラー", &setting.isRandomColor);
                 }
             } else {
@@ -667,3 +726,53 @@ void ParticleEmitter::AddParticleGroup(ParticleGroup *particleGroup) {
     Manager_->AddParticleGroup(particleGroup);
 }
 #pragma endregion
+
+void ParticleEmitter::SetTrailEnabled(const std::string &groupName, bool enabled) {
+    if (particleSettings_.find(groupName) != particleSettings_.end()) {
+        particleSettings_[groupName].enableTrail = enabled;
+        if (Manager_) {
+            Manager_->SetTrailEnabled(groupName, enabled);
+        }
+    }
+}
+
+void ParticleEmitter::SetTrailInterval(const std::string &groupName, float interval) {
+    if (particleSettings_.find(groupName) != particleSettings_.end()) {
+        particleSettings_[groupName].trailSpawnInterval = interval;
+    }
+}
+
+void ParticleEmitter::SetMaxTrailParticles(const std::string &groupName, int maxTrails) {
+    if (particleSettings_.find(groupName) != particleSettings_.end()) {
+        particleSettings_[groupName].maxTrailParticles = maxTrails;
+        if (Manager_) {
+            Manager_->SetTrailSettings(groupName,
+                                       particleSettings_[groupName].trailSpawnInterval, maxTrails);
+        }
+    }
+}
+
+void ParticleEmitter::SetTrailLifeScale(const std::string &groupName, float scale) {
+    if (particleSettings_.find(groupName) != particleSettings_.end()) {
+        particleSettings_[groupName].trailLifeScale = scale;
+    }
+}
+
+void ParticleEmitter::SetTrailScaleMultiplier(const std::string &groupName, const Vector3 &multiplier) {
+    if (particleSettings_.find(groupName) != particleSettings_.end()) {
+        particleSettings_[groupName].trailScaleMultiplier = multiplier;
+    }
+}
+
+void ParticleEmitter::SetTrailColorMultiplier(const std::string &groupName, const Vector4 &multiplier) {
+    if (particleSettings_.find(groupName) != particleSettings_.end()) {
+        particleSettings_[groupName].trailColorMultiplier = multiplier;
+    }
+}
+
+void ParticleEmitter::SetTrailVelocityInheritance(const std::string &groupName, bool inherit, float scale) {
+    if (particleSettings_.find(groupName) != particleSettings_.end()) {
+        particleSettings_[groupName].trailInheritVelocity = inherit;
+        particleSettings_[groupName].trailVelocityScale = scale;
+    }
+}

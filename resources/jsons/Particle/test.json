@@ -1,0 +1,147 @@
+{
+    "GroupNames": [
+        "test"
+    ],
+    "emitFrequency": 0.10000000149011612,
+    "emitterRotation": {
+        "x": 0.0,
+        "y": 0.0,
+        "z": 0.0
+    },
+    "emitterScale": {
+        "x": 5.0,
+        "y": 5.0,
+        "z": 5.0
+    },
+    "emitterTranslation": {
+        "x": 0.0,
+        "y": 0.0,
+        "z": -6.5
+    },
+    "isActive": false,
+    "isAuto": true,
+    "isVisible": true,
+    "test_allScaleMax": {
+        "x": 1.0,
+        "y": 1.0,
+        "z": 1.0
+    },
+    "test_allScaleMin": {
+        "x": 0.0,
+        "y": 0.0,
+        "z": 0.0
+    },
+    "test_alphaMax": 1.0,
+    "test_alphaMin": 1.0,
+    "test_count": 1,
+    "test_enableTrail": true,
+    "test_endAcce": {
+        "x": 1.0,
+        "y": 1.0,
+        "z": 1.0
+    },
+    "test_endRote": {
+        "x": 0.0,
+        "y": 0.0,
+        "z": 0.0
+    },
+    "test_endScale": {
+        "x": 0.0,
+        "y": 0.0,
+        "z": 0.0
+    },
+    "test_gatherStartRatio": -0.5,
+    "test_gatherStrength": 8.5,
+    "test_gravity": 0.0,
+    "test_isAcceMultiply": false,
+    "test_isAllRamdomScale": false,
+    "test_isBillboard": false,
+    "test_isEmitOnEdge": false,
+    "test_isEndScale": false,
+    "test_isFaceDirection": false,
+    "test_isGatherMode": true,
+    "test_isRandomColor": false,
+    "test_isRandomRotate": false,
+    "test_isRandomScale": false,
+    "test_isSinMove": false,
+    "test_lifeTimeMax": 3.0,
+    "test_lifeTimeMin": 1.0,
+    "test_maxTrailParticles": 20,
+    "test_rotateStartMax": {
+        "x": 0.0,
+        "y": 0.0,
+        "z": 0.0
+    },
+    "test_rotateStartMin": {
+        "x": 0.0,
+        "y": 0.0,
+        "z": 0.0
+    },
+    "test_rotateVelocityMax": {
+        "x": 0.07000000029802322,
+        "y": 0.07000000029802322,
+        "z": 0.07000000029802322
+    },
+    "test_rotateVelocityMin": {
+        "x": -0.07000000029802322,
+        "y": -0.07000000029802322,
+        "z": -0.07000000029802322
+    },
+    "test_rotation": {
+        "x": 0.0,
+        "y": 0.0,
+        "z": 0.0
+    },
+    "test_scale": {
+        "x": 5.0,
+        "y": 5.0,
+        "z": 5.0
+    },
+    "test_scaleMax": 1.0,
+    "test_scaleMin": 1.0,
+    "test_startAcce": {
+        "x": 1.0,
+        "y": 1.0,
+        "z": 1.0
+    },
+    "test_startRote": {
+        "x": 0.0,
+        "y": 0.0,
+        "z": 0.0
+    },
+    "test_startScale": {
+        "x": 0.5,
+        "y": 0.5,
+        "z": 0.5
+    },
+    "test_trailColorMultiplier": {
+        "w": 1.0,
+        "x": 0.4099999964237213,
+        "y": 1.9900000095367432,
+        "z": 0.0
+    },
+    "test_trailInheritVelocity": true,
+    "test_trailLifeScale": 0.10000000149011612,
+    "test_trailScaleMultiplier": {
+        "x": 1.0,
+        "y": 1.0,
+        "z": 1.0
+    },
+    "test_trailSpawnInterval": 0.0010000000474974513,
+    "test_trailVelocityScale": 0.0,
+    "test_translate": {
+        "x": 0.0,
+        "y": 0.0,
+        "z": -6.5
+    },
+    "test_velocityMax": {
+        "x": 1.0,
+        "y": 1.0,
+        "z": 1.0
+    },
+    "test_velocityMin": {
+        "x": -1.0,
+        "y": -1.0,
+        "z": -1.0
+    }
+}

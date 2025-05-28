@@ -2,11 +2,11 @@
 #include "WorldTransform.h"
 #include "array"
 #include "wrl.h"
-#include <Matrix4x4.h>
-#include <Quaternion.h>
-#include <Vector2.h>
-#include <Vector3.h>
-#include <Vector4.h>
+#include <type/Matrix4x4.h>
+#include <type/Quaternion.h>
+#include <type/Vector2.h>
+#include <type/Vector3.h>
+#include <type/Vector4.h>
 #include <d3d12.h>
 #include <list>
 #include <map>
@@ -150,6 +150,19 @@ struct Particle {
     float lifeTime;    // ライフタイム
     float currentTime; // 現在の時間
     float initialAlpha;
+    std::weak_ptr<Particle> parent;                  // 親パーティクルへの弱参照
+    std::vector<std::shared_ptr<Particle>> children; // 子パーティクルのリスト
+    Vector3 relativePosition;                        // 親からの相対位置
+    Vector3 parentOffset;                            // 親に対するオフセット
+    bool isChild;                                    // 子パーティクルかどうか
+    bool createTrail;                                // 軌跡を作成するか
+    float trailSpawnTimer;                           // 軌跡生成のタイマー
+    float trailSpawnInterval;                        // 軌跡生成間隔
+    int maxChildren;                                 // 最大子供数
+    float childLifeScale;                            // 子の寿命スケール（親より短く）
+
+    Particle() : isChild(false), createTrail(false), trailSpawnTimer(0.0f),
+                 trailSpawnInterval(0.1f), maxChildren(10), childLifeScale(0.8f) {}
 };
 
 struct ParticleGroupData {

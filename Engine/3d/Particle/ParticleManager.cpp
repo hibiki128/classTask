@@ -30,6 +30,16 @@ void ParticleManager::Update(const ViewProjection &viewProjection) {
                 particleIterator = particleGroup->GetParticleGroupData().particles.erase(particleIterator);
                 continue;
             }
+
+            // 軌跡パーティクル生成処理
+            if (particleSetting.enableTrail && !(*particleIterator).isChild) {
+                (*particleIterator).trailSpawnTimer += Frame::DeltaTime();
+                if ((*particleIterator).trailSpawnTimer >= particleSetting.trailSpawnInterval) {
+                    CreateTrailParticle(*particleIterator, particleSetting);
+                    (*particleIterator).trailSpawnTimer = 0.0f;
+                }
+            }
+
             float t = (*particleIterator).currentTime / (*particleIterator).lifeTime;
             t = std::clamp(t, 0.0f, 1.0f);
 
@@ -47,7 +57,13 @@ void ParticleManager::Update(const ViewProjection &viewProjection) {
             }
 
             bool isGathering = false;
-            if (particleSetting.isGatherMode && t >= particleSetting.gatherStartRatio) {
+            // トレイルパーティクルで速度継承がオフの場合はギャザリングしない
+            bool shouldGather = particleSetting.isGatherMode && t >= particleSetting.gatherStartRatio;
+            if ((*particleIterator).isChild && !particleSetting.trailInheritVelocity) {
+                shouldGather = false;
+            }
+
+            if (shouldGather) {
                 isGathering = true;
                 float gatherFactor = (t - particleSetting.gatherStartRatio) / (1.0f - particleSetting.gatherStartRatio);
                 gatherFactor = std::clamp(gatherFactor, 0.0f, 1.0f);
@@ -70,6 +86,7 @@ void ParticleManager::Update(const ViewProjection &viewProjection) {
 
             if (!isGathering) {
                 (*particleIterator).Acce = (1.0f - t) * (*particleIterator).startAcce + t * (*particleIterator).endAcce;
+
                 if (particleSetting.isFaceDirection) {
                     Vector3 forward = (*particleIterator).fixedDirection;
                     Vector3 initialUp = {0.0f, 1.0f, 0.0f};
@@ -85,6 +102,7 @@ void ParticleManager::Update(const ViewProjection &viewProjection) {
                     (*particleIterator).transform.rotation_ =
                         (1.0f - t) * (*particleIterator).startRote + t * (*particleIterator).endRote;
                 }
+
                 if (particleSetting.isAcceMultiply) {
                     (*particleIterator).velocity *= (*particleIterator).Acce;
                 } else {
@@ -95,9 +113,7 @@ void ParticleManager::Update(const ViewProjection &viewProjection) {
             }
 
             (*particleIterator).velocity.y -= particleSetting.gravity * Frame::DeltaTime();
-
             (*particleIterator).currentTime += Frame::DeltaTime();
-
             Matrix4x4 worldMatrix{};
             if (particleSetting.isBillboard) {
                 worldMatrix = MakeScaleMatrix((*particleIterator).transform.scale_) * billboardMatrix *
@@ -118,6 +134,67 @@ void ParticleManager::Update(const ViewProjection &viewProjection) {
             ++particleIterator;
         }
         particleGroup->GetParticleGroupData().instanceCount = numInstance;
+    }
+}
+
+// 軌跡パーティクル生成メソッド
+void ParticleManager::CreateTrailParticle(const Particle &parent, const ParticleSetting &setting) {
+    // 現在の子パーティクル数をチェック
+    auto &parentParticle = const_cast<Particle &>(parent);
+    if (parentParticle.children.size() >= setting.maxTrailParticles) {
+        return; // 最大数に達している場合は生成しない
+    }
+
+    // 軌跡パーティクルを作成
+    Particle trailParticle;
+    trailParticle.isChild = true;
+    trailParticle.createTrail = false; // 軌跡は軌跡を作らない
+
+    // 親の現在位置に配置
+    trailParticle.transform.translation_ = parent.transform.translation_;
+    trailParticle.transform.rotation_ = parent.transform.rotation_;
+    trailParticle.transform.scale_ = parent.transform.scale_ * setting.trailScaleMultiplier;
+
+    // 速度の設定
+    if (setting.trailInheritVelocity) {
+        trailParticle.velocity = parent.velocity * setting.trailVelocityScale;
+    } else {
+        trailParticle.velocity = {0.0f, 0.0f, 0.0f};
+    }
+
+    // 色と透明度
+    trailParticle.color = parent.color * setting.trailColorMultiplier;
+    trailParticle.initialAlpha = trailParticle.color.w;
+
+    // 寿命
+    trailParticle.lifeTime = parent.lifeTime * setting.trailLifeScale;
+    trailParticle.currentTime = 0.0f;
+
+    // その他のプロパティをコピー
+    trailParticle.startScale = parent.startScale * setting.trailScaleMultiplier;
+    trailParticle.endScale = parent.endScale * setting.trailScaleMultiplier;
+    trailParticle.startAcce = parent.startAcce;
+    trailParticle.endAcce = parent.endAcce;
+
+    // パーティクルグループに追加
+    for (auto &[groupName, particleGroup] : particleGroups_) {
+        if (particleSettings_[groupName].enableTrail) {
+            particleGroup->GetParticleGroupData().particles.push_back(trailParticle);
+            break;
+        }
+    }
+}
+
+void ParticleManager::SetTrailEnabled(const std::string &groupName, bool enabled) {
+    if (particleSettings_.find(groupName) != particleSettings_.end()) {
+        particleSettings_[groupName].enableTrail = enabled;
+    }
+}
+
+void ParticleManager::SetTrailSettings(const std::string &groupName, float interval, int maxTrails) {
+    if (particleSettings_.find(groupName) != particleSettings_.end()) {
+        particleSettings_[groupName].trailSpawnInterval = interval;
+        particleSettings_[groupName].maxTrailParticles = maxTrails;
     }
 }
 

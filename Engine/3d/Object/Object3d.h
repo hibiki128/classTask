@@ -1,17 +1,17 @@
 #pragma once
 #include "Material/Material.h"
-#include "type/Matrix4x4.h"
 #include "Model.h"
 #include "ObjColor.h"
 #include "Object/Object3dCommon.h"
-#include "type/Vector2.h"
-#include "type/Vector3.h"
-#include "type/Vector4.h"
 #include "ViewProjection/ViewProjection.h"
 #include "WorldTransform.h"
 #include "animation/ModelAnimation.h"
 #include "light/LightGroup.h"
 #include "string"
+#include "type/Matrix4x4.h"
+#include "type/Vector2.h"
+#include "type/Vector3.h"
+#include "type/Vector4.h"
 #include "vector"
 
 class ModelCommon;
@@ -53,6 +53,7 @@ class Object3d {
     Vector3 rotation = {0.0f, 0.0f, 0.0f};
     Vector3 size = {1.0f, 1.0f, 1.0f};
     bool HaveAnimation;
+    bool isPrimitive_ = false;
 
     std::string filePath_;
     std::unique_ptr<Object3dCommon> objectCommon_;
@@ -134,10 +135,10 @@ class Object3d {
     void SetRotation(const Vector3 &rotation) { this->rotation = rotation; }
     void SetSize(const Vector3 &size) { this->size = size; }
     void SetModel(const std::string &filePath);
-    void SetUVTransform(const Matrix4x4 &mat,uint32_t index) {
+    void SetUVTransform(const Matrix4x4 &mat, uint32_t index) {
         materials_[index]->GetMaterialDataGPU()->uvTransform = mat;
     }
-    void SetColor(const Vector4 &color,uint32_t index) {
+    void SetColor(const Vector4 &color, uint32_t index) {
         materials_[index]->GetMaterialDataGPU()->color = color;
     }
     void SetBlendMode(BlendMode blendMode) { blendMode_ = blendMode; }

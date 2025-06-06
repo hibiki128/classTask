@@ -6,7 +6,6 @@ void LevelData::LoadFromJson(const std::string &fileName) {
     objectsData_.clear();
     createdObjects_.clear();
 
-    // .json拡張子を自動で付加
     std::string filePath = fileName;
     if (filePath.find(".json") == std::string::npos) {
         filePath += ".json";
@@ -36,7 +35,6 @@ void LevelData::LoadFromJson(const std::string &fileName) {
 }
 
 void LevelData::CreateObjects() {
-    // BaseObjectManagerのインスタンスを取得
     BaseObjectManager *manager = BaseObjectManager::GetInstance();
 
     for (const auto &objectData : objectsData_) {
@@ -45,11 +43,9 @@ void LevelData::CreateObjects() {
             continue;
         }
 
-        // MESHオブジェクトのみ作成
         if (objectData.type == "MESH") {
             auto baseObject = CreateBaseObject(objectData);
             if (baseObject) {
-                // 作成したオブジェクトを記録
                 createdObjects_[objectData.name] = baseObject.get();
 
                 // BaseObjectManagerに追加
@@ -58,7 +54,7 @@ void LevelData::CreateObjects() {
         }
     }
 
-    // 親子関係を設定（全オブジェクト作成後）
+    // 親子関係を設定
     for (const auto &objectData : objectsData_) {
         if (objectData.type == "MESH" && !objectData.children.empty()) {
             auto parentIt = createdObjects_.find(objectData.name);
@@ -73,7 +69,6 @@ void LevelData::Clear() {
     objectsData_.clear();
     createdObjects_.clear();
 
-    // BaseObjectManagerの全オブジェクトを削除
     BaseObjectManager::GetInstance()->DeleteObject();
 }
 
@@ -84,7 +79,6 @@ LevelData::Transform LevelData::ParseTransform(const json &transformJson) {
         auto trans = transformJson["translation"];
         if (trans.size() >= 3) {
             // Blender座標系から自作エンジン座標系に変換
-            // X軸はそのまま、YとZを入れ替え
             transform.translation.x = trans[0].get<float>(); // X軸はそのまま
             transform.translation.y = trans[2].get<float>(); // BlenderのZ → エンジンのY
             transform.translation.z = trans[1].get<float>(); // BlenderのY → エンジンのZ
@@ -95,8 +89,6 @@ LevelData::Transform LevelData::ParseTransform(const json &transformJson) {
         auto rot = transformJson["rotation"];
         if (rot.size() >= 3) {
             // Blender座標系から自作エンジン座標系に変換
-            // X軸はそのまま、YとZを入れ替え
-            // 度からラジアンに変換も同時に行う
             transform.rotation.x = -DegreesToRadians(rot[0].get<float>()); // X軸はそのまま
             transform.rotation.y = DegreesToRadians(rot[2].get<float>());  // BlenderのZ → エンジンのY
             transform.rotation.z = DegreesToRadians(rot[1].get<float>());  // BlenderのY → エンジンのZ
@@ -107,7 +99,6 @@ LevelData::Transform LevelData::ParseTransform(const json &transformJson) {
         auto scale = transformJson["scaling"];
         if (scale.size() >= 3) {
             // Blender座標系から自作エンジン座標系に変換
-            // X軸はそのまま、YとZを入れ替え
             transform.scaling.x = scale[0].get<float>(); // X軸はそのまま
             transform.scaling.y = scale[2].get<float>(); // BlenderのZ → エンジンのY
             transform.scaling.z = scale[1].get<float>(); // BlenderのY → エンジンのZ
@@ -128,7 +119,6 @@ LevelData::ColliderData LevelData::ParseCollider(const json &colliderJson) {
         auto center = colliderJson["center"];
         if (center.size() >= 3) {
             // Blender座標系から自作エンジン座標系に変換
-            // X軸はそのまま、YとZを入れ替え
             collider.center.x = center[0].get<float>(); // X軸はそのまま
             collider.center.y = center[2].get<float>(); // BlenderのZ → エンジンのY
             collider.center.z = center[1].get<float>(); // BlenderのY → エンジンのZ
@@ -139,7 +129,6 @@ LevelData::ColliderData LevelData::ParseCollider(const json &colliderJson) {
         auto size = colliderJson["size"];
         if (size.size() >= 3) {
             // Blender座標系から自作エンジン座標系に変換
-            // X軸はそのまま、YとZを入れ替え
             collider.size.x = size[0].get<float>() / 2.0f; // X軸はそのまま
             collider.size.y = size[2].get<float>() / 2.0f; // BlenderのZ → エンジンのY
             collider.size.z = size[1].get<float>() / 2.0f; // BlenderのY → エンジンのZ
@@ -200,12 +189,12 @@ std::unique_ptr<BaseObject> LevelData::CreateBaseObject(const ObjectData &object
     baseObject->GetWorldRotation() = objectData.transform.rotation;
     baseObject->GetWorldScale() = objectData.transform.scaling;
 
-    // コライダーを追加（AABBを使用）
+    // コライダーを追加（OBBを使用）
     if (objectData.hasCollider) {
         baseObject->AddCollider();
         baseObject->SetOBBSize(objectData.collider.size + Vector3(objectData.transform.scaling.x - 1.0f, objectData.transform.scaling.y - 1.0f, objectData.transform.scaling.z - 1.0f));
         baseObject->SetOBBCenter(objectData.collider.center);
-        // コライダータイプをAABBに設定
+        // コライダータイプをOBBに設定
         baseObject->SetCollisionType(Collider::CollisionType::OBB);
     }
 

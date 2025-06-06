@@ -15,13 +15,8 @@ void TitleScene::Initialize() {
 
     obj_ = std::make_unique<BaseObject>();
     obj_->Init("test");
-    obj_->CreateModel("animation/walk.gltf");
-    //BaseObjectManager::GetInstance()->AddObject(std::move(obj_));
-
-    levelData_ = std::make_unique<LevelData>();
-    levelData_->LoadFromJson("Resources/jsons/LevelData/test.json");
-    levelData_->CreateObjects();
-
+    obj_->CreateModel("debug/suzannu.obj");
+    BaseObjectManager::GetInstance()->AddObject(std::move(obj_));
 }
 
 void TitleScene::Finalize() {
@@ -40,8 +35,8 @@ void TitleScene::Update() {
 void TitleScene::Draw() {
     /// -------描画処理開始-------
 
-    //BaseObjectManager::GetInstance()->DrawWireframe(vp_);
-    BaseObjectManager::GetInstance()->Draw(vp_);
+    BaseObjectManager::GetInstance()->DrawWireframe(vp_);
+
     /// Spriteの描画準備
     spCommon_->DrawCommonSetting();
     //-----Spriteの描画開始-----

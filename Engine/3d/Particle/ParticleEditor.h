@@ -72,7 +72,9 @@ class ParticleEditor {
     // パーティクルグループ追加（プリミティブ使用）
     void AddPrimitiveParticleGroup(const std::string &name, const std::string &texturePath, PrimitiveType type);
     // エミッターの取得
-    //std::unique_ptr<ParticleEmitter> GetEmitter(const std::string &name);
+    // std::unique_ptr<ParticleEmitter> GetEmitter(const std::string &name);
+
+    void AllParticleCount();
 
     std::unique_ptr<ParticleEmitter> CreateEmitterFromTemplate(const std::string &name);
     // ImGuiエディターの表示

@@ -2,7 +2,7 @@
 #include "ParticleEditor.h"
 #include "ImGui/ImGuiManager.h"
 #ifdef _DEBUG
-#include"ShowFolder/ShowFolder.h"
+#include "ShowFolder/ShowFolder.h"
 #endif // _DEBUG
 
 ParticleEditor *ParticleEditor::instance = nullptr;
@@ -136,15 +136,6 @@ void ParticleEditor::DebugAll() {
         }
     }
 }
-
-//std::unique_ptr<ParticleEmitter> ParticleEditor::GetEmitter(const std::string &name) {
-//    auto it = emitters_.find(name);
-//    if (it != emitters_.end()) {
-//        // マップから取り出し、所有権を呼び出し元に移動
-//        return std::move(it->second);
-//    }
-//    return nullptr;
-//}
 
 std::unique_ptr<ParticleEmitter> ParticleEditor::CreateEmitterFromTemplate(const std::string &name) {
     auto it = emitters_.find(name);
@@ -415,6 +406,28 @@ void ParticleEditor::ShowFileSelector() {
     }
 }
 
+void ParticleEditor::AllParticleCount() {
+    if (ImGui::CollapsingHeader("エミッター統計")) {
+        // 全エミッターのパーティクル数を取得・表示
+        size_t totalParticleCount = 0;
+        ImGui::Text("=== パーティクル統計情報 ===");
+
+        for (const auto &[name, emitter] : emitters_) {
+            if (emitter && emitter->GetParticleManager()) {
+                size_t emitterParticleCount = emitter->GetParticleManager()->GetActiveParticleCount();
+                totalParticleCount += emitterParticleCount;
+                ImGui::Text("エミッター '%s': %zu パーティクル", name.c_str(), emitterParticleCount);
+            }
+        }
+
+        ImGui::Separator();
+        ImGui::Text("総パーティクル数: %zu", totalParticleCount);
+        ImGui::Separator();
+        ImGui::Spacing();
+       // ImGui::TreePop();
+    }
+}
+
 std::vector<std::string> ParticleEditor::GetJsonFiles() {
     static std::vector<std::string> jsonFiles; // キャッシュされたJSONファイルリスト
     static size_t lastFileCount = 0;           // 最後に取得したJSONファイル数
@@ -448,4 +461,3 @@ std::vector<std::string> ParticleEditor::GetJsonFiles() {
 
     return jsonFiles;
 }
-

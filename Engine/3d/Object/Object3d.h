@@ -53,10 +53,14 @@ class Object3d {
     Vector3 rotation = {0.0f, 0.0f, 0.0f};
     Vector3 size = {1.0f, 1.0f, 1.0f};
     bool HaveAnimation;
+    bool isPrimitive_ = false;
 
     std::string filePath_;
     std::unique_ptr<Object3dCommon> objectCommon_;
     BlendMode blendMode_ = BlendMode::kNone;
+
+       // ピボット（原点）オフセット
+    Vector3 pivotOffset_ = {0.0f, 0.0f, 0.0f};
 
   public: // メンバ関数
     void Initialize();
@@ -125,6 +129,7 @@ class Object3d {
 
     // マルチマテリアル用のgetter
     size_t GetMaterialCount() const { return materials_.size(); }
+    const Vector3 &GetPivotOffset() const { return pivotOffset_; }
     /// <summary>
     /// setter
     /// </summary>
@@ -151,6 +156,7 @@ class Object3d {
     void SetAllMaterialsUVTransform(const Matrix4x4 &uvTransform);
     void SetMaterialShininess(uint32_t materialIndex, float shininess);
     void SetAllMaterialsShininess(float shininess);
+    void SetPivotOffset(const Vector3 &offset) { pivotOffset_ = offset; }
 
     /// <summary>
     /// 光沢度の設定

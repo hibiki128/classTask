@@ -3,6 +3,7 @@
 #include "BaseScene.h"
 #include"application/Base/BaseObject.h"
 #include"Easing.h"
+#include"Edit/LevelData.h"
 
 class TitleScene : public BaseScene {
   public: // メンバ関数
@@ -64,4 +65,6 @@ class TitleScene : public BaseScene {
     std::unique_ptr<DebugCamera> debugCamera_;
 
    std::unique_ptr<BaseObject> obj_;
+   
+   std::unique_ptr<LevelData> levelData_;
 };

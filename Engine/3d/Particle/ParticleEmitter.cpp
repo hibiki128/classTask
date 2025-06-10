@@ -5,6 +5,7 @@
 
 #include "ParticleGroupManager.h"
 #include <set>
+#include <ParticleEditor.h>
 // コンストラクタ
 ParticleEmitter::ParticleEmitter() {}
 
@@ -50,6 +51,9 @@ void ParticleEmitter::Draw(const ViewProjection &vp_) {
         Manager_->Draw();
     }
     DrawEmitter();
+
+    size_t activeCount = Manager_->GetActiveParticleCount();
+    ParticleEditor::GetInstance()->SetExternalParticleCount(name_, activeCount);
 }
 
 void ParticleEmitter::DrawEmitter() {

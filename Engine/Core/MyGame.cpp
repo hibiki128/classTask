@@ -80,6 +80,9 @@ void MyGame::Draw() {
     sceneManager_->DrawForOffScreen();
     sceneManager_->DrawTransition();
 
+    // フレーム統計を更新（ImGui描画前）
+    ParticleEditor::GetInstance()->UpdateFrameStats();
+
 #ifdef _DEBUG
     imGuiManager_->Draw();
 #endif // _DEBUG

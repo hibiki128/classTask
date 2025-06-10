@@ -549,7 +549,7 @@ void ImGuiManager::ShowFPSWindow() {
 
     DisplayFPS();
 
-    ParticleEditor::GetInstance()->AllParticleCount();
+    ParticleEditor::GetInstance()->SceneParticleCount();
 
     ImGui::End();
 }

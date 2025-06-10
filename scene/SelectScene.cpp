@@ -35,7 +35,6 @@ void SelectScene::Draw() {
     //-------------------------
 
     /// Particleの描画準備
-    ptCommon_->DrawCommonSetting();
     //------Particleの描画開始-------
 
     //-----------------------------
@@ -61,7 +60,6 @@ void SelectScene::DrawForOffScreen() {
     //------------------------
 
     /// Particleの描画準備
-    ptCommon_->DrawCommonSetting();
     //------Particleの描画開始-------
 
     //-----------------------------

@@ -14,6 +14,7 @@
 #include <span>
 #include <string>
 #include <vector>
+#include"PipeLine/PipeLineManager.h"
 
 struct QuaternionTransform {
     Vector3 scale;
@@ -161,6 +162,8 @@ struct Particle {
     int maxChildren;                                 // 最大子供数
     float childLifeScale;                            // 子の寿命スケール（親より短く）
 
+    BlendMode blendMode = BlendMode::kAdd;
+
     Particle() : isChild(false), createTrail(false), trailSpawnTimer(0.0f),
                  trailSpawnInterval(0.1f), maxChildren(10), childLifeScale(0.8f) {}
 };
@@ -180,4 +183,6 @@ struct ParticleGroupData {
     ParticleForGPU *instancingData = nullptr;
     // グループ名
     std::string groupName;
+    // ブレンドモード
+    BlendMode blendMode = BlendMode::kAdd;
 };

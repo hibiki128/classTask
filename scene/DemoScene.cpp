@@ -36,11 +36,7 @@ void DemoScene::Draw() {
 
     //------------------------------
 
-    /// Particleの描画準備
-    ptCommon_->DrawCommonSetting();
-    //------Particleの描画開始-------
     ptEditor_->DrawAll(vp_);
-    //-----------------------------
 
     /// ----------------------------------
 
@@ -57,7 +53,6 @@ void DemoScene::DrawForOffScreen() {
     //------------------------
 
     /// Particleの描画準備
-    ptCommon_->DrawCommonSetting();
     //------Particleの描画開始-------
 
     //-----------------------------

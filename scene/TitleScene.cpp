@@ -44,7 +44,6 @@ void TitleScene::Draw() {
     //-------------------------
 
     /// Particleの描画準備
-    ptCommon_->DrawCommonSetting();
     //------Particleの描画開始-------
 
     //-----------------------------
@@ -70,7 +69,6 @@ void TitleScene::DrawForOffScreen() {
     //------------------------
 
     /// Particleの描画準備
-    ptCommon_->DrawCommonSetting();
     //------Particleの描画開始-------
 
     //-----------------------------

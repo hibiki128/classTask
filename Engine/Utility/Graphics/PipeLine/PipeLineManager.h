@@ -139,7 +139,6 @@ class PipeLineManager {
     DirectXCommon *dxCommon_;
 
     // パイプラインとルートシグネチャの格納用マップ
-    // キーは "PipelineType_BlendMode_ShaderMode" 形式の文字列
     std::unordered_map<std::string, Microsoft::WRL::ComPtr<ID3D12PipelineState>> pipelines_;
     std::unordered_map<std::string, Microsoft::WRL::ComPtr<ID3D12RootSignature>> rootSignatures_;
 

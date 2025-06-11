@@ -14,6 +14,7 @@ void PrimitiveModel::Initialize() {
     CreateTriangle();
     CreateCone();
     CreatePyramid();
+    CreateSkybox();
 }
 
 PrimitiveModel *PrimitiveModel::GetInstance() {
@@ -542,4 +543,53 @@ void PrimitiveModel::CreatePyramid() {
 
     // PrimitiveTypeを追加する必要があります
     primitiveDataMap_.insert(std::make_pair(PrimitiveType::Pyramid, primitiveData));
+}
+
+void PrimitiveModel::CreateSkybox() {
+    // スカイボックス用キューブの頂点データ
+    PrimitiveData primitiveData{};
+
+    // スカイボックス用の頂点（テクスチャ座標は3D座標そのものを使用）
+    VertexData vertices[8] = {
+        // 前面（z = -1）
+        {{-1.0f, -1.0f, -1.0f, 1.0f}, {0.0f, 0.0f}, {-1.0f, -1.0f, -1.0f}}, // 左下
+        {{1.0f, -1.0f, -1.0f, 1.0f}, {0.0f, 0.0f}, {1.0f, -1.0f, -1.0f}},   // 右下
+        {{-1.0f, 1.0f, -1.0f, 1.0f}, {0.0f, 0.0f}, {-1.0f, 1.0f, -1.0f}},   // 左上
+        {{1.0f, 1.0f, -1.0f, 1.0f}, {0.0f, 0.0f}, {1.0f, 1.0f, -1.0f}},     // 右上
+        // 背面（z = 1）
+        {{-1.0f, -1.0f, 1.0f, 1.0f}, {0.0f, 0.0f}, {-1.0f, -1.0f, 1.0f}}, // 左下
+        {{1.0f, -1.0f, 1.0f, 1.0f}, {0.0f, 0.0f}, {1.0f, -1.0f, 1.0f}},   // 右下
+        {{-1.0f, 1.0f, 1.0f, 1.0f}, {0.0f, 0.0f}, {-1.0f, 1.0f, 1.0f}},   // 左上
+        {{1.0f, 1.0f, 1.0f, 1.0f}, {0.0f, 0.0f}, {1.0f, 1.0f, 1.0f}}      // 右上
+    };
+
+    // インデックス配列（内側から見るように巻き順を調整）
+    uint32_t indices[36] = {
+        // 前面（z = -1）
+        0, 2, 1, 1, 2, 3,
+        // 背面（z = 1）
+        5, 7, 4, 4, 7, 6,
+        // 左面（x = -1）
+        4, 6, 0, 0, 6, 2,
+        // 右面（x = 1）
+        1, 3, 5, 5, 3, 7,
+        // 下面（y = -1）
+        4, 0, 5, 5, 0, 1,
+        // 上面（y = 1）
+        2, 6, 3, 3, 6, 7};
+
+    // 頂点データを追加
+    for (int i = 0; i < 8; i++) {
+        primitiveData.vertices.push_back(vertices[i]);
+    }
+
+    // インデックスデータを追加
+    for (int i = 0; i < 36; i++) {
+        primitiveData.indices.push_back(indices[i]);
+    }
+
+    primitiveData.color = {1.0f, 1.0f, 1.0f, 1.0f};
+    primitiveData.uvMatrix = MakeIdentity4x4();
+
+    primitiveDataMap_.insert(std::make_pair(PrimitiveType::Skybox, primitiveData));
 }

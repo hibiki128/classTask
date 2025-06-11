@@ -15,9 +15,11 @@ void TitleScene::Initialize() {
 
     obj_ = std::make_unique<BaseObject>();
     obj_->Init("test");
-    obj_->CreateModel("animation/walk.gltf");
+    obj_->CreateModel("debug/suzannu.obj");
     BaseObjectManager::GetInstance()->AddObject(std::move(obj_));
 
+    skybox_ = std::make_unique<SkyBox>();
+    skybox_->Initialize("debug/rostock_laage_airport_4k.dds");
 }
 
 void TitleScene::Finalize() {
@@ -44,19 +46,7 @@ void TitleScene::Draw() {
 
     //-------------------------
 
-    /// Particleの描画準備
-    ptCommon_->DrawCommonSetting();
-    //------Particleの描画開始-------
-
-    //-----------------------------
-
-    /// Spriteの描画準備
-    spCommon_->DrawCommonSetting();
-    //-----Spriteの描画開始-----
-
-    //------------------------------
-
-    /// ----------------------------------
+    skybox_->Draw(vp_);
 
     /// -------描画処理終了-------
 }
@@ -69,14 +59,6 @@ void TitleScene::DrawForOffScreen() {
     //-----Spriteの描画開始-----
 
     //------------------------
-
-    /// Particleの描画準備
-    ptCommon_->DrawCommonSetting();
-    //------Particleの描画開始-------
-
-    //-----------------------------
-
-    /// ----------------------------------
 
     /// -------描画処理終了-------
 }

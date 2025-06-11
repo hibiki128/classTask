@@ -56,7 +56,7 @@ void Framework::Initialize() {
 #endif // _DEBUG
        /// -----------------------
 
-        /// ---------ImGuizmo---------
+    /// ---------ImGuizmo---------
 #ifdef _DEBUG
     imGuizmoManager_ = ImGuizmoManager::GetInstance();
 #endif // _DEBUG

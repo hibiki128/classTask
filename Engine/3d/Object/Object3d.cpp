@@ -121,7 +121,7 @@ void Object3d::DrawWireframe(const WorldTransform &worldTransform, const ViewPro
 
     // ====== 時間カウンター（時間ベースで変化）======
     static float timeCounter = 0.0f;
-    timeCounter += Frame::DeltaTime() / 10.0f; // 毎フレーム時間加算
+    timeCounter += Frame::DeltaTime() / 7.0f; // 毎フレーム時間加算
     if (timeCounter > 100.0f)
         timeCounter = 0.0f; // オーバーフロー防止
 
@@ -401,6 +401,7 @@ void Object3d::SetShininess(float shininess) {
 }
 
 void Object3d::CreateTransformationMatrix() {
+
     transformationMatrixResource = dxCommon_->CreateBufferResource(sizeof(TransformationMatrix));
     // 書き込むかめのアドレスを取得
     transformationMatrixResource->Map(0, nullptr, reinterpret_cast<void **>(&transformationMatrixData));

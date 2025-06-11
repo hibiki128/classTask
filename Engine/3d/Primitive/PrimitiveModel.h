@@ -13,6 +13,7 @@ enum class PrimitiveType {
     Cone,
     Pyramid,
     kCount,
+    Skybox,
 };
 
 
@@ -64,6 +65,7 @@ class PrimitiveModel {
     void CreateTriangle();
     void CreateCone();
     void CreatePyramid();
+    void CreateSkybox();
 
   private:
     /// ===================================================

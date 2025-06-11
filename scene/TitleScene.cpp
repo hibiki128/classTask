@@ -17,6 +17,9 @@ void TitleScene::Initialize() {
     obj_->Init("test");
     obj_->CreateModel("debug/suzannu.obj");
     BaseObjectManager::GetInstance()->AddObject(std::move(obj_));
+
+    skybox_ = std::make_unique<SkyBox>();
+    skybox_->Initialize("debug/rostock_laage_airport_4k.dds");
 }
 
 void TitleScene::Finalize() {
@@ -42,6 +45,8 @@ void TitleScene::Draw() {
     //-----Spriteの描画開始-----
 
     //-------------------------
+
+    skybox_->Draw(vp_);
 
     /// -------描画処理終了-------
 }

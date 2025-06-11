@@ -341,6 +341,9 @@
     <ClCompile Include="Engine\3d\Model\Mesh\Mesh.cpp">
       <Filter>ソースファイル</Filter>
     </ClCompile>
+    <ClCompile Include="Engine\3d\SkyBox\SkyBox.cpp">
+      <Filter>ソースファイル</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="resources\shaders\Particle\Particle.hlsli">
@@ -361,6 +364,7 @@
     <None Include=".editorconfig">
       <Filter>ソースファイル</Filter>
     </None>
+    <None Include="Resources\shaders\Skybox\Skybox.hlsli" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="externals\imgui\imconfig.h">
@@ -540,9 +544,6 @@
     <ClInclude Include="Engine\3d\Line\DrawLine3D.h">
       <Filter>ソースファイル\myEngine\3d\line</Filter>
     </ClInclude>
-    <ClInclude Include="math\Quaternion.h">
-      <Filter>ソースファイル\math</Filter>
-    </ClInclude>
     <ClInclude Include="Engine\Offscreen\OffScreen.h">
       <Filter>ソースファイル\myEngine\offscreen</Filter>
     </ClInclude>
@@ -589,6 +590,7 @@
     <ClInclude Include="Engine\Utility\ShowFolder\ShowFolder.h" />
     <ClInclude Include="Engine\3d\Model\Material\Material.h" />
     <ClInclude Include="Engine\3d\Model\Mesh\Mesh.h" />
+    <ClInclude Include="Engine\3d\SkyBox\SkyBox.h" />
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="resources\shaders\Particle\Particle.PS.hlsl">
@@ -649,6 +651,8 @@
       <Filter>リソース ファイル\OffScreen</Filter>
     </FxCompile>
     <FxCompile Include="resources\shaders\Object\Skinning.CS.hlsl" />
+    <FxCompile Include="Resources\shaders\Skybox\Skybox.VS.hlsl" />
+    <FxCompile Include="Resources\shaders\Skybox\Skybox.PS.hlsl" />
   </ItemGroup>
   <ItemGroup>
     <Text Include="externals\imgui\LICENSE.txt">

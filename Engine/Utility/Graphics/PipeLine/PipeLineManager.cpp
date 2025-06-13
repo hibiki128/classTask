@@ -264,11 +264,21 @@ Microsoft::WRL::ComPtr<ID3D12RootSignature> PipeLineManager::CreateRootSignature
         D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT;
 
     // DescriptorRange
-    D3D12_DESCRIPTOR_RANGE descriptorRange[1] = {};
-    descriptorRange[0].BaseShaderRegister = 0;                                                   // 0から始まる
-    descriptorRange[0].NumDescriptors = 1;                                                       // 数は1つ
-    descriptorRange[0].RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_SRV;                              // SRVを使う
-    descriptorRange[0].OffsetInDescriptorsFromTableStart = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND; // Offsetを自動計算
+    D3D12_DESCRIPTOR_RANGE descriptorRange[2] = {};
+
+    // 通常の2Dテクスチャ t0
+    descriptorRange[0].RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
+    descriptorRange[0].NumDescriptors = 1;
+    descriptorRange[0].BaseShaderRegister = 0; // t0
+    descriptorRange[0].RegisterSpace = 0;
+    descriptorRange[0].OffsetInDescriptorsFromTableStart = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND;
+
+    // キューブマップ用 t1
+    descriptorRange[1].RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
+    descriptorRange[1].NumDescriptors = 1;
+    descriptorRange[1].BaseShaderRegister = 1; // t1
+    descriptorRange[1].RegisterSpace = 0;
+    descriptorRange[1].OffsetInDescriptorsFromTableStart = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND;
 
     // RootParameter作成。複数設定できるので配列。
     D3D12_ROOT_PARAMETER rootParameters[7] = {};
@@ -876,66 +886,92 @@ Microsoft::WRL::ComPtr<ID3D12RootSignature> PipeLineManager::CreateSkinningRootS
     descriptionRootSignature.Flags =
         D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT;
 
-    // DescriptorRange
-    D3D12_DESCRIPTOR_RANGE descriptorRange[1] = {};
-    descriptorRange[0].BaseShaderRegister = 0;                                                   // 0から始まる
-    descriptorRange[0].NumDescriptors = 1;                                                       // 数は1つ
-    descriptorRange[0].RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_SRV;                              // SRVを使う
-    descriptorRange[0].OffsetInDescriptorsFromTableStart = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND; // Offsetを自動計算
+    // DescriptorRange - テクスチャ用（t0とt1）
+    D3D12_DESCRIPTOR_RANGE descriptorRange[2] = {};
 
-    // descriptorRangeForInstancing
+    // 通常の2Dテクスチャ t0
+    descriptorRange[0].RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
+    descriptorRange[0].NumDescriptors = 1;
+    descriptorRange[0].BaseShaderRegister = 0; // t0
+    descriptorRange[0].RegisterSpace = 0;
+    descriptorRange[0].OffsetInDescriptorsFromTableStart = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND;
+
+    // 環境マップキューブテクスチャ t1
+    descriptorRange[1].RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
+    descriptorRange[1].NumDescriptors = 1;
+    descriptorRange[1].BaseShaderRegister = 1; // t1
+    descriptorRange[1].RegisterSpace = 0;
+    descriptorRange[1].OffsetInDescriptorsFromTableStart = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND;
+
+    // descriptorRangeForInstancing（スキニング用）
     D3D12_DESCRIPTOR_RANGE descriptorRangeForInstancing[1] = {};
-    descriptorRangeForInstancing[0].BaseShaderRegister = 0;                                                   // 0から始まる
+    descriptorRangeForInstancing[0].BaseShaderRegister = 0;                                                   // t0から始まる（VertexShaderのStructuredBuffer用）
     descriptorRangeForInstancing[0].NumDescriptors = 1;                                                       // 数は1つ
     descriptorRangeForInstancing[0].RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_SRV;                              // SRVを使う
     descriptorRangeForInstancing[0].OffsetInDescriptorsFromTableStart = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND; // Offsetを自動計算
 
     // RootParameter作成。複数設定できるので配列。
     D3D12_ROOT_PARAMETER rootParameters[8] = {};
-    rootParameters[0].ParameterType = D3D12_ROOT_PARAMETER_TYPE_CBV;                   // CBVを使う
-    rootParameters[0].ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;                // VertexShaderで使う
-    rootParameters[0].Descriptor.ShaderRegister = 0;                                   // レジスタ番号0とバインド
-    rootParameters[1].ParameterType = D3D12_ROOT_PARAMETER_TYPE_CBV;                   // CBVをつかう
-    rootParameters[1].ShaderVisibility = D3D12_SHADER_VISIBILITY_VERTEX;               // PixelShaderで使う
-    rootParameters[1].Descriptor.ShaderRegister = 0;                                   // レジスタ番号0とバインド
-    rootParameters[2].ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;      // DescriptorTableを使う
-    rootParameters[2].ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;                // PixelShaderで使う
-    rootParameters[2].DescriptorTable.pDescriptorRanges = descriptorRange;             // Tableの中身の配列を指定
-    rootParameters[2].DescriptorTable.NumDescriptorRanges = _countof(descriptorRange); // Tableで利用する数
-    rootParameters[3].ParameterType = D3D12_ROOT_PARAMETER_TYPE_CBV;                   // CBVを使う
-    rootParameters[3].ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;                // PixelShaderで使う
-    rootParameters[3].Descriptor.ShaderRegister = 1;                                   // レジスタ番号1とバインド
-    rootParameters[4].ParameterType = D3D12_ROOT_PARAMETER_TYPE_CBV;                   // CBVを使う
-    rootParameters[4].ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;                // PixelShaderで使う
-    rootParameters[4].Descriptor.ShaderRegister = 2;                                   // レジスタ番号1とバインド
-    rootParameters[5].ParameterType = D3D12_ROOT_PARAMETER_TYPE_CBV;                   // CBVを使う
-    rootParameters[5].ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;                // PixelShaderで使う
-    rootParameters[5].Descriptor.ShaderRegister = 3;                                   // レジスタ番号1とバインド
-    rootParameters[6].ParameterType = D3D12_ROOT_PARAMETER_TYPE_CBV;                   // CBVを使う
-    rootParameters[6].ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;                // PixelShaderで使う
-    rootParameters[6].Descriptor.ShaderRegister = 4;                                   // レジスタ番号1とバインド
+
+    // rootParameters[0]: Material (b0) - PixelShader
+    rootParameters[0].ParameterType = D3D12_ROOT_PARAMETER_TYPE_CBV;
+    rootParameters[0].ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
+    rootParameters[0].Descriptor.ShaderRegister = 0;
+
+    // rootParameters[1]: TransformationMatrix (b0) - VertexShader
+    rootParameters[1].ParameterType = D3D12_ROOT_PARAMETER_TYPE_CBV;
+    rootParameters[1].ShaderVisibility = D3D12_SHADER_VISIBILITY_VERTEX;
+    rootParameters[1].Descriptor.ShaderRegister = 0;
+
+    // rootParameters[2]: テクスチャ用DescriptorTable (t0, t1) - PixelShader
+    rootParameters[2].ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
+    rootParameters[2].ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
+    rootParameters[2].DescriptorTable.pDescriptorRanges = descriptorRange;
+    rootParameters[2].DescriptorTable.NumDescriptorRanges = _countof(descriptorRange); // 2つのテクスチャ
+
+    // rootParameters[3]: DirectionalLight (b1) - PixelShader
+    rootParameters[3].ParameterType = D3D12_ROOT_PARAMETER_TYPE_CBV;
+    rootParameters[3].ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
+    rootParameters[3].Descriptor.ShaderRegister = 1;
+
+    // rootParameters[4]: Camera (b2) - PixelShader
+    rootParameters[4].ParameterType = D3D12_ROOT_PARAMETER_TYPE_CBV;
+    rootParameters[4].ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
+    rootParameters[4].Descriptor.ShaderRegister = 2;
+
+    // rootParameters[5]: PointLight (b3) - PixelShader
+    rootParameters[5].ParameterType = D3D12_ROOT_PARAMETER_TYPE_CBV;
+    rootParameters[5].ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
+    rootParameters[5].Descriptor.ShaderRegister = 3;
+
+    // rootParameters[6]: SpotLight (b4) - PixelShader
+    rootParameters[6].ParameterType = D3D12_ROOT_PARAMETER_TYPE_CBV;
+    rootParameters[6].ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
+    rootParameters[6].Descriptor.ShaderRegister = 4;
+
+    // rootParameters[7]: スキニング用StructuredBuffer (t0) - VertexShader
     rootParameters[7].ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
     rootParameters[7].ShaderVisibility = D3D12_SHADER_VISIBILITY_VERTEX;
     rootParameters[7].DescriptorTable.pDescriptorRanges = descriptorRangeForInstancing;
     rootParameters[7].DescriptorTable.NumDescriptorRanges = _countof(descriptorRangeForInstancing);
 
-    descriptionRootSignature.pParameters = rootParameters;             // ルートパラメータ配列へのポインタ
-    descriptionRootSignature.NumParameters = _countof(rootParameters); // 配列の長さ
+    descriptionRootSignature.pParameters = rootParameters;
+    descriptionRootSignature.NumParameters = _countof(rootParameters);
 
-    // Smplerの設定
+    // Samplerの設定
     D3D12_STATIC_SAMPLER_DESC staticSamplers[1] = {};
-    staticSamplers[0].Filter = D3D12_FILTER_MIN_MAG_MIP_LINEAR;   // バイリニアフィルタ
-    staticSamplers[0].AddressU = D3D12_TEXTURE_ADDRESS_MODE_WRAP; // 0～1の範囲外をリピート
+    staticSamplers[0].Filter = D3D12_FILTER_MIN_MAG_MIP_LINEAR;
+    staticSamplers[0].AddressU = D3D12_TEXTURE_ADDRESS_MODE_WRAP;
     staticSamplers[0].AddressV = D3D12_TEXTURE_ADDRESS_MODE_WRAP;
     staticSamplers[0].AddressW = D3D12_TEXTURE_ADDRESS_MODE_WRAP;
-    staticSamplers[0].ComparisonFunc = D3D12_COMPARISON_FUNC_NEVER;     // 比較しない
-    staticSamplers[0].MaxLOD = D3D12_FLOAT32_MAX;                       // ありったけのMipmapを使う
-    staticSamplers[0].ShaderRegister = 0;                               // レジスタ番号0を使う
-    staticSamplers[0].ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL; // PixelShaderで使う
+    staticSamplers[0].ComparisonFunc = D3D12_COMPARISON_FUNC_NEVER;
+    staticSamplers[0].MaxLOD = D3D12_FLOAT32_MAX;
+    staticSamplers[0].ShaderRegister = 0;
+    staticSamplers[0].ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
     descriptionRootSignature.pStaticSamplers = staticSamplers;
     descriptionRootSignature.NumStaticSamplers = _countof(staticSamplers);
 
-    // シリアライズしてパイナリする
+    // シリアライズしてバイナリにする
     ID3DBlob *signatureBlob = nullptr;
     ID3DBlob *errorBlob = nullptr;
     hr = D3D12SerializeRootSignature(&descriptionRootSignature, D3D_ROOT_SIGNATURE_VERSION_1, &signatureBlob, &errorBlob);

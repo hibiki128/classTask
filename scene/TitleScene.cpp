@@ -13,13 +13,14 @@ void TitleScene::Initialize() {
     debugCamera_ = std::make_unique<DebugCamera>();
     debugCamera_->Initialize(&vp_);
 
-    obj_ = std::make_unique<BaseObject>();
-    obj_->Init("test");
-    obj_->CreateModel("debug/suzannu.obj");
-    BaseObjectManager::GetInstance()->AddObject(std::move(obj_));
-
     skybox_ = std::make_unique<SkyBox>();
     skybox_->Initialize("debug/rostock_laage_airport_4k.dds");
+
+    obj_ = std::make_unique<BaseObject>();
+    obj_->Init("test");
+    obj_->CreateModel("animation/walk.gltf");
+    obj_->SetSkyBox(skybox_.get());
+    BaseObjectManager::GetInstance()->AddObject(std::move(obj_));
 }
 
 void TitleScene::Finalize() {
@@ -38,7 +39,7 @@ void TitleScene::Update() {
 void TitleScene::Draw() {
     /// -------描画処理開始-------
 
-    BaseObjectManager::GetInstance()->DrawWireframe(vp_);
+    BaseObjectManager::GetInstance()->Draw(vp_);
 
     /// Spriteの描画準備
     spCommon_->DrawCommonSetting();

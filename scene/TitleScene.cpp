@@ -15,7 +15,7 @@ void TitleScene::Initialize() {
 
     obj_ = std::make_unique<BaseObject>();
     obj_->Init("test");
-    obj_->CreateModel("debug/suzannu.obj");
+    obj_->CreateModel("debug/multiMaterial.obj");
     BaseObjectManager::GetInstance()->AddObject(std::move(obj_));
 
     skybox_ = std::make_unique<SkyBox>();
@@ -38,7 +38,7 @@ void TitleScene::Update() {
 void TitleScene::Draw() {
     /// -------描画処理開始-------
 
-    BaseObjectManager::GetInstance()->DrawWireframe(vp_);
+    BaseObjectManager::GetInstance()->Draw(vp_);
 
     /// Spriteの描画準備
     spCommon_->DrawCommonSetting();
@@ -46,7 +46,7 @@ void TitleScene::Draw() {
 
     //-------------------------
 
-    skybox_->Draw(vp_);
+    //skybox_->Draw(vp_);
 
     /// -------描画処理終了-------
 }

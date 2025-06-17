@@ -30,13 +30,20 @@ struct VertexData {
 };
 
 struct MaterialData {
+    Vector4 color = {1.0f, 1.0f, 1.0f, 1.0f};
+    bool enableLighting = true;
+    Matrix4x4 uvTransform = MakeIdentity4x4();
+    float shininess = 20.0f;
+    std::string textureFilePath;
+    uint32_t textureIndex = 0;
+};
+
+struct MaterialDataGPU {
     Vector4 color;
     int32_t enableLighting;
     float padding[3];
     Matrix4x4 uvTransform;
     float shininess;
-    std::string textureFilePath;
-    uint32_t textureIndex = 0;
 };
 
 struct MeshData {

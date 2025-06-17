@@ -47,7 +47,7 @@ void TitleScene::Draw() {
 
     //-------------------------
 
-    skybox_->Draw(vp_);
+    //skybox_->Draw(vp_);
 
     /// -------描画処理終了-------
 }

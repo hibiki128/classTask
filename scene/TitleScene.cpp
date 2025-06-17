@@ -19,7 +19,6 @@ void TitleScene::Initialize() {
     obj_ = std::make_unique<BaseObject>();
     obj_->Init("test");
     obj_->CreateModel("animation/walk.gltf");
-    obj_->SetSkyBox(skybox_.get());
     BaseObjectManager::GetInstance()->AddObject(std::move(obj_));
 }
 
@@ -47,7 +46,7 @@ void TitleScene::Draw() {
 
     //-------------------------
 
-    //skybox_->Draw(vp_);
+    skybox_->Draw(vp_);
 
     /// -------描画処理終了-------
 }

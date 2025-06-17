@@ -89,7 +89,6 @@ class BaseObject : public Collider {
     void SetAnima(const std::string &filePath) { obj3d_->SetAnimation(filePath); }
     void AddAnimation(std::string filePath) { obj3d_->AddAnimation(filePath); }
     void SetBlendMode(BlendMode blendMode) { obj3d_->SetBlendMode(blendMode); }
-    void SetSkyBox(SkyBox *skyBox) { obj3d_->SetSkyBox(skyBox); }
 
   private:
     void DebugObject();

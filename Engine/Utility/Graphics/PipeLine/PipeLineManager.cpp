@@ -264,7 +264,7 @@ Microsoft::WRL::ComPtr<ID3D12RootSignature> PipeLineManager::CreateRootSignature
         D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT;
 
     // DescriptorRange
-    D3D12_DESCRIPTOR_RANGE descriptorRange[2] = {};
+    D3D12_DESCRIPTOR_RANGE descriptorRange[1] = {};
 
     // 通常の2Dテクスチャ t0
     descriptorRange[0].RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
@@ -272,13 +272,6 @@ Microsoft::WRL::ComPtr<ID3D12RootSignature> PipeLineManager::CreateRootSignature
     descriptorRange[0].BaseShaderRegister = 0; // t0
     descriptorRange[0].RegisterSpace = 0;
     descriptorRange[0].OffsetInDescriptorsFromTableStart = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND;
-
-    // キューブマップ用 t1
-    descriptorRange[1].RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
-    descriptorRange[1].NumDescriptors = 1;
-    descriptorRange[1].BaseShaderRegister = 1; // t1
-    descriptorRange[1].RegisterSpace = 0;
-    descriptorRange[1].OffsetInDescriptorsFromTableStart = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND;
 
     // RootParameter作成。複数設定できるので配列。
     D3D12_ROOT_PARAMETER rootParameters[7] = {};
@@ -887,7 +880,7 @@ Microsoft::WRL::ComPtr<ID3D12RootSignature> PipeLineManager::CreateSkinningRootS
         D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT;
 
     // DescriptorRange - テクスチャ用（t0とt1）
-    D3D12_DESCRIPTOR_RANGE descriptorRange[2] = {};
+    D3D12_DESCRIPTOR_RANGE descriptorRange[1] = {};
 
     // 通常の2Dテクスチャ t0
     descriptorRange[0].RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
@@ -895,13 +888,6 @@ Microsoft::WRL::ComPtr<ID3D12RootSignature> PipeLineManager::CreateSkinningRootS
     descriptorRange[0].BaseShaderRegister = 0; // t0
     descriptorRange[0].RegisterSpace = 0;
     descriptorRange[0].OffsetInDescriptorsFromTableStart = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND;
-
-    // 環境マップキューブテクスチャ t1
-    descriptorRange[1].RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
-    descriptorRange[1].NumDescriptors = 1;
-    descriptorRange[1].BaseShaderRegister = 1; // t1
-    descriptorRange[1].RegisterSpace = 0;
-    descriptorRange[1].OffsetInDescriptorsFromTableStart = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND;
 
     // descriptorRangeForInstancing（スキニング用）
     D3D12_DESCRIPTOR_RANGE descriptorRangeForInstancing[1] = {};

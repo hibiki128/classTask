@@ -13,9 +13,6 @@ void TitleScene::Initialize() {
     debugCamera_ = std::make_unique<DebugCamera>();
     debugCamera_->Initialize(&vp_);
 
-    skybox_ = std::make_unique<SkyBox>();
-    skybox_->Initialize("debug/rostock_laage_airport_4k.dds");
-
     obj_ = std::make_unique<BaseObject>();
     obj_->Init("test");
     obj_->CreateModel("animation/walk.gltf");
@@ -45,8 +42,6 @@ void TitleScene::Draw() {
     //-----Spriteの描画開始-----
 
     //-------------------------
-
-    skybox_->Draw(vp_);
 
     /// -------描画処理終了-------
 }

@@ -1,6 +1,7 @@
 #include "PipeLineManager.h"
 #include "Log/Logger.h"
 #include <d3dx12.h>
+#include "ComputePipeLineManager.h"
 PipeLineManager *PipeLineManager::instance = nullptr;
 
 PipeLineManager *PipeLineManager::GetInstance() {
@@ -1061,6 +1062,7 @@ Microsoft::WRL::ComPtr<ID3D12PipelineState> PipeLineManager::CreateSkinningGraph
     // 実際に生成
     hr = dxCommon_->GetDevice()->CreateGraphicsPipelineState(&graphicsPipelineStateDesc,
                                                              IID_PPV_ARGS(&graphicsPipelineState));
+
     assert(SUCCEEDED(hr));
     return graphicsPipelineState;
 }

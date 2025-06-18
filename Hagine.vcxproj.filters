@@ -344,6 +344,9 @@
     <ClCompile Include="Engine\3d\SkyBox\SkyBox.cpp">
       <Filter>ソースファイル</Filter>
     </ClCompile>
+    <ClCompile Include="Engine\Utility\Graphics\PipeLine\ComputePipeLineManager.cpp">
+      <Filter>ソースファイル</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="resources\shaders\Particle\Particle.hlsli">
@@ -591,6 +594,7 @@
     <ClInclude Include="Engine\3d\Model\Material\Material.h" />
     <ClInclude Include="Engine\3d\Model\Mesh\Mesh.h" />
     <ClInclude Include="Engine\3d\SkyBox\SkyBox.h" />
+    <ClInclude Include="Engine\Utility\Graphics\PipeLine\ComputePipeLineManager.h" />
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="resources\shaders\Particle\Particle.PS.hlsl">

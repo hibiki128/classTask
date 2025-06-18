@@ -107,6 +107,7 @@ copy "$(WindowsSdkDIr)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="Engine\Utility\Graphics\PipeLine\ComputePipeLineManager.cpp" />
     <ClCompile Include="Engine\3d\Object\BaseObjectManager.cpp" />
     <ClCompile Include="Engine\Utility\Data\DataHandler.cpp" />
     <ClCompile Include="Engine\3d\Particle\ParticleEditor.cpp" />
@@ -211,6 +212,7 @@ copy "$(WindowsSdkDIr)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     </None>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Engine\Utility\Graphics\PipeLine\ComputePipeLineManager.h" />
     <ClInclude Include="Engine\3d\Object\BaseObjectManager.h" />
     <ClInclude Include="Engine\Utility\Data\DataHandler.h" />
     <ClInclude Include="Engine\3d\Particle\ParticleEditor.h" />

@@ -150,13 +150,6 @@ class Object3d {
     /// </summary>
     void CreateTransformationMatrix();
 
-    /// <summary>
-    /// マテリアルインデックス検証
-    /// </summary>
-    /// <param name="materialIndex"></param>
-    /// <returns></returns>
-    bool IsValidMaterialIndex(uint32_t materialIndex) const;
-
     Vector3 ExtractTranslation(const Matrix4x4 &matrix) {
         return Vector3(matrix.m[3][0], matrix.m[3][1], matrix.m[3][2]);
     }

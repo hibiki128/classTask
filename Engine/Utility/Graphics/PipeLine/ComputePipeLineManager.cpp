@@ -1,6 +1,8 @@
 #include "ComputePipeLineManager.h"
 #include <Log/Logger.h>
 
+ComputePipeLineManager *ComputePipeLineManager::instance = nullptr;
+
 ComputePipeLineManager *ComputePipeLineManager::GetInstance() {
     if (instance == nullptr) {
         instance = new ComputePipeLineManager;

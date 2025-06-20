@@ -35,12 +35,12 @@ SkinCluster Skin::CreateSkinCluster(const Skeleton &skeleton, const ModelData &m
     WellForGPU *mappedPalette = nullptr;
     skinCluster.paletteResource->Map(0, nullptr, reinterpret_cast<void **>(&mappedPalette));
     skinCluster.mappedPalette = {mappedPalette, skeleton.joints.size()};
-    skinClusterSrvIndex_ = srvManager_->Allocate() + 1;
-    skinCluster.paletteSrvHandle.first = srvManager_->GetCPUDescriptorHandle(skinClusterSrvIndex_);
-    skinCluster.paletteSrvHandle.second = srvManager_->GetGPUDescriptorHandle(skinClusterSrvIndex_);
+    skinClusterPaletteSrvIndex_ = srvManager_->Allocate() + 1;
+    skinCluster.paletteSrvHandle.first = srvManager_->GetCPUDescriptorHandle(skinClusterPaletteSrvIndex_);
+    skinCluster.paletteSrvHandle.second = srvManager_->GetGPUDescriptorHandle(skinClusterPaletteSrvIndex_);
 
     // palette用のSRVを作成
-    srvManager_->CreateSRVforStructuredBuffer(skinClusterSrvIndex_, skinCluster.paletteResource.Get(), UINT(skeleton.joints.size()), sizeof(WellForGPU));
+    srvManager_->CreateSRVforStructuredBuffer(skinClusterPaletteSrvIndex_, skinCluster.paletteResource.Get(), UINT(skeleton.joints.size()), sizeof(WellForGPU));
 
     // influence用のResourceを確保（全メッシュ分）
     skinCluster.influenceResource = dxCommon->CreateBufferResource(sizeof(VertexInfluence) * totalVertexCount);
@@ -48,6 +48,11 @@ SkinCluster Skin::CreateSkinCluster(const Skeleton &skeleton, const ModelData &m
     skinCluster.influenceResource->Map(0, nullptr, reinterpret_cast<void **>(&mappedInfluence));
     std::memset(mappedInfluence, 0, sizeof(VertexInfluence) * totalVertexCount);
     skinCluster.mappedInfluence = {mappedInfluence, totalVertexCount};
+    skinClusterInfluenceSrvIndex_ = srvManager_->Allocate() + 1;
+    skinCluster.influenceSrvHandle.first = srvManager_->GetCPUDescriptorHandle(skinClusterInfluenceSrvIndex_);
+    skinCluster.influenceSrvHandle.second = srvManager_->GetGPUDescriptorHandle(skinClusterInfluenceSrvIndex_); 
+
+    srvManager_->CreateSRVforStructuredBuffer(skinClusterInfluenceSrvIndex_, skinCluster.influenceResource.Get(), UINT(totalVertexCount), sizeof(VertexInfluence));
 
     // Influence用のVBVを作成
     skinCluster.influenceBufferView.BufferLocation = skinCluster.influenceResource->GetGPUVirtualAddress();

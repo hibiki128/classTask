@@ -4,12 +4,13 @@
 class Skin {
   private:
     SkinCluster skinCluster_;
-    uint32_t skinClusterSrvIndex_ = 0;
+    uint32_t skinClusterPaletteSrvIndex_ = 0;
+    uint32_t skinClusterInfluenceSrvIndex_ = 0;
 
   public:
     void Initialize(const Skeleton &skeleton, const ModelData &modelData);
     void Update(const Skeleton &skeleton);
-    uint32_t GetSrvIndex() { return skinClusterSrvIndex_; }
+    uint32_t GetSrvIndex() { return skinClusterPaletteSrvIndex_; }
     SkinCluster GetSkinCluster() { return skinCluster_; }
 
   private:
@@ -23,5 +24,4 @@ class Skin {
     /// <param name="descriptorSize"></param>
     /// <returns></returns>
     SkinCluster CreateSkinCluster(const Skeleton &skeleton, const ModelData &modelData);
-  
 };

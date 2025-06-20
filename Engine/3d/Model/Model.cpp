@@ -1,7 +1,7 @@
 #include "Model.h"
 #include "Engine/Frame/Frame.h"
-#include "Object/Object3dCommon.h"
 #include "Graphics/Texture/TextureManager.h"
+#include "Object/Object3dCommon.h"
 #include "fstream"
 #include "myMath.h"
 #include "sstream"
@@ -74,6 +74,7 @@ void Model::CreatePrimitiveModel(const PrimitiveType &type) {
 }
 
 void Model::Draw(const Vector4 &color, bool lighting) {
+    ID3D12GraphicsCommandList *commandList = modelCommon_->GetDxCommon()->GetCommandList().Get();
     // 各メッシュを描画
     for (size_t meshIndex = 0; meshIndex < meshes_.size(); ++meshIndex) {
         Mesh *currentMesh = meshes_[meshIndex].get();
@@ -90,22 +91,20 @@ void Model::Draw(const Vector4 &color, bool lighting) {
         D3D12_VERTEX_BUFFER_VIEW vertexBufferView = currentMesh->GetVertexBufferView();
         D3D12_INDEX_BUFFER_VIEW indexBufferView = currentMesh->GetIndexBufferView();
 
-        modelCommon_->GetDxCommon()->GetCommandList()->IASetIndexBuffer(&indexBufferView);
-        modelCommon_->GetDxCommon()->GetCommandList()->IASetVertexBuffers(0, 1, &vertexBufferView);
-
+        commandList->IASetIndexBuffer(&indexBufferView);
+        commandList->IASetVertexBuffers(0, 1, &vertexBufferView);
         // スキニング処理（必要に応じて）
         if (isGltf && animator_ && animator_->HaveAnimation()) {
             D3D12_VERTEX_BUFFER_VIEW influenceBufferView = skin_->GetSkinCluster().influenceBufferView;
             D3D12_VERTEX_BUFFER_VIEW vbvs[2] = {vertexBufferView, influenceBufferView};
-            modelCommon_->GetDxCommon()->GetCommandList()->IASetVertexBuffers(0, 2, vbvs);
+            commandList->IASetVertexBuffers(0, 2, vbvs);
             srvManager_->SetGraphicsRootDescriptorTable(7, skin_->GetSrvIndex());
         }
-
         // マテリアル描画
         currentMaterial->Draw(color, lighting);
 
         // 描画コール
-        modelCommon_->GetDxCommon()->GetCommandList()->DrawIndexedInstanced(
+        commandList->DrawIndexedInstanced(
             UINT(modelData.meshes[meshIndex].indices.size()), 1, 0, 0, 0);
     }
 }

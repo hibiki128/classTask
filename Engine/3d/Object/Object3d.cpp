@@ -73,6 +73,7 @@ void Object3d::Draw(const WorldTransform &worldTransform, const ViewProjection &
         if (currentModelAnimation_->GetAnimator()->HaveAnimation()) {
             HaveAnimation = true;
             objectCommon_->skinningDrawCommonSetting();
+            //objectCommon_->computeSkinningDrawCommonSetting();
         } else {
             HaveAnimation = false;
         }

@@ -76,6 +76,11 @@ void Framework::Initialize() {
     pipeLineManager_->Initialize(dxCommon);
     ///-------------------------------------
 
+     ///-----------PipeLineManager-----------
+    computePipeLineManager_ = ComputePipeLineManager::GetInstance();
+    computePipeLineManager_->Initialize(dxCommon);
+    ///-------------------------------------
+  
     ///-----------TextureManager----------
     textureManager_ = TextureManager::GetInstance();
     textureManager_->Initialize(srvManager);
@@ -151,6 +156,10 @@ void Framework::Finalize() {
 
     ///-------PipeLineManager-------
     pipeLineManager_->Finalize();
+    ///-----------------------------
+
+    ///-------ComputePipeLineManager-------
+    computePipeLineManager_->Finalize();
     ///-----------------------------
 
     ///-------TextureManager-------

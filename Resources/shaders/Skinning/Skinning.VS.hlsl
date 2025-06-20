@@ -1,4 +1,4 @@
-#include"object3d.hlsli"
+#include"Skinning.hlsli"
 
 struct TransformationMatrix
 {
@@ -14,12 +14,6 @@ struct VertexShaderInput
     float3 normal : NORMAL0;
     float4 weight : WEIGHT0;
     int4 index : INDEX0;
-};
-
-struct Well
-{
-    float4x4 skeletonSpaceMatrix;
-    float4x4 skeletonSpaceInverseTransposeMatrix;
 };
 
 struct Skinned

@@ -21,6 +21,8 @@
 #include <Scene/AbstractSceneFactory.h>
 #include <Scene/SceneManager.h>
 #include"Debug/ResourceLeakChecker/D3DResourceLeakChecker.h"
+#include"Graphics/PipeLine/PipeLineManager.h"
+#include"Graphics/PipeLine/ComputePipeLineManager.h"
 
 class Framework {
   public: // メンバ関数
@@ -84,6 +86,7 @@ class Framework {
     BaseObjectManager *baseObjectManager_ = nullptr;
     ParticleGroupManager *particleGroupManager_ = nullptr;
     PipeLineManager *pipeLineManager_ = nullptr;
+    ComputePipeLineManager *computePipeLineManager_ = nullptr;
 
     SpriteCommon *spriteCommon = nullptr;
     ParticleCommon *particleCommon = nullptr;

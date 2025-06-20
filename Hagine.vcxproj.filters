@@ -433,6 +433,7 @@
     <None Include="README.md">
       <Filter>ソースファイル</Filter>
     </None>
+    <None Include="Resources\shaders\Skinning\Skinning.hlsli" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="externals\imgui\imconfig.h">
@@ -707,9 +708,6 @@
     <FxCompile Include="resources\shaders\Line\Line3d.VS.hlsl">
       <Filter>リソース ファイル\Line</Filter>
     </FxCompile>
-    <FxCompile Include="resources\shaders\Object\SkinningObject3d.VS.hlsl">
-      <Filter>リソース ファイル\Object</Filter>
-    </FxCompile>
     <FxCompile Include="resources\shaders\OffScreen\BoxFilter.PS.hlsl">
       <Filter>リソース ファイル\OffScreen</Filter>
     </FxCompile>
@@ -740,7 +738,7 @@
     <FxCompile Include="resources\shaders\OffScreen\Cinematic.PS.hlsl">
       <Filter>リソース ファイル\OffScreen</Filter>
     </FxCompile>
-    <FxCompile Include="resources\shaders\Object\Skinning.CS.hlsl">
+    <FxCompile Include="Resources\shaders\Skinning\Skinning.CS.hlsl">
       <Filter>リソース ファイル\Object</Filter>
     </FxCompile>
     <FxCompile Include="Resources\shaders\Skybox\Skybox.VS.hlsl">

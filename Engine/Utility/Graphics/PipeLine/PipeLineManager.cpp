@@ -1,7 +1,7 @@
 #include "PipeLineManager.h"
-#include "Log/Logger.h"
 #include <d3dx12.h>
 #include "ComputePipeLineManager.h"
+#include <Debug/Log/Logger.h>
 PipeLineManager *PipeLineManager::instance = nullptr;
 
 PipeLineManager *PipeLineManager::GetInstance() {

@@ -1,7 +1,7 @@
 #include "Model.h"
 #include "Engine/Frame/Frame.h"
 #include "Object/Object3dCommon.h"
-#include "Texture/TextureManager.h"
+#include "Graphics/Texture/TextureManager.h"
 #include "fstream"
 #include "myMath.h"
 #include "sstream"

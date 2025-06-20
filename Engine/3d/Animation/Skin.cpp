@@ -1,9 +1,9 @@
 #include "Skin.h"
 #include <DirectXCommon.h>
-#include"Srv/SrvManager.h"
 #include <myMath.h>
 #include <cassert>
 #include"algorithm"
+#include <Graphics/Srv/SrvManager.h>
 
 void Skin::Initialize(const Skeleton& skeleton, const ModelData& modelData)
 {

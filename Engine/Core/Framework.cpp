@@ -1,7 +1,5 @@
 #include "Framework.h"
-#include "Engine/Frame/Frame.h"
-#include "ImGui/ImGuiManager.h"
-#include "ResourceLeakChecker/D3DResourceLeakChecker.h"
+#include <Frame.h>
 
 void Framework::Run() {
     // ゲームの初期化

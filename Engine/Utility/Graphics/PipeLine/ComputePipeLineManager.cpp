@@ -1,5 +1,5 @@
 #include "ComputePipeLineManager.h"
-#include <Log/Logger.h>
+#include <Debug/Log/Logger.h>
 
 ComputePipeLineManager *ComputePipeLineManager::instance = nullptr;
 

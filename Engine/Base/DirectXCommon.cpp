@@ -4,11 +4,11 @@
 #include "externals/imgui/imgui_impl_win32.h"
 #include"cassert"
 #include "DirectXCommon.h"
-#include "Log/Logger.h"
-#include "StringUtility.h"
 #include "format"
 #include"thread"
-#include"Srv/SrvManager.h"
+#include <Graphics/Srv/SrvManager.h>
+#include <Debug/Log/Logger.h>
+#include <String/StringUtility.h>
 using namespace Logger;
 using namespace StringUtility;
 

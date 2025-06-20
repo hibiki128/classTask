@@ -1,5 +1,5 @@
 #pragma once
-#include"PipeLine/PipeLineManager.h"
+#include"Graphics/PipeLine/PipeLineManager.h"
 class Object3dCommon 
 {
   public: // メンバ関数

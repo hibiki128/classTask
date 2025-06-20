@@ -1,5 +1,4 @@
 #include "DemoScene.h"
-#include "SceneManager.h"
 
 void DemoScene::Initialize() {
     audio_ = Audio::GetInstance();

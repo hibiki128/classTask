@@ -1,6 +1,5 @@
 #include "TitleScene.h"
-#include "SceneManager.h"
-#include <Engine/Frame/Frame.h>
+#include <Frame.h>
 
 void TitleScene::Initialize() {
     audio_ = Audio::GetInstance();

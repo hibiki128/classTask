@@ -62,7 +62,6 @@ void TitleScene::AddSceneSetting() {
 }
 
 void TitleScene::AddObjectSetting() {
- 
 }
 
 void TitleScene::AddParticleSetting() {

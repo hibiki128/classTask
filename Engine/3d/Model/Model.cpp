@@ -73,33 +73,46 @@ void Model::CreatePrimitiveModel(const PrimitiveType &type) {
     modelData.meshes[0].materialIndex = 0;
 }
 
+void Model::Update() {
+    DirectXCommon *dxCommon = modelCommon_->GetDxCommon();
+    ID3D12GraphicsCommandList *commandList = dxCommon->GetCommandList().Get();
+
+    commandList->SetComputeRootDescriptorTable(0, srvManager_->GetGPUDescriptorHandle(skin_->GetPaletteSrvIndex()));
+    commandList->SetComputeRootDescriptorTable(1, srvManager_->GetGPUDescriptorHandle(skin_->GetInputVertexSrvIndex()));
+    commandList->SetComputeRootDescriptorTable(2, srvManager_->GetGPUDescriptorHandle(skin_->GetInfluenceSrvIndex()));
+    commandList->SetComputeRootDescriptorTable(3, srvManager_->GetGPUDescriptorHandle(skin_->GetOutputVertexSrvIndex()));
+    commandList->SetComputeRootConstantBufferView(4, skin_->GetSkinningInformationResource()->GetGPUVirtualAddress());
+
+    commandList->Dispatch(UINT(skin_->GetTotalVertex() + 1023) / 1024, 1, 1);
+
+}
+
 void Model::Draw(const Vector4 &color, bool lighting) {
     ID3D12GraphicsCommandList *commandList = modelCommon_->GetDxCommon()->GetCommandList().Get();
-    // 各メッシュを描画
+
     for (size_t meshIndex = 0; meshIndex < meshes_.size(); ++meshIndex) {
         Mesh *currentMesh = meshes_[meshIndex].get();
         uint32_t materialIndex = modelData.meshes[meshIndex].materialIndex;
 
-        // マテリアルインデックスの範囲チェック
         if (materialIndex >= materials_.size()) {
             materialIndex = 0;
         }
 
         Material *currentMaterial = materials_[materialIndex].get();
 
-        // バッファ設定
-        D3D12_VERTEX_BUFFER_VIEW vertexBufferView = currentMesh->GetVertexBufferView();
+        // インデックスバッファ設定
         D3D12_INDEX_BUFFER_VIEW indexBufferView = currentMesh->GetIndexBufferView();
-
+        D3D12_VERTEX_BUFFER_VIEW vbvs[2] = {currentMesh->GetVertexBufferView(), skin_->GetOutputVertexBufferView()};
         commandList->IASetIndexBuffer(&indexBufferView);
-        commandList->IASetVertexBuffers(0, 1, &vertexBufferView);
-        // スキニング処理（必要に応じて）
+
+        // 頂点バッファ設定
         if (isGltf && animator_ && animator_->HaveAnimation()) {
-            D3D12_VERTEX_BUFFER_VIEW influenceBufferView = skin_->GetSkinCluster().influenceBufferView;
-            D3D12_VERTEX_BUFFER_VIEW vbvs[2] = {vertexBufferView, influenceBufferView};
             commandList->IASetVertexBuffers(0, 2, vbvs);
-            srvManager_->SetGraphicsRootDescriptorTable(7, skin_->GetSrvIndex());
+            srvManager_->SetGraphicsRootDescriptorTable(7, skin_->GetPaletteSrvIndex());
+        } else {
+            commandList->IASetVertexBuffers(0, 1, vbvs);
         }
+
         // マテリアル描画
         currentMaterial->Draw(color, lighting);
 

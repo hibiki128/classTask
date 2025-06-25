@@ -58,6 +58,8 @@ class Model {
 
     void CreatePrimitiveModel(const PrimitiveType &type);
 
+    void Update();
+
     /// <summary>
     /// 描画
     /// </summary>

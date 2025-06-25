@@ -61,7 +61,7 @@ void ComputePipeLineManager::DrawCommonSetting(ComputePipelineType type, BlendMo
     // グラフィックスコマンドリストにパイプラインとルートシグネチャを設定
     ID3D12GraphicsCommandList *commandList = dxCommon_->GetCommandList().Get();
     commandList->SetPipelineState(pipeline.Get());
-    commandList->SetGraphicsRootSignature(rootSignature.Get());
+    commandList->SetComputeRootSignature(rootSignature.Get());
 }
 
 void ComputePipeLineManager::CreateSkinningPipelines() {

@@ -1,6 +1,8 @@
 #pragma once
 #include "Model/ModelStructs.h"
 #include <cstdint>
+class DirectXCommon;
+class SrvManager;
 class Skin {
   private:
     SkinCluster skinCluster_;
@@ -10,6 +12,9 @@ class Skin {
     uint32_t skinClusterInputVertexSrvIndex_ = 0;
 
     size_t totalVertexCount = 0;
+
+    DirectXCommon *dxCommon_;
+    SrvManager *srvManager_;
 
   public:
     void Initialize(const Skeleton &skeleton, const ModelData &modelData);
@@ -30,6 +35,9 @@ class Skin {
 
     SkinCluster GetSkinCluster() { return skinCluster_; }
 
+    void UpdateInputVertices(const ModelData &modelData);
+    void ExecuteSkinning(ID3D12GraphicsCommandList *commandList);
+
   private:
     /// <summary>
     /// SkinClusterの生成
@@ -41,4 +49,12 @@ class Skin {
     /// <param name="descriptorSize"></param>
     /// <returns></returns>
     SkinCluster CreateSkinCluster(const Skeleton &skeleton, const ModelData &modelData);
+
+    void CreatePaletteResource(SkinCluster &skinCluster, const Skeleton &skeleton);
+    void CreateInfluenceResource(SkinCluster &skinCluster, const Skeleton &skeleton);
+    void CreateInputVertexResource(SkinCluster &skinCluster, const Skeleton &skeleton);
+    void CreateOutputVertexResource(SkinCluster &skinCluster, const Skeleton &skeleton);
+    void CreateSkinningInformationResource(SkinCluster &skinCluster, const Skeleton &skeleton);
+    size_t GetMeshVertexOffset(size_t meshIndex) const;
+    size_t GetMeshVertexCount(size_t meshIndex, const ModelData &modelData) const;
 };

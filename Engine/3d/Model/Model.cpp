@@ -74,17 +74,29 @@ void Model::CreatePrimitiveModel(const PrimitiveType &type) {
 }
 
 void Model::Update() {
-    DirectXCommon *dxCommon = modelCommon_->GetDxCommon();
-    ID3D12GraphicsCommandList *commandList = dxCommon->GetCommandList().Get();
+    if (isGltf && animator_ && animator_->HaveAnimation()) {
+        // 1. 入力頂点データ更新
+        skin_->UpdateInputVertices(modelData);
 
-    commandList->SetComputeRootDescriptorTable(0, srvManager_->GetGPUDescriptorHandle(skin_->GetPaletteSrvIndex()));
-    commandList->SetComputeRootDescriptorTable(1, srvManager_->GetGPUDescriptorHandle(skin_->GetInputVertexSrvIndex()));
-    commandList->SetComputeRootDescriptorTable(2, srvManager_->GetGPUDescriptorHandle(skin_->GetInfluenceSrvIndex()));
-    commandList->SetComputeRootDescriptorTable(3, srvManager_->GetGPUDescriptorHandle(skin_->GetOutputVertexSrvIndex()));
-    commandList->SetComputeRootConstantBufferView(4, skin_->GetSkinningInformationResource()->GetGPUVirtualAddress());
+        // 2. コンピュートシェーダ実行のためのバリア
+        ID3D12GraphicsCommandList *commandList = modelCommon_->GetDxCommon()->GetCommandList().Get();
 
-    commandList->Dispatch(UINT(skin_->GetTotalVertex() + 1023) / 1024, 1, 1);
+        //// UAV -> SRV バリア (前回の結果があれば)
+        //D3D12_RESOURCE_BARRIER barrier = {};
+        //barrier.Type = D3D12_RESOURCE_BARRIER_TYPE_UAV;
+        //barrier.UAV.pResource = skin_->GetOutputVertexResource();
+        //commandList->ResourceBarrier(1, &barrier);
 
+        // 3. スキニング実行
+        skin_->ExecuteSkinning(commandList);
+
+        //// 4. UAV -> VBV バリア
+        //barrier.Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
+        //barrier.Transition.pResource = skin_->GetOutputVertexResource();
+        //barrier.Transition.StateBefore = D3D12_RESOURCE_STATE_UNORDERED_ACCESS;
+        //barrier.Transition.StateAfter = D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER;
+        //commandList->ResourceBarrier(1, &barrier);
+    }
 }
 
 void Model::Draw(const Vector4 &color, bool lighting) {
@@ -93,24 +105,27 @@ void Model::Draw(const Vector4 &color, bool lighting) {
     for (size_t meshIndex = 0; meshIndex < meshes_.size(); ++meshIndex) {
         Mesh *currentMesh = meshes_[meshIndex].get();
         uint32_t materialIndex = modelData.meshes[meshIndex].materialIndex;
-
         if (materialIndex >= materials_.size()) {
             materialIndex = 0;
         }
-
         Material *currentMaterial = materials_[materialIndex].get();
 
         // インデックスバッファ設定
         D3D12_INDEX_BUFFER_VIEW indexBufferView = currentMesh->GetIndexBufferView();
-        D3D12_VERTEX_BUFFER_VIEW vbvs[2] = {currentMesh->GetVertexBufferView(), skin_->GetOutputVertexBufferView()};
         commandList->IASetIndexBuffer(&indexBufferView);
 
-        // 頂点バッファ設定
+        // 頂点バッファ設定 - アニメーション有無で使用するバッファを切り替え
         if (isGltf && animator_ && animator_->HaveAnimation()) {
-            commandList->IASetVertexBuffers(0, 2, vbvs);
+            // スキニング後の頂点バッファのみを使用
+            D3D12_VERTEX_BUFFER_VIEW vbv = skin_->GetOutputVertexBufferView();
+            commandList->IASetVertexBuffers(0, 1, &vbv);
+
+            // パレット情報をシェーダーに渡す（必要に応じて）
             srvManager_->SetGraphicsRootDescriptorTable(7, skin_->GetPaletteSrvIndex());
         } else {
-            commandList->IASetVertexBuffers(0, 1, vbvs);
+            // 元の頂点バッファを使用
+            D3D12_VERTEX_BUFFER_VIEW vbv = currentMesh->GetVertexBufferView();
+            commandList->IASetVertexBuffers(0, 1, &vbv);
         }
 
         // マテリアル描画

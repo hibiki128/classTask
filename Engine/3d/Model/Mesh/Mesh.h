@@ -14,8 +14,6 @@ class Mesh {
     void Initialize();
     void PrimitiveInitialize(const PrimitiveType &type);
 
-    void Draw();
-
     MeshData &GetMeshData() { return meshData_; }
     D3D12_VERTEX_BUFFER_VIEW GetVertexBufferView() { return vertexBufferView; }
     D3D12_INDEX_BUFFER_VIEW GetIndexBufferView() { return indexBufferView; }

@@ -37,9 +37,12 @@ void BaseObject::Draw(const ViewProjection &viewProjection, Vector3 offSet) {
 
     // 新しい位置を設定
     transform_.translation_ = newPosition;
-
-    // オブジェクトの描画
-    obj3d_->Draw(transform_, viewProjection, &objColor_, isLighting_);
+    if (!isWireframe_) {
+        // オブジェクトの描画
+        obj3d_->Draw(transform_, viewProjection, &objColor_, isLighting_);
+    } else {
+        obj3d_->DrawWireframe(transform_, viewProjection);
+    }
 
     // スケルトンの描画が必要な場合
     if (skeletonDraw_) {
@@ -48,19 +51,6 @@ void BaseObject::Draw(const ViewProjection &viewProjection, Vector3 offSet) {
 
     // 描画後に元の位置に戻す場合は、以下の行を追加
     transform_.translation_ = currentPosition;
-}
-
-void BaseObject::DrawWireframe(const ViewProjection &viewProjection, Vector3 offSet) {
-    // オフセットを加える前の現在の位置を取得
-    Vector3 currentPosition = transform_.translation_;
-
-    // オフセットを加えて新しい位置を計算
-    Vector3 newPosition = currentPosition + offSet;
-
-    // 新しい位置を設定
-    transform_.translation_ = newPosition;
-
-    obj3d_->DrawWireframe(transform_, viewProjection);
 }
 
 Vector3 BaseObject::GetWorldPosition() const {
@@ -101,6 +91,8 @@ void BaseObject::ImGui() {
             if (ImGui::Button("コライダー追加")) {
                 AddCollider();
             }
+            ImGui::Checkbox("ワイヤーフレーム", &isWireframe_);
+
             if (ImGui::Button("セーブ")) {
                 SaveToJson();
                 AnimaSaveToJson();
@@ -147,7 +139,7 @@ void BaseObject::DebugObject() {
         ImGui::Checkbox("ライティング有効", &isLighting_);
     }
 
-if (ImGui::CollapsingHeader("モデル")) {
+    if (ImGui::CollapsingHeader("モデル")) {
         static int selectedMaterialIndex = 0; // 選択中のマテリアルインデックス
 
         size_t materialCount = obj3d_->GetMaterialCount();
@@ -211,7 +203,6 @@ if (ImGui::CollapsingHeader("モデル")) {
         }
     }
 }
-
 
 void BaseObject::SaveToJson() {
     TransformDatas_->Save<Vector3>("translation", transform_.translation_);

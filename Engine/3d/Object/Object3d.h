@@ -148,6 +148,10 @@ class Object3d {
     /// 座標変換行列データ作成
     /// </summary>
     void CreateTransformationMatrix();
+    
+    void DrawBoneArmature(const Vector3 &parentPos, const Vector3 &childPos);
+
+    void DrawArmatureShape(const Vector3 &startPos, const Vector3 &endPos, float baseWidth, float tipWidth, const Vector4 &color);
 
     Vector3 ExtractTranslation(const Matrix4x4 &matrix) {
         return Vector3(matrix.m[3][0], matrix.m[3][1], matrix.m[3][2]);

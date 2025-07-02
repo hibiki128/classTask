@@ -37,16 +37,18 @@ void BaseObject::Draw(const ViewProjection &viewProjection, Vector3 offSet) {
 
     // 新しい位置を設定
     transform_.translation_ = newPosition;
-    if (!isWireframe_) {
-        // オブジェクトの描画
-        obj3d_->Draw(transform_, viewProjection, reflect_, & objColor_, isLighting_);
-    } else {
-        obj3d_->DrawWireframe(transform_, viewProjection);
-    }
 
     // スケルトンの描画が必要な場合
     if (skeletonDraw_) {
         obj3d_->DrawSkeleton(transform_, viewProjection);
+    }
+    if (!isWireframe_) {
+        if (isModelDraw_) {
+            // オブジェクトの描画
+            obj3d_->Draw(transform_, viewProjection, reflect_, &objColor_, isLighting_);
+        }
+    } else {
+        obj3d_->DrawWireframe(transform_, viewProjection);
     }
 
     // 描画後に元の位置に戻す場合は、以下の行を追加
@@ -91,6 +93,7 @@ void BaseObject::ImGui() {
             if (ImGui::Button("コライダー追加")) {
                 AddCollider();
             }
+            ImGui::Checkbox("モデル描画", &isModelDraw_);
             ImGui::Checkbox("ワイヤーフレーム", &isWireframe_);
 
             if (ImGui::Button("セーブ")) {

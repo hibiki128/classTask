@@ -259,33 +259,35 @@ void Object3d::DrawWireframe(const WorldTransform &worldTransform, const ViewPro
 }
 
 void Object3d::DrawSkeleton(const WorldTransform &worldTransform, const ViewProjection &viewProjection) {
-    Update(worldTransform, viewProjection);
-
-    // スケルトンデータを取得
     const Skeleton &skeleton = currentModelAnimation_->GetSkeletonData();
 
-    // 各ジョイントを巡回
+    // モデルに適用されているワールド変換を生成
+    Matrix4x4 worldMatrix = MakeAffineMatrix(
+        worldTransform.scale_,
+        worldTransform.rotation_,
+        worldTransform.translation_);
+    if (worldTransform.parent_) {
+        worldMatrix *= worldTransform.parent_->matWorld_;
+    }
+
     for (const auto &joint : skeleton.joints) {
-        // 関節に球体を描画
-        Vector3 jointPosition = ExtractTranslation(joint.skeletonSpaceMatrix);
-        Vector4 jointColor = {0.8f, 0.2f, 0.2f, 1.0f}; // 赤系の色
-        float jointRadius = 0.03f;                     // 関節の半径
+        // ローカル座標 → ワールド座標に変換
+        Matrix4x4 jointWorldMat = joint.skeletonSpaceMatrix * worldMatrix;
+        Vector3 jointPosition = ExtractTranslation(jointWorldMat);
+
+        Vector4 jointColor = {0.8f, 0.2f, 0.2f, 1.0f};
+        float jointRadius = 0.03f;
         DrawLine3D::GetInstance()->DrawSphere(jointPosition, jointColor, jointRadius, 8);
 
-        // 親がいない場合、このジョイントはルートなのでボーンの描画はスキップ
         if (!joint.parent.has_value()) {
             continue;
         }
 
-        // 親ジョイントを取得
         const auto &parentJoint = skeleton.joints[*joint.parent];
+        Matrix4x4 parentWorldMat = parentJoint.skeletonSpaceMatrix * worldMatrix;
+        Vector3 parentPosition = ExtractTranslation(parentWorldMat);
 
-        // 親と子のスケルトン空間座標を取得
-        Vector3 parentPosition = ExtractTranslation(parentJoint.skeletonSpaceMatrix);
-        Vector3 childPosition = ExtractTranslation(joint.skeletonSpaceMatrix);
-
-        // ボーンをBlenderアーマチュア風に描画
-        DrawBoneArmature(parentPosition, childPosition);
+        DrawBoneArmature(parentPosition, jointPosition);
     }
 }
 

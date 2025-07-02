@@ -15,8 +15,6 @@ void TitleScene::Initialize() {
     obj_ = std::make_unique<BaseObject>();
     obj_->Init("test");
     obj_->CreateModel("animation/walk.gltf");
-    obj_->SetReflect(true);
-    SkyBox::GetInstance()->Initialize("debug/rostock_laage_airport_4k.dds");
     BaseObjectManager::GetInstance()->AddObject(std::move(obj_));
 }
 
@@ -43,8 +41,6 @@ void TitleScene::Draw() {
     //-----Spriteの描画開始-----
 
     //-------------------------
-
-    SkyBox::GetInstance()->Draw(vp_); 
 
     /// -------描画処理終了-------
 }

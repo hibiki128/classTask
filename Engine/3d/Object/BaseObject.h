@@ -30,9 +30,10 @@ class BaseObject : public Collider {
     // カラー
     ObjColor objColor_;
     // ライティング
-    bool isLighting_;
-    bool isLoop_;
-    bool skeletonDraw_;
+    bool isLighting_ = true;
+    bool isLoop_ = true;
+    bool skeletonDraw_ = false;
+    bool isModelDraw_ = true;
     bool isWireframe_ = false;
     bool reflect_ = false;
 

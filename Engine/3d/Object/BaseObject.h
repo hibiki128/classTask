@@ -34,6 +34,7 @@ class BaseObject : public Collider {
     bool isLoop_;
     bool skeletonDraw_;
     bool isWireframe_ = false;
+    bool reflect_ = false;
 
     std::string objectName_;
 
@@ -89,6 +90,7 @@ class BaseObject : public Collider {
     void SetAnima(const std::string &filePath) { obj3d_->SetAnimation(filePath); }
     void AddAnimation(std::string filePath) { obj3d_->AddAnimation(filePath); }
     void SetBlendMode(BlendMode blendMode) { obj3d_->SetBlendMode(blendMode); }
+    void SetReflect(bool reflect) { reflect_ = reflect; }
 
   private:
     void DebugObject();

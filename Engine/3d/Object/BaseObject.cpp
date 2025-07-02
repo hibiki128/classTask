@@ -39,7 +39,7 @@ void BaseObject::Draw(const ViewProjection &viewProjection, Vector3 offSet) {
     transform_.translation_ = newPosition;
     if (!isWireframe_) {
         // オブジェクトの描画
-        obj3d_->Draw(transform_, viewProjection, &objColor_, isLighting_);
+        obj3d_->Draw(transform_, viewProjection, reflect_, & objColor_, isLighting_);
     } else {
         obj3d_->DrawWireframe(transform_, viewProjection);
     }

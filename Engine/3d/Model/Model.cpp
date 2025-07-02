@@ -5,6 +5,7 @@
 #include "fstream"
 #include "myMath.h"
 #include "sstream"
+#include <SkyBox/SkyBox.h>
 
 std::unordered_set<std::string> Model::jointNames = {};
 
@@ -99,7 +100,7 @@ void Model::Update() {
     }
 }
 
-void Model::Draw(const Vector4 &color, bool lighting) {
+void Model::Draw(const Vector4 &color, bool lighting, bool reflect) {
     ID3D12GraphicsCommandList *commandList = modelCommon_->GetDxCommon()->GetCommandList().Get();
 
     for (size_t meshIndex = 0; meshIndex < meshes_.size(); ++meshIndex) {
@@ -121,11 +122,19 @@ void Model::Draw(const Vector4 &color, bool lighting) {
             commandList->IASetVertexBuffers(0, 1, &vbv);
 
             // パレット情報をシェーダーに渡す（必要に応じて）
-            srvManager_->SetGraphicsRootDescriptorTable(7, skin_->GetPaletteSrvIndex());
+            srvManager_->SetGraphicsRootDescriptorTable(8, skin_->GetPaletteSrvIndex());
         } else {
             // 元の頂点バッファを使用
             D3D12_VERTEX_BUFFER_VIEW vbv = currentMesh->GetVertexBufferView();
             commandList->IASetVertexBuffers(0, 1, &vbv);
+        }
+
+        commandList->SetGraphicsRootDescriptorTable(7, srvManager_->GetGPUDescriptorHandle(SkyBox::GetInstance()->GetTextureIndex()));
+        if (reflect) {
+            // 環境係数を有効化
+            SetEnvironmentCoefficients(1.0f);
+        } else {
+            SetEnvironmentCoefficients(0.0f); // 環境係数を無効化
         }
 
         // マテリアル描画

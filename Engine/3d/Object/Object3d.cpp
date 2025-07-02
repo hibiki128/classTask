@@ -71,7 +71,7 @@ void Object3d::Update(const WorldTransform &worldTransform, const ViewProjection
     }
 }
 
-void Object3d::Draw(const WorldTransform &worldTransform, const ViewProjection &viewProjection, ObjColor *color, bool lighting) {
+void Object3d::Draw(const WorldTransform &worldTransform, const ViewProjection &viewProjection, bool reflect, ObjColor *color, bool lighting) {
     objectCommon_->SetBlendMode(blendMode_);
     Update(worldTransform, viewProjection);
 
@@ -96,7 +96,7 @@ void Object3d::Draw(const WorldTransform &worldTransform, const ViewProjection &
     // モデル描画
     if (model) {
         Vector4 drawColor = color ? color->GetColor() : Vector4{1.0f, 1.0f, 1.0f, 1.0f};
-        model->Draw(drawColor, lighting);
+        model->Draw(drawColor, lighting, reflect);
     }
 }
 
@@ -333,7 +333,7 @@ void Object3d::DrawArmatureShape(const Vector3 &startPos, const Vector3 &endPos,
     }
 
     Vector3 right = (normalizedDir.Cross(up)).Normalize();
-    up = (right.Cross( normalizedDir)).Normalize();
+    up = (right.Cross(normalizedDir)).Normalize();
 
     // 分割数
     const int segments = 8;       // 断面の分割数

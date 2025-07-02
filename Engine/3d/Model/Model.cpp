@@ -81,21 +81,21 @@ void Model::Update() {
         // 2. コンピュートシェーダ実行のためのバリア
         ID3D12GraphicsCommandList *commandList = modelCommon_->GetDxCommon()->GetCommandList().Get();
 
-        //// UAV -> SRV バリア (前回の結果があれば)
-        //D3D12_RESOURCE_BARRIER barrier = {};
-        //barrier.Type = D3D12_RESOURCE_BARRIER_TYPE_UAV;
-        //barrier.UAV.pResource = skin_->GetOutputVertexResource();
-        //commandList->ResourceBarrier(1, &barrier);
+        // UAV -> SRV バリア (前回の結果があれば)
+        D3D12_RESOURCE_BARRIER barrier = {};
+        barrier.Type = D3D12_RESOURCE_BARRIER_TYPE_UAV;
+        barrier.UAV.pResource = skin_->GetOutputVertexResource();
+        commandList->ResourceBarrier(1, &barrier);
 
         // 3. スキニング実行
         skin_->ExecuteSkinning(commandList);
 
-        //// 4. UAV -> VBV バリア
-        //barrier.Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
-        //barrier.Transition.pResource = skin_->GetOutputVertexResource();
-        //barrier.Transition.StateBefore = D3D12_RESOURCE_STATE_UNORDERED_ACCESS;
-        //barrier.Transition.StateAfter = D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER;
-        //commandList->ResourceBarrier(1, &barrier);
+        // 4. UAV -> VBV バリア
+        barrier.Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
+        barrier.Transition.pResource = skin_->GetOutputVertexResource();
+        barrier.Transition.StateBefore = D3D12_RESOURCE_STATE_UNORDERED_ACCESS;
+        barrier.Transition.StateAfter = D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER;
+        commandList->ResourceBarrier(1, &barrier);
     }
 }
 

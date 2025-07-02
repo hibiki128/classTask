@@ -14,7 +14,7 @@ void TitleScene::Initialize() {
 
     obj_ = std::make_unique<BaseObject>();
     obj_->Init("test");
-    obj_->CreateModel("animation/playerGoal.gltf");
+    obj_->CreateModel("animation/BrainStem.gltf");
     BaseObjectManager::GetInstance()->AddObject(std::move(obj_));
 }
 

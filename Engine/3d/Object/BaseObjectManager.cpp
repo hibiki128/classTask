@@ -35,6 +35,8 @@ void BaseObjectManager::AddObject(std::unique_ptr<BaseObject> baseObject) {
 
 void BaseObjectManager::Update() {
     for (auto &[name, obj] : baseObjects_) {
+        obj->UpdateHierarchy();
+        obj->UpdateWorldTransformHierarchy();
         obj->Update();
     }
 }
@@ -49,6 +51,16 @@ void BaseObjectManager::DrawImGui() {
     for (auto &[name, obj] : baseObjects_) {
         obj->ImGui();
     }
+}
+
+void BaseObjectManager::SaveAll() {
+    for (auto &[name, obj] : baseObjects_) {
+        obj->SaveToJson();
+    }
+}
+
+void BaseObjectManager::LoadAll() {
+
 }
 
 BaseObject *BaseObjectManager::GetObjectByName(const std::string &name) {

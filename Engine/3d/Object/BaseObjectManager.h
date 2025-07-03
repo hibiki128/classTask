@@ -30,6 +30,10 @@ class BaseObjectManager {
 
     void DrawImGui();
 
+    void SaveAll();
+
+    void LoadAll();
+
     BaseObject *GetObjectByName(const std::string &name);
 
   private:

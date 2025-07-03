@@ -395,6 +395,15 @@
     <ClCompile Include="Engine\Utility\ShowFolder\ShowFolder.cpp">
       <Filter>ソースファイル\Engine\Utility\ShowFolder</Filter>
     </ClCompile>
+    <ClCompile Include="Application\Utility\Shake\Shake.cpp">
+      <Filter>ソースファイル</Filter>
+    </ClCompile>
+    <ClCompile Include="Application\Utility\MotionEditor\MotionEditor.cpp">
+      <Filter>ソースファイル</Filter>
+    </ClCompile>
+    <ClCompile Include="Application\Utility\HitStop\HitStop.cpp">
+      <Filter>ソースファイル</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="resources\shaders\Particle\Particle.hlsli">
@@ -687,6 +696,9 @@
     <ClInclude Include="resource.h">
       <Filter>ソースファイル</Filter>
     </ClInclude>
+    <ClInclude Include="Application\Utility\Shake\Shake.h" />
+    <ClInclude Include="Application\Utility\MotionEditor\MotionEditor.h" />
+    <ClInclude Include="Application\Utility\HitStop\HitStop.h" />
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="resources\shaders\Particle\Particle.PS.hlsl">

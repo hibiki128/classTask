@@ -112,6 +112,9 @@ copy "$(WindowsSdkDIr)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     <ClCompile Include="Application\Scene\GameScene.cpp" />
     <ClCompile Include="Application\Scene\SelectScene.cpp" />
     <ClCompile Include="Application\Scene\TitleScene.cpp" />
+    <ClCompile Include="Application\Utility\HitStop\HitStop.cpp" />
+    <ClCompile Include="Application\Utility\MotionEditor\MotionEditor.cpp" />
+    <ClCompile Include="Application\Utility\Shake\Shake.cpp" />
     <ClCompile Include="Engine\3d\Object\BaseObject.cpp" />
     <ClCompile Include="Engine\3d\Transform\ObjColor.cpp" />
     <ClCompile Include="Engine\Math\Easing.cpp" />
@@ -225,6 +228,9 @@ copy "$(WindowsSdkDIr)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     <ClInclude Include="Application\Scene\GameScene.h" />
     <ClInclude Include="Application\Scene\SelectScene.h" />
     <ClInclude Include="Application\Scene\TitleScene.h" />
+    <ClInclude Include="Application\Utility\HitStop\HitStop.h" />
+    <ClInclude Include="Application\Utility\MotionEditor\MotionEditor.h" />
+    <ClInclude Include="Application\Utility\Shake\Shake.h" />
     <ClInclude Include="Engine\3d\Object\BaseObject.h" />
     <ClInclude Include="Engine\3d\Transform\ObjColor.h" />
     <ClInclude Include="Engine\Math\Easing.h" />

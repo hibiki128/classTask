@@ -103,9 +103,9 @@ class BaseObject : public Collider {
     const WorldTransform &GetTransform() { return *transform_; }
     std::string &GetName() { return objectName_; }
     Object3d *GetObject3d() { return obj3d_.get(); }
-    Vector3 &GetWorldPosition() { return transform_->translation_; }
-    Vector3 &GetWorldRotation() { return transform_->rotation_; }
-    Vector3 &GetWorldScale() { return transform_->scale_; }
+    Vector3 &GetLocalPosition() { return transform_->translation_; }
+    Vector3 &GetLocalRotation() { return transform_->rotation_; }
+    Vector3 &GetLocalScale() { return transform_->scale_; }
     bool AnimaIsFinish() { return obj3d_->IsFinish(); }
     bool &GetLighting() { return isLighting_; }
     bool &GetLoop() { return isLoop_; }

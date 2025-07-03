@@ -166,7 +166,8 @@ BaseObject *BaseObject::GetChildByName(const std::string &name) {
 
 void BaseObject::CreateModel(const std::string modelname) {
     obj3d_->CreateModel(modelname);
-
+    modelName_ = modelname;
+    textureName_ = obj3d_->GetTextureFilePath(0);
     LoadFromJson();
     AnimaLoadFromJson();
 }
@@ -307,6 +308,10 @@ void BaseObject::DebugObject() {
 }
 
 void BaseObject::SaveToJson() {
+    modelName_ = obj3d_->GetModelFilePath();
+    textureName_ = obj3d_->GetTextureFilePath(0);
+    TransformDatas_->Save<std::string>("modelName", modelName_);
+    TransformDatas_->Save<std::string>("textureName", textureName_);
     TransformDatas_->Save<Vector3>("translation", transform_->translation_);
     TransformDatas_->Save<Vector3>("rotation", transform_->rotation_);
     TransformDatas_->Save<Vector3>("scale", transform_->scale_);
@@ -327,6 +332,10 @@ void BaseObject::LoadFromJson() {
     transform_->translation_ = TransformDatas_->Load<Vector3>("translation", {0.0f, 0.0f, 0.0f});
     transform_->rotation_ = TransformDatas_->Load<Vector3>("rotation", {0.0f, 0.0f, 0.0f});
     transform_->scale_ = TransformDatas_->Load<Vector3>("scale", {1.0f, 1.0f, 1.0f});
+    modelName_ = TransformDatas_->Load<std::string>("modelName", "suzannu.obj");
+    textureName_ = TransformDatas_->Load<std::string>("textureName", "uvChecker.png");
+    obj3d_->SetModel(modelName_);
+    obj3d_->SetTexture(textureName_, 0);
 
     // カラーとライティング設定も読み込み
     Vector4 loadedColor = TransformDatas_->Load<Vector4>("objectColor", {1.0f, 1.0f, 1.0f, 1.0f});

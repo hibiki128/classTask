@@ -22,17 +22,17 @@ void Object3d::Initialize() {
 }
 
 void Object3d::CreateModel(const std::string &filePath) {
-    filePath_ = filePath;
+    modelFilePath_ = filePath;
 
-    ModelManager::GetInstance()->LoadModel(filePath_);
+    ModelManager::GetInstance()->LoadModel(modelFilePath_);
 
     // モデルを検索してセットする
-    model = ModelManager::GetInstance()->FindModel(filePath_);
+    model = ModelManager::GetInstance()->FindModel(modelFilePath_);
 
     if (model->IsGltf()) {
         currentModelAnimation_ = std::make_unique<ModelAnimation>();
         currentModelAnimation_->SetModelData(model->GetModelData());
-        currentModelAnimation_->Initialize("resources/models/", filePath_);
+        currentModelAnimation_->Initialize("resources/models/", modelFilePath_);
 
         model->SetAnimator(currentModelAnimation_->GetAnimator());
         model->SetBone(currentModelAnimation_->GetBone());
@@ -108,7 +108,7 @@ void Object3d::AnimationUpdate(bool roop) {
 
 void Object3d::SetAnimation(const std::string &fileName) {
     // すでにセット済みのアニメーションなら何もしない
-    if (fileName == filePath_) {
+    if (fileName == modelFilePath_) {
         return;
     }
 
@@ -129,7 +129,7 @@ void Object3d::SetAnimation(const std::string &fileName) {
     currentModelAnimation_->GetAnimator()->SetAnimationTime(0.0f);
 
     // ファイルパスを更新
-    filePath_ = fileName;
+    modelFilePath_ = fileName;
 }
 
 void Object3d::AddAnimation(const std::string &fileName) {

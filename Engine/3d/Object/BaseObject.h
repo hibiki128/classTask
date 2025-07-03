@@ -38,6 +38,8 @@ class BaseObject : public Collider {
     bool reflect_ = false;
 
     std::string objectName_;
+    std::string modelName_;
+    std::string textureName_;
 
     BaseObject *parent_ = nullptr;
     std::list<BaseObject *> children_;

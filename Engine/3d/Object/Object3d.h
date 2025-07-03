@@ -51,7 +51,7 @@ class Object3d {
     bool HaveAnimation;
     bool isPrimitive_ = false;
 
-    std::string filePath_;
+    std::string modelFilePath_;
     std::unique_ptr<Object3dCommon> objectCommon_;
     BlendMode blendMode_ = BlendMode::kNone;
   public: // メンバ関数
@@ -114,6 +114,7 @@ class Object3d {
     const Vector3 &GetRotation() const { return rotation; }
     const Vector3 &GetSize() const { return size; }
     size_t GetMaterialCount() const { return model->GetMaterialCount(); }
+    std::string GetModelFilePath() const { return modelFilePath_; }
     std::string GetTextureFilePath(uint32_t materialIndex) const {
         return model->GetMaterial(materialIndex)->GetMaterialData().textureFilePath;
     }

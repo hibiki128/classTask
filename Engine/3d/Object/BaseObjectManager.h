@@ -1,5 +1,5 @@
 #pragma once
-#include "application/Base/BaseObject.h"
+#include "Object/BaseObject.h"
 #include"unordered_map"
 class BaseObjectManager {
   private:
@@ -28,9 +28,11 @@ class BaseObjectManager {
 
     void Draw(const ViewProjection &viewProjection, Vector3 offSet = {0.0f, 0.0f, 0.0f});
 
-    void DrawWireframe(const ViewProjection &viewProjection, Vector3 offSet = {0.0f, 0.0f, 0.0f});
-
     void DrawImGui();
+
+    void SaveAll();
+
+    void LoadAll();
 
     BaseObject *GetObjectByName(const std::string &name);
 

@@ -1,6 +1,8 @@
 #define NOMINMAX
+#ifdef _DEBUG
 #include "ImGuizmoManager.h"
 #include "Input.h"
+#include <Transform/WorldTransform.h>
 
 ImGuizmoManager *ImGuizmoManager::instance = nullptr;
 
@@ -113,7 +115,7 @@ void ImGuizmoManager::Update(const ImVec2 &scenePosition, const ImVec2 &sceneSiz
             std::string pickedName;
             for (const auto &pair : transformMap) {
                 BaseObject *obj = pair.second;
-                Vector3 pos = obj->GetWorldPosition();
+                Vector3 pos = obj->GetLocalPosition();
 
                 // ワールド座標をスクリーン座標に変換
                 Vector3 screenPos;
@@ -146,7 +148,7 @@ void ImGuizmoManager::Update(const ImVec2 &scenePosition, const ImVec2 &sceneSiz
                 float distSq = dx * dx + dy * dy;
 
                 // 半径はGetRadius()で取得、2D投影で十分
-                float radius = obj->GetWorldScale().x;
+                float radius = obj->GetLocalScale().x;
                 float screenRadius = radius * 100.0f; // 適当なスケール（必要に応じて調整）
 
                 if (distSq < screenRadius * screenRadius && distSq < minDistSq) {
@@ -174,7 +176,7 @@ void ImGuizmoManager::Update(const ImVec2 &scenePosition, const ImVec2 &sceneSiz
         return;
 
     float matrix[16];
-    ConvertMatrix4x4ToFloat16(targetTransform->GetWorldTransform().matWorld_, matrix);
+    ConvertMatrix4x4ToFloat16(targetTransform->GetWorldTransform()->matWorld_, matrix);
 
     float viewMatrix[16];
     float projMatrix[16];
@@ -192,9 +194,9 @@ void ImGuizmoManager::Update(const ImVec2 &scenePosition, const ImVec2 &sceneSiz
         matrix);
 
     if (manipulated) {
-        ConvertFloat16ToMatrix4x4(matrix, targetTransform->GetWorldTransform().matWorld_);
-        DecomposeMatrix(&targetTransform->GetWorldTransform());
-        targetTransform->GetWorldTransform().TransferMatrix();
+        ConvertFloat16ToMatrix4x4(matrix, targetTransform->GetWorldTransform()->matWorld_);
+        DecomposeMatrix(targetTransform->GetWorldTransform());
+        targetTransform->GetWorldTransform()->TransferMatrix();
     }
 }
 
@@ -228,3 +230,5 @@ void ImGuizmoManager::DecomposeMatrix(WorldTransform *transform) {
         rotation[2] * DEG_TO_RAD};
     transform->scale_ = {scale[0], scale[1], scale[2]};
 }
+
+#endif // _DEBUG

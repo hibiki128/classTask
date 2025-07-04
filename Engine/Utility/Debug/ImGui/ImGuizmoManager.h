@@ -1,12 +1,13 @@
 #pragma once
+#ifdef _DEBUG
+
+
 #include "imgui.h"
 #include "ImGuizmo.h"
-#include "ViewProjection/ViewProjection.h"
-#include "WorldTransform.h"
 #include <string>
 #include <unordered_map>
 #include <vector>
-#include"application/Base/BaseObject.h"
+#include <Object/BaseObject.h>
 class ImGuizmoManager {
   private:
     static ImGuizmoManager *instance;
@@ -58,3 +59,5 @@ class ImGuizmoManager {
     void ConvertFloat16ToMatrix4x4(const float *inMatrix, Matrix4x4 &outMatrix);
     void DecomposeMatrix(WorldTransform *transform);
 };
+
+#endif // _DEBUG

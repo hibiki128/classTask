@@ -1,10 +1,5 @@
 #pragma once
-#include "Material/Material.h"
-#include "Model.h"
-#include "ObjColor.h"
 #include "Object/Object3dCommon.h"
-#include "ViewProjection/ViewProjection.h"
-#include "WorldTransform.h"
 #include "animation/ModelAnimation.h"
 #include "light/LightGroup.h"
 #include "string"
@@ -13,6 +8,10 @@
 #include "type/Vector3.h"
 #include "type/Vector4.h"
 #include "vector"
+#include <Model/Model.h>
+#include <Graphics/PipeLine/PipeLineManager.h>
+#include <Transform/ObjColor.h>
+#include"Camera/ViewProjection/ViewProjection.h"
 
 class ModelCommon;
 class Object3d {
@@ -37,9 +36,6 @@ class Object3d {
     // バッファリソース内のデータを指すポインタ
     TransformationMatrix *transformationMatrixData = nullptr;
 
-    // マルチマテリアル対応：マテリアル配列
-    std::vector<std::unique_ptr<Material>> materials_;
-
     Transform transform;
 
     Model *model = nullptr;
@@ -55,10 +51,9 @@ class Object3d {
     bool HaveAnimation;
     bool isPrimitive_ = false;
 
-    std::string filePath_;
+    std::string modelFilePath_;
     std::unique_ptr<Object3dCommon> objectCommon_;
     BlendMode blendMode_ = BlendMode::kNone;
-
   public: // メンバ関数
     void Initialize();
 
@@ -102,7 +97,7 @@ class Object3d {
     /// <summary>
     /// 描画
     /// </summary>
-    void Draw(const WorldTransform &worldTransform, const ViewProjection &viewProjection, ObjColor *color = nullptr, bool Lighting = true);
+    void Draw(const WorldTransform &worldTransform, const ViewProjection &viewProjection, bool reflect, ObjColor *color = nullptr, bool Lighting = true);
 
     /// <summary>
     /// スケルトン描画
@@ -118,14 +113,15 @@ class Object3d {
     const Vector3 &GetPosition() const { return position; }
     const Vector3 &GetRotation() const { return rotation; }
     const Vector3 &GetSize() const { return size; }
-    const std::string GetTexture(uint32_t index) const {
-        return materials_[index]->GetMaterialDataGPU()->textureFilePath;
+    size_t GetMaterialCount() const { return model->GetMaterialCount(); }
+    std::string GetModelFilePath() const { return modelFilePath_; }
+    std::string GetTextureFilePath(uint32_t materialIndex) const {
+        return model->GetMaterial(materialIndex)->GetMaterialData().textureFilePath;
     }
+
     const bool &GetHaveAnimation() const { return HaveAnimation; }
     bool IsFinish() { return currentModelAnimation_->IsFinish(); }
 
-    // マルチマテリアル用のgetter
-    size_t GetMaterialCount() const { return materials_.size(); }
     /// <summary>
     /// setter
     /// </summary>
@@ -135,47 +131,27 @@ class Object3d {
     void SetRotation(const Vector3 &rotation) { this->rotation = rotation; }
     void SetSize(const Vector3 &size) { this->size = size; }
     void SetModel(const std::string &filePath);
-    void SetUVTransform(const Matrix4x4 &mat, uint32_t index) {
-        materials_[index]->GetMaterialDataGPU()->uvTransform = mat;
-    }
-    void SetColor(const Vector4 &color, uint32_t index) {
-        materials_[index]->GetMaterialDataGPU()->color = color;
-    }
     void SetBlendMode(BlendMode blendMode) { blendMode_ = blendMode; }
 
     // マルチマテリアル用のsetter
-    void SetTexture(const std::string &filePath, uint32_t materialIndex);
-    void SetAllTexturesIndex(const std::string &filePath);
-    void SetMaterialColor(uint32_t materialIndex, const Vector4 &color);
-    void SetAllMaterialsColor(const Vector4 &color);
-    void SetMaterialUVTransform(uint32_t materialIndex, const Matrix4x4 &uvTransform);
-    void SetAllMaterialsUVTransform(const Matrix4x4 &uvTransform);
-    void SetMaterialShininess(uint32_t materialIndex, float shininess);
-    void SetAllMaterialsShininess(float shininess);
+    void SetTexture(const std::string &filePath, uint32_t materialIndex) {
+        model->SetTexture(filePath, materialIndex);
+    }
+    
+    void SetEnvironmentCoefficients(float value) {
+        model->SetEnvironmentCoefficients(value);
+    }
 
-    /// <summary>
-    /// 光沢度の設定
-    /// </summary>
-    /// <param name="shininess">マテリアルの光沢度</param>
-    void SetShininess(float shininess = 20.0f);
 
   private: // メンバ関数
     /// <summary>
     /// 座標変換行列データ作成
     /// </summary>
     void CreateTransformationMatrix();
+    
+    void DrawBoneArmature(const Vector3 &parentPos, const Vector3 &childPos);
 
-    /// <summary>
-    /// マテリアル初期化（マルチマテリアル対応）
-    /// </summary>
-    void InitializeMaterials();
-
-    /// <summary>
-    /// マテリアルインデックス検証
-    /// </summary>
-    /// <param name="materialIndex"></param>
-    /// <returns></returns>
-    bool IsValidMaterialIndex(uint32_t materialIndex) const;
+    void DrawArmatureShape(const Vector3 &startPos, const Vector3 &endPos, float baseWidth, float tipWidth, const Vector4 &color);
 
     Vector3 ExtractTranslation(const Matrix4x4 &matrix) {
         return Vector3(matrix.m[3][0], matrix.m[3][1], matrix.m[3][2]);

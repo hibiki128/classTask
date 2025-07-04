@@ -9,6 +9,7 @@
 #include <line/DrawLine3D.h>
 #include <myMath.h>
 #include <type/Matrix4x4.h>
+#include"Debug/Log/Logger.h"
 
 void Object3d::Initialize() {
     objectCommon_ = std::make_unique<Object3dCommon>();
@@ -142,7 +143,7 @@ void Object3d::AddAnimation(const std::string &fileName) {
     modelAnimations_.emplace(fileName, std::move(animation));
 }
 
-void Object3d::DrawWireframe(const WorldTransform &worldTransform, const ViewProjection &viewProjection) {
+void Object3d::DrawWireframe(const WorldTransform &worldTransform, const ViewProjection &viewProjection,bool isRainbow) {
     // worldTransformを更新
     Update(worldTransform, viewProjection);
     if (!model) {
@@ -152,7 +153,7 @@ void Object3d::DrawWireframe(const WorldTransform &worldTransform, const ViewPro
     const ModelData &modelData = model->GetModelData();
 
     // ====== フラグで切り替え可能 ======
-    static bool gamingMode = false;
+    bool gamingMode = isRainbow;
 
     // ====== 時間カウンター（時間ベースで変化）======
     static float timeCounter = 0.0f;

@@ -1,0 +1,30 @@
+{
+    "Lighting": true,
+    "blendMode": 0,
+    "isLighting": true,
+    "modelName": "animation/sneakWalk.gltf",
+    "objectColor": {
+        "w": 1.0,
+        "x": 1.0,
+        "y": 1.0,
+        "z": 1.0
+    },
+    "objectName": "aaaaa",
+    "rotation": {
+        "x": 0.0,
+        "y": -0.0,
+        "z": 0.0
+    },
+    "scale": {
+        "x": 1.0,
+        "y": 1.0,
+        "z": 1.0
+    },
+    "textureName": "debug/white1x1.png",
+    "texturePath": "debug/white1x1.png",
+    "translation": {
+        "x": 4.920943260192871,
+        "y": -11.929595947265625,
+        "z": 0.0
+    }
+}

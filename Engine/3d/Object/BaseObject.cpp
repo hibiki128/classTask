@@ -1,5 +1,6 @@
 #define NOMINMAX
 #include "BaseObject.h"
+#include "Scene/SceneManager.h"
 #include "ShowFolder/ShowFolder.h"
 
 void BaseObject::Init(const std::string objectName) {
@@ -15,6 +16,8 @@ void BaseObject::Init(const std::string objectName) {
     // ライティングのセット
     isLighting_ = true;
     isCollider = false;
+    LoadFromJson();
+    AnimaLoadFromJson();
 }
 
 void BaseObject::Update() {
@@ -46,7 +49,7 @@ void BaseObject::Draw(const ViewProjection &viewProjection, Vector3 offSet) {
             obj3d_->Draw(*transform_, viewProjection, reflect_, &objColor_, isLighting_);
         }
     } else {
-        obj3d_->DrawWireframe(*transform_, viewProjection);
+        obj3d_->DrawWireframe(*transform_, viewProjection, isRainbow_);
     }
 
     // 描画後に元の位置に戻す場合は、以下の行を追加
@@ -166,15 +169,15 @@ BaseObject *BaseObject::GetChildByName(const std::string &name) {
 
 void BaseObject::CreateModel(const std::string modelname) {
     obj3d_->CreateModel(modelname);
-    modelName_ = modelname;
-    textureName_ = obj3d_->GetTextureFilePath(0);
+    modelPath_ = modelname;
+    texturePath_ = obj3d_->GetTextureFilePath(0);
     LoadFromJson();
     AnimaLoadFromJson();
 }
 
 void BaseObject::CreatePrimitiveModel(const PrimitiveType &type) {
     obj3d_->CreatePrimitiveModel(type);
-    LoadFromJson();
+    isPrimitive_ = true;
 }
 
 void BaseObject::AddCollider() {
@@ -187,15 +190,35 @@ void BaseObject::ImGui() {
     if (ImGui::BeginTabBar(objectName_.c_str())) {
         if (ImGui::BeginTabItem(objectName_.c_str())) {
             DebugObject();
+
+            // コライダーの設定
             if (isCollider) {
                 DebugCollider();
             }
             if (ImGui::Button("コライダー追加")) {
                 AddCollider();
             }
-            ImGui::Checkbox("モデル描画", &isModelDraw_);
-            ImGui::Checkbox("ワイヤーフレーム", &isWireframe_);
 
+            // モデル描画チェックボックス
+            bool modelDrawChanged = ImGui::Checkbox("モデル描画", &isModelDraw_);
+            if (modelDrawChanged && isModelDraw_) {
+                // モデル描画がオンになったときはワイヤーフレームをオフにする
+                isWireframe_ = false;
+            }
+
+            // ワイヤーフレームチェックボックス
+            bool wireframeChanged = ImGui::Checkbox("ワイヤーフレーム", &isWireframe_);
+            if (wireframeChanged && isWireframe_) {
+                // ワイヤーフレームがオンになったときはモデル描画をオフにする
+                isModelDraw_ = false;
+            }
+            if (isWireframe_) {
+                ImGui::Checkbox("???", &isRainbow_);
+            } else {
+                isRainbow_ = false;
+            }
+
+            // セーブボタン
             if (ImGui::Button("セーブ")) {
                 SaveToJson();
                 AnimaSaveToJson();
@@ -205,6 +228,7 @@ void BaseObject::ImGui() {
                 std::string message = std::format("ObjectData saved.");
                 MessageBoxA(nullptr, message.c_str(), "Object", 0);
             }
+
             ImGui::EndTabItem();
         }
         ImGui::EndTabBar();
@@ -212,51 +236,141 @@ void BaseObject::ImGui() {
 }
 
 void BaseObject::DebugObject() {
-    if (ImGui::CollapsingHeader("トランスフォーム")) {
-        ImGui::DragFloat3("位置", &transform_->translation_.x, 0.1f);
+    // 全体のスタイル設定
+    ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(8, 4));
+    ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(6, 4));
 
-        // 回転を度数法に変換してUI表示
+    // === トランスフォーム設定 ===
+    ImGui::PushStyleColor(ImGuiCol_Header, ImVec4(0.2f, 0.6f, 0.8f, 0.3f));
+    ImGui::PushStyleColor(ImGuiCol_HeaderHovered, ImVec4(0.3f, 0.7f, 0.9f, 0.4f));
+
+    if (ImGui::CollapsingHeader("トランスフォーム", ImGuiTreeNodeFlags_DefaultOpen)) {
+        ImGui::Indent(10);
+
+        // 位置設定
+        ImGui::AlignTextToFramePadding();
+        ImGui::Text("位置:");
+        ImGui::SameLine(80);
+        ImGui::PushItemWidth(200);
+        ImGui::DragFloat3("##Position", &transform_->translation_.x, 0.1f, -1000.0f, 1000.0f, "%.2f");
+        ImGui::PopItemWidth();
+
+        ImGui::SameLine();
+        if (ImGui::Button("リセット##ResetPos")) {
+            transform_->translation_ = {0.0f, 0.0f, 0.0f};
+        }
+        if (ImGui::IsItemHovered())
+            ImGui::SetTooltip("位置をリセット");
+
+        // 回転設定
+        ImGui::AlignTextToFramePadding();
+        ImGui::Text("回転:");
+        ImGui::SameLine(80);
+        ImGui::PushItemWidth(200);
+
         float rotationDegrees[3] = {
             radiansToDegrees(transform_->rotation_.x),
             radiansToDegrees(transform_->rotation_.y),
             radiansToDegrees(transform_->rotation_.z)};
-        if (ImGui::DragFloat3("回転", rotationDegrees, 0.1f, -360.0f, 360.0f)) {
-            // 操作後、ラジアンに戻して保存
+
+        if (ImGui::DragFloat3("##Rotation", rotationDegrees, 1.0f, -360.0f, 360.0f, "%.1f°")) {
             transform_->rotation_.x = degreesToRadians(rotationDegrees[0]);
             transform_->rotation_.y = degreesToRadians(rotationDegrees[1]);
             transform_->rotation_.z = degreesToRadians(rotationDegrees[2]);
         }
+        ImGui::PopItemWidth();
 
-        ImGui::DragFloat3("大きさ", &transform_->scale_.x, 0.1f);
+        ImGui::SameLine();
+        if (ImGui::Button("リセット##ResetRot")) {
+            transform_->rotation_ = {0.0f, 0.0f, 0.0f};
+        }
+        if (ImGui::IsItemHovered())
+            ImGui::SetTooltip("回転をリセット");
+
+        // スケール設定
+        ImGui::AlignTextToFramePadding();
+        ImGui::Text("大きさ:");
+        ImGui::SameLine(80);
+        ImGui::PushItemWidth(200);
+        ImGui::DragFloat3("##Scale", &transform_->scale_.x, 0.01f, 0.01f, 10.0f, "%.2f");
+        ImGui::PopItemWidth();
+
+        ImGui::SameLine();
+        if (ImGui::Button("リセット##ResetScale")) {
+            transform_->scale_ = {1.0f, 1.0f, 1.0f};
+        }
+        if (ImGui::IsItemHovered())
+            ImGui::SetTooltip("大きさをリセット");
+
+        ImGui::Unindent(10);
+        ImGui::Spacing();
     }
+
+    // === マテリアル設定 ===
+    ImGui::PushStyleColor(ImGuiCol_Header, ImVec4(0.8f, 0.4f, 0.2f, 0.3f));
+    ImGui::PushStyleColor(ImGuiCol_HeaderHovered, ImVec4(0.9f, 0.5f, 0.3f, 0.4f));
 
     if (ImGui::CollapsingHeader("マテリアル設定")) {
+        ImGui::Indent(10);
+
         // カラー設定
+        ImGui::Text("カラー:");
+        ImGui::SameLine(80);
         Vector4 color = objColor_.GetColor();
         float colorArray[4] = {color.x, color.y, color.z, color.w};
-        if (ImGui::ColorEdit4("オブジェクトカラー", colorArray)) {
+        ImGui::PushItemWidth(200);
+        if (ImGui::ColorEdit4("##ObjectColor", colorArray, ImGuiColorEditFlags_AlphaBar)) {
             objColor_.GetColor() = Vector4(colorArray[0], colorArray[1], colorArray[2], colorArray[3]);
         }
+        ImGui::PopItemWidth();
 
-        // ライティング有効・無効
-        ImGui::Checkbox("ライティング有効", &isLighting_);
+        ImGui::Spacing();
+
+        // ライティング設定
+        ImGui::Text("ライティング:");
+        ImGui::SameLine(120);
+
+        if (isLighting_) {
+            ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.7f, 1.0f, 0.7f, 1.0f));
+            ImGui::Text("有効");
+            ImGui::PopStyleColor();
+        } else {
+            ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.0f, 0.7f, 0.7f, 1.0f));
+            ImGui::Text("無効");
+            ImGui::PopStyleColor();
+        }
+
+        ImGui::SameLine();
+        if (ImGui::Button(isLighting_ ? "無効化" : "有効化")) {
+            isLighting_ = !isLighting_;
+        }
+
+        ImGui::Unindent(10);
+        ImGui::Spacing();
     }
 
-    if (ImGui::CollapsingHeader("モデル")) {
-        static int selectedMaterialIndex = 0; // 選択中のマテリアルインデックス
+    // === モデル設定 ===
+    ImGui::PushStyleColor(ImGuiCol_Header, ImVec4(0.6f, 0.2f, 0.8f, 0.3f));
+    ImGui::PushStyleColor(ImGuiCol_HeaderHovered, ImVec4(0.7f, 0.3f, 0.9f, 0.4f));
 
+    if (ImGui::CollapsingHeader("モデル設定")) {
+        ImGui::Indent(10);
+
+        static int selectedMaterialIndex = 0;
         size_t materialCount = obj3d_->GetMaterialCount();
 
-        // アニメーションがある場合、最後のマテリアルはダミーなので除外
         if (obj3d_->GetHaveAnimation() && materialCount > 1) {
             --materialCount;
         }
 
-        // マテリアルが複数ある場合のみ、コンボボックスを表示
+        // マテリアル選択
         if (materialCount > 1) {
+            ImGui::Text("マテリアル:");
+            ImGui::SameLine(120);
+
             std::vector<std::string> comboItems;
             for (int i = 0; i < static_cast<int>(materialCount); ++i) {
-                comboItems.push_back("Material " + std::to_string(i));
+                comboItems.push_back("Material " + std::to_string(i + 1));
             }
 
             std::vector<const char *> comboItemsCStr;
@@ -264,93 +378,151 @@ void BaseObject::DebugObject() {
                 comboItemsCStr.push_back(item.c_str());
             }
 
-            ImGui::Text("マテリアルスロット:");
-            if (ImGui::Combo("##MaterialIndexCombo", &selectedMaterialIndex, comboItemsCStr.data(), static_cast<int>(comboItemsCStr.size()))) {
-                // 必要なら選択変更時の処理を書く
+            ImGui::PushItemWidth(150);
+            if (ImGui::Combo("##MaterialIndex", &selectedMaterialIndex, comboItemsCStr.data(), static_cast<int>(comboItemsCStr.size()))) {
+                // 選択変更時の処理
             }
+            ImGui::PopItemWidth();
 
-            // 範囲外アクセス防止
             selectedMaterialIndex = std::clamp(selectedMaterialIndex, 0, static_cast<int>(materialCount) - 1);
         } else {
-            // マテリアルが1個以下の場合は常に0を選択
             selectedMaterialIndex = 0;
+            ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.7f, 0.7f, 0.7f, 1.0f));
+            ImGui::Text("マテリアル: Single Material");
+            ImGui::PopStyleColor();
         }
 
-        // テクスチャ選択ツリー
-        if (ImGui::TreeNode("テクスチャ選択")) {
+        ImGui::Spacing();
+
+        // テクスチャ設定
+        ImGui::PushStyleColor(ImGuiCol_Header, ImVec4(0.3f, 0.7f, 0.3f, 0.3f));
+        if (ImGui::TreeNode("テクスチャ設定")) {
             ShowTextureFile(texturePath_);
-            if (ImGui::Button("適用")) {
+            ImGui::Spacing();
+
+            if (ImGui::Button("適用", ImVec2(80, 0))) {
                 SetTexture(texturePath_, selectedMaterialIndex);
             }
+
+            ImGui::SameLine();
+            if (ImGui::Button("クリア", ImVec2(80, 0))) {
+                texturePath_.clear();
+            }
+
             ImGui::TreePop();
         }
+        ImGui::PopStyleColor();
 
-        // ブレンドモード設定ツリー
+        // ブレンドモード設定
+        ImGui::PushStyleColor(ImGuiCol_Header, ImVec4(0.7f, 0.3f, 0.7f, 0.3f));
         if (ImGui::TreeNode("ブレンドモード")) {
             ShowBlendModeCombo(blendMode_);
             ImGui::TreePop();
         }
+        ImGui::PopStyleColor();
+
+        ImGui::Unindent(10);
+        ImGui::Spacing();
     }
-    // アニメーション設定セクション
+
+    // === アニメーション設定 ===
     if (obj3d_->GetHaveAnimation()) {
-        if (ImGui::CollapsingHeader("アニメーション")) {
-            ImGui::Checkbox("ループ", &isLoop_);
-            ImGui::Checkbox("スケルトン描画", &skeletonDraw_);
-            if (ImGui::Button("アニメーション再生")) {
+        ImGui::PushStyleColor(ImGuiCol_Header, ImVec4(0.8f, 0.6f, 0.2f, 0.3f));
+        ImGui::PushStyleColor(ImGuiCol_HeaderHovered, ImVec4(0.9f, 0.7f, 0.3f, 0.4f));
+
+        if (ImGui::CollapsingHeader("アニメーション設定")) {
+            ImGui::Indent(10);
+
+            // 制御オプション
+            ImGui::Text("ループ:");
+            ImGui::SameLine(80);
+            ImGui::Checkbox("##Loop", &isLoop_);
+
+            ImGui::Text("スケルトン:");
+            ImGui::SameLine(100); // 幅を80から100に拡張
+            ImGui::Checkbox("##Skeleton", &skeletonDraw_);
+
+            ImGui::Spacing();
+
+            // 制御ボタン
+            if (ImGui::Button("再生", ImVec2(80, 0))) {
                 obj3d_->PlayAnimation();
             }
+
+            ImGui::Spacing();
+
+            // アニメーションセット選択
+            ImGui::PushStyleColor(ImGuiCol_Header, ImVec4(0.6f, 0.8f, 0.2f, 0.3f));
             if (ImGui::TreeNode("アニメーションセット")) {
                 ShowFileSelector();
                 ImGui::TreePop();
             }
+            ImGui::PopStyleColor();
+
+            ImGui::Unindent(10);
         }
+
+        ImGui::PopStyleColor(2);
     }
+
+    ImGui::PopStyleColor(6);
+    ImGui::PopStyleVar(2);
 }
 
 void BaseObject::SaveToJson() {
-    modelName_ = obj3d_->GetModelFilePath();
-    textureName_ = obj3d_->GetTextureFilePath(0);
-    TransformDatas_->Save<std::string>("modelName", modelName_);
-    TransformDatas_->Save<std::string>("textureName", textureName_);
-    TransformDatas_->Save<Vector3>("translation", transform_->translation_);
-    TransformDatas_->Save<Vector3>("rotation", transform_->rotation_);
-    TransformDatas_->Save<Vector3>("scale", transform_->scale_);
+    // JSONデータを扱うハンドラを作成
+    ObjectDatas_ = std::make_unique<DataHandler>(foldarPath_, objectName_);
+    modelPath_ = obj3d_->GetModelFilePath();
+    texturePath_ = obj3d_->GetTextureFilePath(0);
+    ObjectDatas_->Save<std::string>("modelName", modelPath_);
+    ObjectDatas_->Save<std::string>("textureName", texturePath_);
+    ObjectDatas_->Save<std::string>("objectName", objectName_);
+    ObjectDatas_->Save<Vector3>("translation", transform_->translation_);
+    ObjectDatas_->Save<Vector3>("rotation", transform_->rotation_);
+    ObjectDatas_->Save<Vector3>("scale", transform_->scale_);
+    ObjectDatas_->Save<bool>("Lighting", isLighting_);
 
     // カラーとライティング設定も保存
     Vector4 color = objColor_.GetColor();
-    TransformDatas_->Save<Vector4>("objectColor", color);
-    TransformDatas_->Save<bool>("isLighting", isLighting_);
+    ObjectDatas_->Save<Vector4>("objectColor", color);
+    ObjectDatas_->Save<bool>("isLighting", isLighting_);
 
-    for (int i = 0; i < obj3d_->GetMaterialCount(); i++) {
-        TransformDatas_->Save<std::string>("texturePath", obj3d_->GetTextureFilePath(i));
-    }
-    TransformDatas_->Save<int>("blendMode", static_cast<int>(blendMode_));
+    ObjectDatas_->Save<int>("blendMode", static_cast<int>(blendMode_));
 }
 
 void BaseObject::LoadFromJson() {
-    TransformDatas_ = std::make_unique<DataHandler>("Transform", objectName_);
-    transform_->translation_ = TransformDatas_->Load<Vector3>("translation", {0.0f, 0.0f, 0.0f});
-    transform_->rotation_ = TransformDatas_->Load<Vector3>("rotation", {0.0f, 0.0f, 0.0f});
-    transform_->scale_ = TransformDatas_->Load<Vector3>("scale", {1.0f, 1.0f, 1.0f});
-    modelName_ = TransformDatas_->Load<std::string>("modelName", "suzannu.obj");
-    textureName_ = TransformDatas_->Load<std::string>("textureName", "uvChecker.png");
-    obj3d_->SetModel(modelName_);
-    obj3d_->SetTexture(textureName_, 0);
+    // JSONデータを扱うハンドラを作成
+    ObjectDatas_ = std::make_unique<DataHandler>(foldarPath_, objectName_);
 
-    // カラーとライティング設定も読み込み
-    Vector4 loadedColor = TransformDatas_->Load<Vector4>("objectColor", {1.0f, 1.0f, 1.0f, 1.0f});
-    objColor_.GetColor() = loadedColor;
-    isLighting_ = TransformDatas_->Load<bool>("isLighting", true);
+    // 基本トランスフォームを読み込み
+    transform_->translation_ = ObjectDatas_->Load<Vector3>("translation", {0.0f, 0.0f, 0.0f});
+    transform_->rotation_ = ObjectDatas_->Load<Vector3>("rotation", {0.0f, 0.0f, 0.0f});
+    transform_->scale_ = ObjectDatas_->Load<Vector3>("scale", {1.0f, 1.0f, 1.0f});
+    isLighting_ = ObjectDatas_->Load<bool>("Lighting", true);
 
-    for (int i = 0; i < obj3d_->GetMaterialCount(); i++) {
-        if (obj3d_->GetTextureFilePath(i).empty()) {
-            SetTexture(TransformDatas_->Load<std::string>("texturePath", "debug/uvChecker.png"), i);
-        } else {
-            SetTexture(TransformDatas_->Load<std::string>("texturePath", obj3d_->GetTextureFilePath(i)), i);
-        }
+    // モデルパスが未設定でプリミティブでなければデフォルトモデルを使用
+    if (modelPath_.empty() && !isPrimitive_) {
+        modelPath_ = "debug/suzannu.obj";
     }
-    blendMode_ = static_cast<BlendMode>(TransformDatas_->Load<int>("blendMode", 0));
+
+    // モデルパスをJSONから読み込み（上書きされる可能性あり）
+    modelPath_ = ObjectDatas_->Load<std::string>("modelName", modelPath_);
+
+    // テクスチャパスが未設定ならデフォルトにする
+    if (texturePath_.empty()) {
+        texturePath_ = "debug/uvChecker.png";
+    }
+
+    texturePath_ = ObjectDatas_->Load<std::string>("textureName", texturePath_);
+
+    // オブジェクトカラーとライティングの設定を読み込み
+    objColor_.GetColor() = ObjectDatas_->Load<Vector4>("objectColor", {1.0f, 1.0f, 1.0f, 1.0f});
+    isLighting_ = ObjectDatas_->Load<bool>("isLighting", true);
+
+    // ブレンドモードの設定を読み込み
+    blendMode_ = static_cast<BlendMode>(ObjectDatas_->Load<int>("blendMode", 0));
 }
+
 void BaseObject::AnimaSaveToJson() {
     if (!AnimaDatas_) {
         return;

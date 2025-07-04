@@ -41,9 +41,20 @@ BaseObject *ImGuizmoManager::GetSelectedTarget() {
 }
 
 void ImGuizmoManager::Update(const ImVec2 &scenePosition, const ImVec2 &sceneSize) {
-    ImGui::Begin("トランスフォームエディター");
+    // メインウィンドウのスタイル設定
+    ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(12, 12));
+    ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(8, 6));
+    ImGui::PushStyleColor(ImGuiCol_Header, ImVec4(0.2f, 0.4f, 0.8f, 0.3f));
+
+    ImGui::Begin("トランスフォームマネージャ", nullptr, ImGuiWindowFlags_AlwaysAutoResize);
 
     BaseObject *targetTransform = nullptr;
+
+    // === オブジェクト選択セクション ===
+    ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.0f, 1.0f, 0.6f, 1.0f));
+    ImGui::Text("オブジェクト選択");
+    ImGui::PopStyleColor();
+    ImGui::Separator();
 
     if (!transformMap.empty()) {
         std::vector<const char *> names;
@@ -56,38 +67,97 @@ void ImGuizmoManager::Update(const ImVec2 &scenePosition, const ImVec2 &sceneSiz
             i++;
         }
 
-        if (ImGui::Combo("選択", &currentIndex, names.data(), static_cast<int>(names.size()))) {
+        ImGui::PushItemWidth(200);
+        if (ImGui::Combo("##ObjectSelector", &currentIndex, names.data(), static_cast<int>(names.size()))) {
             selectedName = names[currentIndex];
+        }
+        ImGui::PopItemWidth();
+
+        ImGui::SameLine();
+        if (ImGui::Button("更新"))
+            if (ImGui::IsItemHovered())
+                ImGui::SetTooltip("リフレッシュ");
+
+        // 選択されたオブジェクト情報を表示
+        if (!selectedName.empty()) {
+            ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.7f, 1.0f, 0.7f, 1.0f));
+            ImGui::Text("選択中: %s", selectedName.c_str());
+            ImGui::PopStyleColor();
         }
 
         targetTransform = GetSelectedTarget();
     } else {
+        ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.0f, 0.7f, 0.7f, 1.0f));
         ImGui::Text("Transformが登録されていません。");
+        ImGui::PopStyleColor();
     }
+
+    ImGui::Spacing();
+    ImGui::Spacing();
+
+    // === 操作モードセクション ===
+    ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.0f, 1.0f, 0.6f, 1.0f));
+    ImGui::Text("操作モード");
+    ImGui::PopStyleColor();
+    ImGui::Separator();
+
+    // 操作タイプ選択
+    ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.3f, 0.6f, 0.3f, 0.8f));
+    ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(0.4f, 0.8f, 0.4f, 1.0f));
 
     if (ImGui::RadioButton("位置", currentOperation == ImGuizmo::TRANSLATE))
         currentOperation = ImGuizmo::TRANSLATE;
+    if (ImGui::IsItemHovered())
+        ImGui::SetTooltip("オブジェクトを移動します");
+
     ImGui::SameLine();
     if (ImGui::RadioButton("回転", currentOperation == ImGuizmo::ROTATE))
         currentOperation = ImGuizmo::ROTATE;
+    if (ImGui::IsItemHovered())
+        ImGui::SetTooltip("オブジェクトを回転します");
+
     ImGui::SameLine();
     if (ImGui::RadioButton("大きさ", currentOperation == ImGuizmo::SCALE))
         currentOperation = ImGuizmo::SCALE;
+    if (ImGui::IsItemHovered())
+        ImGui::SetTooltip("オブジェクトのサイズを変更します");
 
-    ImGui::Separator();
+    ImGui::PopStyleColor(2);
+
+    ImGui::Spacing();
+
+    // 座標系選択
+    ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.6f, 0.3f, 0.6f, 0.8f));
+    ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(0.8f, 0.4f, 0.8f, 1.0f));
 
     if (ImGui::RadioButton("ローカル", currentMode == ImGuizmo::LOCAL))
         currentMode = ImGuizmo::LOCAL;
+    if (ImGui::IsItemHovered())
+        ImGui::SetTooltip("オブジェクトのローカル座標系で操作");
+
     ImGui::SameLine();
     if (ImGui::RadioButton("ワールド", currentMode == ImGuizmo::WORLD))
         currentMode = ImGuizmo::WORLD;
+    if (ImGui::IsItemHovered())
+        ImGui::SetTooltip("ワールド座標系で操作");
 
-    ImGui::Separator();
+    ImGui::PopStyleColor(2);
 
+    ImGui::Spacing();
+    ImGui::Spacing();
+
+    // === オブジェクト詳細セクション ===
     if (targetTransform) {
+        ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.0f, 1.0f, 0.6f, 1.0f));
+        ImGui::Text("オブジェクト詳細");
+        ImGui::PopStyleColor();
+        ImGui::Separator();
+
         targetTransform->ImGui();
     }
 
+    ImGui::PopStyleColor(); // Header color
+    ImGui::PopStyleVar(2);  // Window padding and item spacing
     ImGui::End();
 
     if (!viewProjection)

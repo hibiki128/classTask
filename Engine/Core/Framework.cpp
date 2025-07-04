@@ -204,9 +204,9 @@ void Framework::Update() {
     /// deltaTimeの更新
     Frame::Update();
 
-    baseObjectManager_->Update();
-
     sceneManager_->Update();
+  
+    baseObjectManager_->Update();
 
     collisionManager_->Update();
 

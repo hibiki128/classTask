@@ -20,7 +20,7 @@ class BaseObjectManager {
 
     void Finalize();
 
-    void DeleteObject();
+    void RemoveAllObjects();
 
     void AddObject(std::unique_ptr<BaseObject> baseObject);
 
@@ -34,8 +34,16 @@ class BaseObjectManager {
 
     void LoadAll();
 
+    void SetSceneName(std::string sceneName);
+
+    void CreateObject(std::string objectName, std::string modelPath, std::string texturePath = "");
+
     BaseObject *GetObjectByName(const std::string &name);
 
   private:
     std::unordered_map<std::string, std::unique_ptr<BaseObject>> baseObjects_;
+    std::string sceneName_ = "TitleScene";
+    std::string objectName_;
+    std::string modelPath_;
+    std::string texturePath_;
 };

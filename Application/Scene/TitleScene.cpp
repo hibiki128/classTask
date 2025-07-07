@@ -15,7 +15,15 @@ void TitleScene::Initialize() {
     obj_ = std::make_unique<BaseObject>();
     obj_->Init("test");
     obj_->CreateModel("animation/walk.gltf");
+    
+    childObj_ = std::make_unique<BaseObject>();
+    childObj_->Init("child");
+    childObj_->CreateModel("debug/suzannu.obj");
+    childObj_->SetParent(obj_.get());
+    childObj_->SetTexture("debug/white1x1.png", 0);
+
     BaseObjectManager::GetInstance()->AddObject(std::move(obj_));
+    BaseObjectManager::GetInstance()->AddObject(std::move(childObj_));
 }
 
 void TitleScene::Finalize() {

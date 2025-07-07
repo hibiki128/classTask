@@ -69,7 +69,7 @@ void LevelData::Clear() {
     objectsData_.clear();
     createdObjects_.clear();
 
-    BaseObjectManager::GetInstance()->DeleteObject();
+    BaseObjectManager::GetInstance()->RemoveAllObjects();
 }
 
 LevelData::Transform LevelData::ParseTransform(const json &transformJson) {
@@ -185,9 +185,9 @@ std::unique_ptr<BaseObject> LevelData::CreateBaseObject(const ObjectData &object
     baseObject->CreateModel(modelPath);
 
     // トランスフォームを設定
-    baseObject->GetWorldPosition() = objectData.transform.translation;
-    baseObject->GetWorldRotation() = objectData.transform.rotation;
-    baseObject->GetWorldScale() = objectData.transform.scaling;
+    baseObject->GetLocalPosition() = objectData.transform.translation;
+    baseObject->GetLocalRotation() = objectData.transform.rotation;
+    baseObject->GetLocalScale() = objectData.transform.scaling;
 
     // コライダーを追加（OBBを使用）
     if (objectData.hasCollider) {
@@ -208,7 +208,7 @@ void LevelData::SetupParentChild(BaseObject *parent, const std::vector<ObjectDat
             auto childObject = CreateBaseObject(childData);
             if (childObject) {
                 // 親子関係を設定
-                childObject->SetParent(parent->GetWorldTransform());
+                childObject->SetParent(parent);
 
                 // 作成したオブジェクトを記録
                 createdObjects_[childData.name] = childObject.get();

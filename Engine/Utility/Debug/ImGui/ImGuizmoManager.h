@@ -49,6 +49,12 @@ class ImGuizmoManager {
     /// <summary>ImGui更新処理（sceneWindowの位置・サイズが必要）</summary>
     void Update(const ImVec2 &scenePosition, const ImVec2 &sceneSize);
 
+    void DecomposeMatrixToLocal(const Matrix4x4 &matrix, WorldTransform *transform);
+
+    Matrix4x4 CreateLocalMatrix(WorldTransform *transform);
+
+    void ApplyLocalMatrix(const Matrix4x4 &matrix, WorldTransform *transform);
+
     /// <summary>現在選択されているWorldTransformを取得</summary>
     BaseObject *GetSelectedTarget();
 

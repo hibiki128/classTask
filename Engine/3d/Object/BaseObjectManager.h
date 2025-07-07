@@ -40,6 +40,20 @@ class BaseObjectManager {
 
     BaseObject *GetObjectByName(const std::string &name);
 
+    /// ===================================================
+    /// 親子付け関連
+    /// ===================================================
+
+    void ShowParentChildHierarchy();
+    void ShowObjectHierarchy(BaseObject *obj, int depth);
+    void SetParentChild(const std::string &childName, const std::string &parentName);
+    void RemoveParentChild(const std::string &childName);
+    std::vector<std::string> GetObjectNames() const;
+
+    // 親子関係の保存・読み込み
+    void SaveAllParentChildRelationships();
+    void LoadAllParentChildRelationships();
+
   private:
     std::unordered_map<std::string, std::unique_ptr<BaseObject>> baseObjects_;
     std::string sceneName_ = "TitleScene";

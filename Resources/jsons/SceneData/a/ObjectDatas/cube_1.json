@@ -1,15 +1,16 @@
 {
     "Lighting": true,
+    "PrimitiveType": 3,
     "blendMode": 0,
     "isLighting": true,
-    "modelName": "debug/sphere.obj",
+    "modelName": "",
     "objectColor": {
         "w": 1.0,
         "x": 1.0,
         "y": 1.0,
         "z": 1.0
     },
-    "objectName": "p",
+    "objectName": "cube_1",
     "rotation": {
         "x": 0.0,
         "y": -0.0,
@@ -20,11 +21,10 @@
         "y": 1.0,
         "z": 1.0
     },
-    "textureName": "debug/white1x1.png",
-    "texturePath": "debug/uvChecker.png",
+    "textureName": "debug/uvChecker.png",
     "translation": {
-        "x": -10.338949203491211,
-        "y": -3.131518840789795,
+        "x": -5.098100185394287,
+        "y": -6.540010452270508,
         "z": 0.0
     }
 }

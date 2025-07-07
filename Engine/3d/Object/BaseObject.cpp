@@ -177,12 +177,176 @@ void BaseObject::CreateModel(const std::string modelname) {
 
 void BaseObject::CreatePrimitiveModel(const PrimitiveType &type) {
     obj3d_->CreatePrimitiveModel(type);
+    type_ = type;
     isPrimitive_ = true;
 }
 
 void BaseObject::AddCollider() {
     colliders_.push_back(&Collider::AddCollider(objectName_));
     isCollider = true;
+}
+
+void BaseObject::SaveParentChildRelationship() {
+    if (!ObjectDatas_) {
+        return;
+    }
+
+    // 親の名前を保存
+    std::string parentName = parent_ ? parent_->GetName() : "";
+    ObjectDatas_->Save<std::string>("parentName", parentName);
+
+    // 子の名前リストを保存
+    std::vector<std::string> childrenNames;
+    for (const auto &child : children_) {
+        if (child) {
+            childrenNames.push_back(child->GetName());
+        }
+    }
+    ObjectDatas_->Save<std::vector<std::string>>("childrenNames", childrenNames);
+}
+
+void BaseObject::LoadParentChildRelationship() {
+    if (!ObjectDatas_) {
+        return;
+    }
+
+    // 親の名前を読み込み（実際の親付けはBaseObjectManagerで行う）
+    std::string parentName = ObjectDatas_->Load<std::string>("parentName", "");
+
+    // 子の名前リストを読み込み（実際の子付けはBaseObjectManagerで行う）
+    std::vector<std::string> childrenNames = ObjectDatas_->Load<std::vector<std::string>>("childrenNames", std::vector<std::string>());
+
+    // 注意: 実際の親子関係の復元はBaseObjectManagerで全オブジェクト読み込み後に行う
+}
+
+std::string BaseObject::GetParentName() const {
+    return parent_ ? parent_->GetName() : "";
+}
+
+std::vector<std::string> BaseObject::GetChildrenNames() const {
+    std::vector<std::string> names;
+    for (const auto &child : children_) {
+        if (child) {
+            names.push_back(child->GetName());
+        }
+    }
+    return names;
+}
+
+// ワールド座標を取得（親の位置は加算不要）
+Vector3 &BaseObject::GetWorldPosition() {
+    static Vector3 worldPos; // 参照を返すため static に保持
+    // ワールド行列の平行移動成分を取得
+    worldPos.x = transform_->matWorld_.m[3][0];
+    worldPos.y = transform_->matWorld_.m[3][1];
+    worldPos.z = transform_->matWorld_.m[3][2];
+    return worldPos;
+}
+
+// ワールド回転を取得（簡易的にオイラー角変換）
+Vector3 &BaseObject::GetWorldRotation() {
+    static Vector3 worldRot;
+    // ワールド行列から回転角（オイラー角）を抽出
+    const Matrix4x4 &m = transform_->matWorld_;
+    worldRot.y = std::asin(-m.m[2][0]); // Pitch
+
+    if (std::cos(worldRot.y) > 0.0001f) {
+        worldRot.x = std::atan2(m.m[2][1], m.m[2][2]); // Yaw
+        worldRot.z = std::atan2(m.m[1][0], m.m[0][0]); // Roll
+    } else {
+        worldRot.x = std::atan2(-m.m[1][2], m.m[1][1]);
+        worldRot.z = 0.0f;
+    }
+
+    return worldRot;
+}
+
+// ワールドスケールを取得（回転を考慮）
+Vector3 &BaseObject::GetWorldScale() {
+    static Vector3 worldScale;
+    const Matrix4x4 &m = transform_->matWorld_;
+
+    // 各軸のベクトルの長さをスケールとして取得
+    worldScale.x = std::sqrt(m.m[0][0] * m.m[0][0] + m.m[0][1] * m.m[0][1] + m.m[0][2] * m.m[0][2]);
+    worldScale.y = std::sqrt(m.m[1][0] * m.m[1][0] + m.m[1][1] * m.m[1][1] + m.m[1][2] * m.m[1][2]);
+    worldScale.z = std::sqrt(m.m[2][0] * m.m[2][0] + m.m[2][1] * m.m[2][1] + m.m[2][2] * m.m[2][2]);
+
+    return worldScale;
+}
+
+
+
+void BaseObject::SaveToJson() {
+    // JSONデータを扱うハンドラを作成
+    ObjectDatas_ = std::make_unique<DataHandler>(foldarPath_, objectName_);
+    modelPath_ = obj3d_->GetModelFilePath();
+    texturePath_ = obj3d_->GetTextureFilePath(0);
+    ObjectDatas_->Save<std::string>("modelName", modelPath_);
+    ObjectDatas_->Save<std::string>("textureName", texturePath_);
+    ObjectDatas_->Save<std::string>("objectName", objectName_);
+    ObjectDatas_->Save<Vector3>("translation", transform_->translation_);
+    ObjectDatas_->Save<Vector3>("rotation", transform_->rotation_);
+    ObjectDatas_->Save<Vector3>("scale", transform_->scale_);
+    ObjectDatas_->Save<bool>("Lighting", isLighting_);
+    ObjectDatas_->Save<PrimitiveType>("PrimitiveType", type_);
+
+    // カラーとライティング設定も保存
+    Vector4 color = objColor_.GetColor();
+    ObjectDatas_->Save<Vector4>("objectColor", color);
+    ObjectDatas_->Save<bool>("isLighting", isLighting_);
+
+    ObjectDatas_->Save<int>("blendMode", static_cast<int>(blendMode_));
+
+    SaveParentChildRelationship();
+}
+
+void BaseObject::LoadFromJson() {
+    // JSONデータを扱うハンドラを作成
+    ObjectDatas_ = std::make_unique<DataHandler>(foldarPath_, objectName_);
+
+    // 基本トランスフォームを読み込み
+    transform_->translation_ = ObjectDatas_->Load<Vector3>("translation", {0.0f, 0.0f, 0.0f});
+    transform_->rotation_ = ObjectDatas_->Load<Vector3>("rotation", {0.0f, 0.0f, 0.0f});
+    transform_->scale_ = ObjectDatas_->Load<Vector3>("scale", {1.0f, 1.0f, 1.0f});
+    isLighting_ = ObjectDatas_->Load<bool>("Lighting", true);
+    type_ = ObjectDatas_->Load<PrimitiveType>("PrimitiveType", PrimitiveType::kCount);
+
+    // モデルパスが未設定でプリミティブでなければデフォルトモデルを使用
+    if (modelPath_.empty() && !isPrimitive_) {
+        modelPath_ = "debug/suzannu.obj";
+    }
+
+    // モデルパスをJSONから読み込み（上書きされる可能性あり）
+    modelPath_ = ObjectDatas_->Load<std::string>("modelName", modelPath_);
+
+    // テクスチャパスが未設定ならデフォルトにする
+    if (texturePath_.empty()) {
+        texturePath_ = "debug/uvChecker.png";
+    }
+
+    texturePath_ = ObjectDatas_->Load<std::string>("textureName", texturePath_);
+
+    // オブジェクトカラーとライティングの設定を読み込み
+    objColor_.GetColor() = ObjectDatas_->Load<Vector4>("objectColor", {1.0f, 1.0f, 1.0f, 1.0f});
+    isLighting_ = ObjectDatas_->Load<bool>("isLighting", true);
+
+    // ブレンドモードの設定を読み込み
+    blendMode_ = static_cast<BlendMode>(ObjectDatas_->Load<int>("blendMode", 0));
+
+    // 親子関係の情報を読み込み（実際の親子付けはBaseObjectManagerで行う）
+    LoadParentChildRelationship();
+}
+
+void BaseObject::AnimaSaveToJson() {
+    if (!AnimaDatas_) {
+        return;
+    }
+    AnimaDatas_->Save<bool>("Loop", isLoop_);
+}
+
+void BaseObject::AnimaLoadFromJson() {
+    AnimaDatas_ = std::make_unique<DataHandler>("Animation", objectName_);
+    isLoop_ = AnimaDatas_->Load<bool>("Loop", false);
 }
 
 void BaseObject::ImGui() {
@@ -247,6 +411,12 @@ void BaseObject::DebugObject() {
     if (ImGui::CollapsingHeader("トランスフォーム", ImGuiTreeNodeFlags_DefaultOpen)) {
         ImGui::Indent(10);
 
+        // === ローカル座標 ===
+        ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.0f, 1.0f, 1.0f, 1.0f));
+        ImGui::Text("ローカル座標:");
+        ImGui::PopStyleColor();
+        ImGui::Separator();
+
         // 位置設定
         ImGui::AlignTextToFramePadding();
         ImGui::Text("位置:");
@@ -301,6 +471,58 @@ void BaseObject::DebugObject() {
         }
         if (ImGui::IsItemHovered())
             ImGui::SetTooltip("大きさをリセット");
+
+        ImGui::Spacing();
+
+        // === ワールド座標 ===
+        ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.8f, 1.0f, 0.8f, 1.0f));
+        ImGui::Text("ワールド座標:");
+        ImGui::PopStyleColor();
+        ImGui::Separator();
+
+        // ワールド座標の取得
+        Vector3 worldPos = GetWorldPosition();
+        Vector3 worldRot = GetWorldRotation();
+        Vector3 worldScale = GetWorldScale();
+
+        // ワールド位置（読み取り専用）
+        ImGui::AlignTextToFramePadding();
+        ImGui::Text("位置:");
+        ImGui::SameLine(80);
+        ImGui::PushItemWidth(200);
+        ImGui::PushStyleColor(ImGuiCol_FrameBg, ImVec4(0.15f, 0.15f, 0.15f, 0.8f));
+        ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.9f, 0.9f, 0.9f, 1.0f));
+        float worldPosArray[3] = {worldPos.x, worldPos.y, worldPos.z};
+        ImGui::InputFloat3("##WorldPosition", worldPosArray, "%.2f", ImGuiInputTextFlags_ReadOnly);
+        ImGui::PopStyleColor(2);
+        ImGui::PopItemWidth();
+
+        // ワールド回転（読み取り専用、度数で表示）
+        ImGui::AlignTextToFramePadding();
+        ImGui::Text("回転:");
+        ImGui::SameLine(80);
+        ImGui::PushItemWidth(200);
+        ImGui::PushStyleColor(ImGuiCol_FrameBg, ImVec4(0.15f, 0.15f, 0.15f, 0.8f));
+        ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.9f, 0.9f, 0.9f, 1.0f));
+        float worldRotDegrees[3] = {
+            radiansToDegrees(worldRot.x),
+            radiansToDegrees(worldRot.y),
+            radiansToDegrees(worldRot.z)};
+        ImGui::InputFloat3("##WorldRotation", worldRotDegrees, "%.1f°", ImGuiInputTextFlags_ReadOnly);
+        ImGui::PopStyleColor(2);
+        ImGui::PopItemWidth();
+
+        // ワールドスケール（読み取り専用）
+        ImGui::AlignTextToFramePadding();
+        ImGui::Text("大きさ:");
+        ImGui::SameLine(80);
+        ImGui::PushItemWidth(200);
+        ImGui::PushStyleColor(ImGuiCol_FrameBg, ImVec4(0.15f, 0.15f, 0.15f, 0.8f));
+        ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.9f, 0.9f, 0.9f, 1.0f));
+        float worldScaleArray[3] = {worldScale.x, worldScale.y, worldScale.z};
+        ImGui::InputFloat3("##WorldScale", worldScaleArray, "%.2f", ImGuiInputTextFlags_ReadOnly);
+        ImGui::PopStyleColor(2);
+        ImGui::PopItemWidth();
 
         ImGui::Unindent(10);
         ImGui::Spacing();
@@ -467,72 +689,6 @@ void BaseObject::DebugObject() {
 
     ImGui::PopStyleColor(6);
     ImGui::PopStyleVar(2);
-}
-
-void BaseObject::SaveToJson() {
-    // JSONデータを扱うハンドラを作成
-    ObjectDatas_ = std::make_unique<DataHandler>(foldarPath_, objectName_);
-    modelPath_ = obj3d_->GetModelFilePath();
-    texturePath_ = obj3d_->GetTextureFilePath(0);
-    ObjectDatas_->Save<std::string>("modelName", modelPath_);
-    ObjectDatas_->Save<std::string>("textureName", texturePath_);
-    ObjectDatas_->Save<std::string>("objectName", objectName_);
-    ObjectDatas_->Save<Vector3>("translation", transform_->translation_);
-    ObjectDatas_->Save<Vector3>("rotation", transform_->rotation_);
-    ObjectDatas_->Save<Vector3>("scale", transform_->scale_);
-    ObjectDatas_->Save<bool>("Lighting", isLighting_);
-
-    // カラーとライティング設定も保存
-    Vector4 color = objColor_.GetColor();
-    ObjectDatas_->Save<Vector4>("objectColor", color);
-    ObjectDatas_->Save<bool>("isLighting", isLighting_);
-
-    ObjectDatas_->Save<int>("blendMode", static_cast<int>(blendMode_));
-}
-
-void BaseObject::LoadFromJson() {
-    // JSONデータを扱うハンドラを作成
-    ObjectDatas_ = std::make_unique<DataHandler>(foldarPath_, objectName_);
-
-    // 基本トランスフォームを読み込み
-    transform_->translation_ = ObjectDatas_->Load<Vector3>("translation", {0.0f, 0.0f, 0.0f});
-    transform_->rotation_ = ObjectDatas_->Load<Vector3>("rotation", {0.0f, 0.0f, 0.0f});
-    transform_->scale_ = ObjectDatas_->Load<Vector3>("scale", {1.0f, 1.0f, 1.0f});
-    isLighting_ = ObjectDatas_->Load<bool>("Lighting", true);
-
-    // モデルパスが未設定でプリミティブでなければデフォルトモデルを使用
-    if (modelPath_.empty() && !isPrimitive_) {
-        modelPath_ = "debug/suzannu.obj";
-    }
-
-    // モデルパスをJSONから読み込み（上書きされる可能性あり）
-    modelPath_ = ObjectDatas_->Load<std::string>("modelName", modelPath_);
-
-    // テクスチャパスが未設定ならデフォルトにする
-    if (texturePath_.empty()) {
-        texturePath_ = "debug/uvChecker.png";
-    }
-
-    texturePath_ = ObjectDatas_->Load<std::string>("textureName", texturePath_);
-
-    // オブジェクトカラーとライティングの設定を読み込み
-    objColor_.GetColor() = ObjectDatas_->Load<Vector4>("objectColor", {1.0f, 1.0f, 1.0f, 1.0f});
-    isLighting_ = ObjectDatas_->Load<bool>("isLighting", true);
-
-    // ブレンドモードの設定を読み込み
-    blendMode_ = static_cast<BlendMode>(ObjectDatas_->Load<int>("blendMode", 0));
-}
-
-void BaseObject::AnimaSaveToJson() {
-    if (!AnimaDatas_) {
-        return;
-    }
-    AnimaDatas_->Save<bool>("Loop", isLoop_);
-}
-
-void BaseObject::AnimaLoadFromJson() {
-    AnimaDatas_ = std::make_unique<DataHandler>("Animation", objectName_);
-    isLoop_ = AnimaDatas_->Load<bool>("Loop", false);
 }
 
 void BaseObject::ShowFileSelector() {

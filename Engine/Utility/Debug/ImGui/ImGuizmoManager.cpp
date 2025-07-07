@@ -176,22 +176,19 @@ void ImGuizmoManager::Update(const ImVec2 &scenePosition, const ImVec2 &sceneSiz
         mouseY >= scenePosition.y && mouseY <= scenePosition.y + sceneSize.y) {
 
         if (leftClicked) {
-            // 画面座標をNDC(-1~1)に変換
-            float ndcX = 2.0f * (mouseX - scenePosition.x) / sceneSize.x - 1.0f;
-            float ndcY = 1.0f - 2.0f * (mouseY - scenePosition.y) / sceneSize.y;
-
-            // 最も近いオブジェクトを1つだけ判定（AABBの2D投影で簡易判定）
+            // 最も近いオブジェクトを1つだけ判定
             float minDistSq = std::numeric_limits<float>::max();
             std::string pickedName;
             for (const auto &pair : transformMap) {
                 BaseObject *obj = pair.second;
-                Vector3 pos = obj->GetLocalPosition();
+                // ワールド座標を使用
+                Vector3 worldPos = obj->GetWorldPosition();
 
                 // ワールド座標をスクリーン座標に変換
                 Vector3 screenPos;
                 {
                     // ビュー射影変換
-                    Vector3 v = pos;
+                    Vector3 v = worldPos;
                     float x = v.x * viewProjection->matView_.m[0][0] + v.y * viewProjection->matView_.m[1][0] + v.z * viewProjection->matView_.m[2][0] + viewProjection->matView_.m[3][0];
                     float y = v.x * viewProjection->matView_.m[0][1] + v.y * viewProjection->matView_.m[1][1] + v.z * viewProjection->matView_.m[2][1] + viewProjection->matView_.m[3][1];
                     float z = v.x * viewProjection->matView_.m[0][2] + v.y * viewProjection->matView_.m[1][2] + v.z * viewProjection->matView_.m[2][2] + viewProjection->matView_.m[3][2];
@@ -217,8 +214,9 @@ void ImGuizmoManager::Update(const ImVec2 &scenePosition, const ImVec2 &sceneSiz
                 float dy = mouseY - sy;
                 float distSq = dx * dx + dy * dy;
 
-                // 半径はGetRadius()で取得、2D投影で十分
-                float radius = obj->GetLocalScale().x;
+                // ワールドスケールを使用
+                Vector3 worldScale = obj->GetWorldScale();
+                float radius = worldScale.x;
                 float screenRadius = radius * 100.0f; // 適当なスケール（必要に応じて調整）
 
                 if (distSq < screenRadius * screenRadius && distSq < minDistSq) {
@@ -238,15 +236,22 @@ void ImGuizmoManager::Update(const ImVec2 &scenePosition, const ImVec2 &sceneSiz
 
     // === ImGuizmoの処理は必要条件を満たすときのみ ===
     targetTransform = GetSelectedTarget();
-    if (!targetTransform)
+    if (!targetTransform || !gizmoActive)
         return;
 
-    // ギズモがアクティブな時のみImGuizmoを有効化
-    if (!gizmoActive)
-        return;
+    BaseObject *parent = targetTransform->GetParent();
+    Matrix4x4 operationMatrix;
+
+    if (parent != nullptr) {
+        // 親がいる場合：ローカル行列を使用
+        operationMatrix = CreateLocalMatrix(targetTransform->GetWorldTransform());
+    } else {
+        // 親がいない場合：ワールド行列を使用
+        operationMatrix = targetTransform->GetWorldTransform()->matWorld_;
+    }
 
     float matrix[16];
-    ConvertMatrix4x4ToFloat16(targetTransform->GetWorldTransform()->matWorld_, matrix);
+    ConvertMatrix4x4ToFloat16(operationMatrix, matrix);
 
     float viewMatrix[16];
     float projMatrix[16];
@@ -264,10 +269,69 @@ void ImGuizmoManager::Update(const ImVec2 &scenePosition, const ImVec2 &sceneSiz
         matrix);
 
     if (manipulated) {
-        ConvertFloat16ToMatrix4x4(matrix, targetTransform->GetWorldTransform()->matWorld_);
-        DecomposeMatrix(targetTransform->GetWorldTransform());
+        Matrix4x4 newMatrix;
+        ConvertFloat16ToMatrix4x4(matrix, newMatrix);
+
+        if (parent != nullptr) {
+            // 親がいる場合：ローカル行列として処理
+            ApplyLocalMatrix(newMatrix, targetTransform->GetWorldTransform());
+        } else {
+            // 親がいない場合：従来通り
+            targetTransform->GetWorldTransform()->matWorld_ = newMatrix;
+            DecomposeMatrix(targetTransform->GetWorldTransform());
+        }
+
         targetTransform->GetWorldTransform()->TransferMatrix();
     }
+}
+
+void ImGuizmoManager::DecomposeMatrixToLocal(const Matrix4x4 &matrix, WorldTransform *transform) {
+    float matrixArray[16];
+    ConvertMatrix4x4ToFloat16(matrix, matrixArray);
+
+    float translation[3], rotation[3], scale[3];
+    ImGuizmo::DecomposeMatrixToComponents(
+        matrixArray,
+        translation, rotation, scale);
+
+    const float DEG_TO_RAD = 0.01745329251f;
+
+    transform->translation_ = {translation[0], translation[1], translation[2]};
+    transform->rotation_ = {
+        rotation[0] * DEG_TO_RAD,
+        rotation[1] * DEG_TO_RAD,
+        rotation[2] * DEG_TO_RAD};
+    transform->scale_ = {scale[0], scale[1], scale[2]};
+}
+
+Matrix4x4 ImGuizmoManager::CreateLocalMatrix(WorldTransform *transform) {
+    Matrix4x4 scaleMatrix = MakeScaleMatrix(transform->scale_);
+    Matrix4x4 rotateMatrix = MakeRotateXYZMatrix(transform->rotation_);
+    Matrix4x4 translateMatrix = MakeTranslateMatrix(transform->translation_);
+
+    return (scaleMatrix * rotateMatrix) * translateMatrix;
+}
+
+// ローカル行列を適用
+void ImGuizmoManager::ApplyLocalMatrix(const Matrix4x4 &matrix, WorldTransform *transform) {
+    // 行列をローカル座標成分に分解
+    float matrixArray[16];
+    ConvertMatrix4x4ToFloat16(matrix, matrixArray);
+
+    float translation[3], rotation[3], scale[3];
+    ImGuizmo::DecomposeMatrixToComponents(
+        matrixArray,
+        translation, rotation, scale);
+
+    const float DEG_TO_RAD = 0.01745329251f;
+
+    // ローカル座標として直接設定
+    transform->translation_ = {translation[0], translation[1], translation[2]};
+    transform->rotation_ = {
+        rotation[0] * DEG_TO_RAD,
+        rotation[1] * DEG_TO_RAD,
+        rotation[2] * DEG_TO_RAD};
+    transform->scale_ = {scale[0], scale[1], scale[2]};
 }
 
 // 行列 → float[16]
@@ -284,7 +348,7 @@ void ImGuizmoManager::ConvertFloat16ToMatrix4x4(const float *inMatrix, Matrix4x4
             outMatrix.m[i][j] = inMatrix[i * 4 + j];
 }
 
-// ImGuizmoを使って行列からTRSを分解
+// **重要**: 旧版と同じImGuizmoのビルトイン関数を使用
 void ImGuizmoManager::DecomposeMatrix(WorldTransform *transform) {
     float translation[3], rotation[3], scale[3];
     ImGuizmo::DecomposeMatrixToComponents(

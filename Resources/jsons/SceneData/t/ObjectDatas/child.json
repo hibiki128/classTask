@@ -1,6 +1,8 @@
 {
     "Lighting": true,
+    "PrimitiveType": 9,
     "blendMode": 0,
+    "childrenNames": [],
     "isLighting": true,
     "modelName": "debug/suzannu.obj",
     "objectColor": {
@@ -9,7 +11,8 @@
         "y": 1.0,
         "z": 1.0
     },
-    "objectName": "sasa",
+    "objectName": "child",
+    "parentName": "test",
     "rotation": {
         "x": 0.0,
         "y": -0.0,
@@ -22,8 +25,8 @@
     },
     "textureName": "debug/white1x1.png",
     "translation": {
-        "x": 6.311934947967529,
-        "y": -5.380683898925781,
+        "x": 7.003452301025391,
+        "y": 0.0,
         "z": 0.0
     }
 }

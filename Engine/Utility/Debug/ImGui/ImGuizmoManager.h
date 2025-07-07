@@ -1,13 +1,13 @@
 #pragma once
 #ifdef _DEBUG
 
-
 #include "imgui.h"
 #include "ImGuizmo.h"
+#include <Object/BaseObject.h>
 #include <string>
 #include <unordered_map>
 #include <vector>
-#include <Object/BaseObject.h>
+
 class ImGuizmoManager {
   private:
     static ImGuizmoManager *instance;
@@ -49,12 +49,17 @@ class ImGuizmoManager {
     /// <summary>ImGui更新処理（sceneWindowの位置・サイズが必要）</summary>
     void Update(const ImVec2 &scenePosition, const ImVec2 &sceneSize);
 
+    void DecomposeMatrixToLocal(const Matrix4x4 &matrix, WorldTransform *transform);
+
+    Matrix4x4 CreateLocalMatrix(WorldTransform *transform);
+
     /// <summary>現在選択されているWorldTransformを取得</summary>
     BaseObject *GetSelectedTarget();
 
     void DeleteTarget() { transformMap.clear(); }
 
   private:
+    void ApplyLocalMatrix(const Matrix4x4 &matrix, WorldTransform *transform);
     void ConvertMatrix4x4ToFloat16(const Matrix4x4 &matrix, float *outMatrix);
     void ConvertFloat16ToMatrix4x4(const float *inMatrix, Matrix4x4 &outMatrix);
     void DecomposeMatrix(WorldTransform *transform);

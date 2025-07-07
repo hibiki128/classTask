@@ -65,9 +65,10 @@ void BaseObjectManager::DrawImGui() {
 
         // 横並びに「保存」ボタンと「キャンセル」ボタン
         if (ImGui::Button("保存", ImVec2(120, 0))) {
-            sceneName_ = sceneNameBuffer; // 入力内容を保存
-            SaveAll();                    // 実際の保存処理
-            ImGui::CloseCurrentPopup();   // モーダルを閉じる
+            sceneName_ = sceneNameBuffer;      // 入力内容を保存
+            SaveAll();                         // 実際の保存処理
+            SaveAllParentChildRelationships(); // 親子関係も保存
+            ImGui::CloseCurrentPopup();        // モーダルを閉じる
         }
 
         ImGui::SameLine();
@@ -95,9 +96,10 @@ void BaseObjectManager::DrawImGui() {
 
         // 横並びに「保存」ボタンと「キャンセル」ボタン
         if (ImGui::Button("読み込み", ImVec2(120, 0))) {
-            sceneName_ = sceneNameBuffer; // 入力内容を保存
-            LoadAll();                    // 実際の保存処理
-            ImGui::CloseCurrentPopup();   // モーダルを閉じる
+            sceneName_ = sceneNameBuffer;      // 入力内容を保存
+            LoadAll();                         // 実際の保存処理
+            LoadAllParentChildRelationships(); // 親子関係も読み込み
+            ImGui::CloseCurrentPopup();        // モーダルを閉じる
         }
 
         ImGui::SameLine();
@@ -202,6 +204,8 @@ void BaseObjectManager::DrawImGui() {
         ImGui::EndPopup();
     }
 
+    ShowParentChildHierarchy();
+
     ImGui::End();
 }
 
@@ -209,6 +213,7 @@ void BaseObjectManager::SaveAll() {
     for (auto &[name, obj] : baseObjects_) {
         obj->SetFolderPath("SceneData/" + sceneName_ + "/ObjectDatas");
         obj->SaveToJson();
+        obj->SaveParentChildRelationship(); // 親子関係を保存
     }
 }
 
@@ -245,7 +250,6 @@ void BaseObjectManager::LoadAll() {
         newObject->SetFolderPath("SceneData/" + sceneName_ + "/ObjectDatas");
 
         // オブジェクト名でInit
-
         newObject->Init(objectName);
 
         // 読み込んだデータからモデルとテクスチャのパスを取得
@@ -255,6 +259,8 @@ void BaseObjectManager::LoadAll() {
         // モデルとテクスチャを設定
         if (!modelPath.empty()) {
             newObject->CreateModel(modelPath);
+        } else {
+            newObject->CreatePrimitiveModel(newObject->GetPrimitiveType());
         }
 
         if (!texturePath.empty()) {
@@ -264,6 +270,9 @@ void BaseObjectManager::LoadAll() {
         // オブジェクトマネージャーに追加
         this->AddObject(std::move(newObject));
     }
+
+    // 全オブジェクト読み込み後に親子関係を復元
+    LoadAllParentChildRelationships();
 }
 
 void BaseObjectManager::SetSceneName(std::string sceneName) {
@@ -287,4 +296,171 @@ BaseObject *BaseObjectManager::GetObjectByName(const std::string &name) {
         return it->second.get();
     }
     return nullptr;
+}
+
+// BaseObjectManager.cpp に以下のメソッドを実装
+
+void BaseObjectManager::ShowParentChildHierarchy() {
+    if (ImGui::BeginTabBar("階層エディター")) {
+        if (ImGui::BeginTabItem("階層エディター")) {
+
+            if (ImGui::CollapsingHeader("親子関係設定", ImGuiTreeNodeFlags_DefaultOpen)) {
+
+                // 親子付けセクション
+                ImGui::Separator();
+                ImGui::Text("親子付け:");
+
+                static int selectedChild = 0;
+                static int selectedParent = 0;
+
+                std::vector<std::string> objectNames = GetObjectNames();
+
+                if (!objectNames.empty()) {
+                    std::vector<const char *> objectNamesCStr;
+                    for (const auto &name : objectNames) {
+                        objectNamesCStr.push_back(name.c_str());
+                    }
+
+                    ImGui::Text("子オブジェクト:");
+                    ImGui::SameLine();
+                    ImGui::PushItemWidth(150);
+                    ImGui::Combo("##ChildObject", &selectedChild, objectNamesCStr.data(), static_cast<int>(objectNamesCStr.size()));
+                    ImGui::PopItemWidth();
+
+                    ImGui::Text("親オブジェクト:");
+                    ImGui::SameLine();
+                    ImGui::PushItemWidth(150);
+                    ImGui::Combo("##ParentObject", &selectedParent, objectNamesCStr.data(), static_cast<int>(objectNamesCStr.size()));
+                    ImGui::PopItemWidth();
+
+                    selectedChild = std::clamp(selectedChild, 0, static_cast<int>(objectNames.size()) - 1);
+                    selectedParent = std::clamp(selectedParent, 0, static_cast<int>(objectNames.size()) - 1);
+
+                    if (ImGui::Button("親子付け")) {
+                        if (selectedChild != selectedParent) {
+                            SetParentChild(objectNames[selectedChild], objectNames[selectedParent]);
+                        }
+                    }
+
+                    ImGui::SameLine();
+                    if (ImGui::Button("親子解除")) {
+                        RemoveParentChild(objectNames[selectedChild]);
+                    }
+                }
+
+                ImGui::Separator();
+                ImGui::Text("階層表示:");
+
+                // 階層構造を表示
+                ImGui::BeginChild("HierarchyView", ImVec2(0, 300), true);
+
+                for (auto &[name, obj] : baseObjects_) {
+                    if (!obj->GetParent()) { // ルートオブジェクトのみ表示
+                        ShowObjectHierarchy(obj.get(), 0);
+                    }
+                }
+
+                ImGui::EndChild();
+            }
+            ImGui::EndTabItem();
+        }
+        ImGui::EndTabBar();
+    };
+}
+
+void BaseObjectManager::ShowObjectHierarchy(BaseObject *obj, int depth) {
+    if (!obj)
+        return;
+
+    // インデントを設定
+    std::string indent(depth * 2, ' ');
+    std::string displayName = indent + obj->GetName();
+
+    ImGuiTreeNodeFlags flags = ImGuiTreeNodeFlags_OpenOnArrow | ImGuiTreeNodeFlags_OpenOnDoubleClick;
+
+    // 子がない場合は葉ノードフラグを追加
+    if (obj->GetChildren()->empty()) {
+        flags |= ImGuiTreeNodeFlags_Leaf;
+    }
+
+    bool nodeOpen = ImGui::TreeNodeEx(displayName.c_str(), flags);
+
+    if (nodeOpen) {
+        // 子オブジェクトを表示
+        for (BaseObject *child : *obj->GetChildren()) {
+            ShowObjectHierarchy(child, depth + 1);
+        }
+        ImGui::TreePop();
+    }
+}
+
+void BaseObjectManager::SetParentChild(const std::string &childName, const std::string &parentName) {
+    BaseObject *child = GetObjectByName(childName);
+    BaseObject *parent = GetObjectByName(parentName);
+
+    if (child && parent && child != parent) {
+        // 循環参照チェック
+        BaseObject *currentParent = parent;
+        while (currentParent) {
+            if (currentParent == child) {
+                // 循環参照が発生するため、親子付けを拒否
+                return;
+            }
+            currentParent = currentParent->GetParent();
+        }
+
+        child->SetParent(parent);
+    }
+}
+
+void BaseObjectManager::RemoveParentChild(const std::string &childName) {
+    BaseObject *child = GetObjectByName(childName);
+    if (child) {
+        child->DetachParent();
+    }
+}
+
+std::vector<std::string> BaseObjectManager::GetObjectNames() const {
+    std::vector<std::string> names;
+    for (const auto &[name, obj] : baseObjects_) {
+        names.push_back(name);
+    }
+    return names;
+}
+
+void BaseObjectManager::SaveAllParentChildRelationships() {
+    for (auto &[name, obj] : baseObjects_) {
+        obj->SaveParentChildRelationship();
+    }
+}
+
+void BaseObjectManager::LoadAllParentChildRelationships() {
+    // まず全オブジェクトから親子関係情報を読み込む
+    std::unordered_map<std::string, std::string> parentRelations;
+    std::unordered_map<std::string, std::vector<std::string>> childRelations;
+
+    for (auto &[name, obj] : baseObjects_) {
+        if (!obj->ObjectDatas_)
+            continue;
+
+        std::string parentName = obj->ObjectDatas_->Load<std::string>("parentName", "");
+        if (!parentName.empty()) {
+            parentRelations[name] = parentName;
+        }
+
+        std::vector<std::string> childrenNames = obj->ObjectDatas_->Load<std::vector<std::string>>("childrenNames", std::vector<std::string>());
+        if (!childrenNames.empty()) {
+            childRelations[name] = childrenNames;
+        }
+    }
+
+    // 親子関係を復元
+    for (const auto &[childName, parentName] : parentRelations) {
+        BaseObject *child = GetObjectByName(childName);
+        BaseObject *parent = GetObjectByName(parentName);
+
+        if (child && parent) {
+            child->SetParent(parent);
+        }
+    }
 }

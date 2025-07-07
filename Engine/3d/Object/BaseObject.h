@@ -10,7 +10,7 @@
 
 class SkyBox;
 class BaseObject : public Collider {
-  private:
+  public:
     /// ===================================================
     /// private variaus
     /// ===================================================
@@ -46,6 +46,8 @@ class BaseObject : public Collider {
 
     BaseObject *parent_ = nullptr;
     std::list<BaseObject *> children_;
+
+    PrimitiveType type_ = PrimitiveType::kCount;
 
   private:
     using json = nlohmann::json;
@@ -101,6 +103,8 @@ class BaseObject : public Collider {
     void LoadFromJson();
     void AnimaSaveToJson();
     void AnimaLoadFromJson();
+    void SaveParentChildRelationship();
+    void LoadParentChildRelationship();
     void SetFolderPath(const std::string &folderPath) { foldarPath_ = folderPath; }
 
     /// ===================================================
@@ -110,10 +114,16 @@ class BaseObject : public Collider {
     std::string &GetName() { return objectName_; }
     std::string &GetModelPath() { return modelPath_; }
     std::string &GetTexturePath() { return texturePath_; }
+    std::string GetParentName() const;
+    std::vector<std::string> GetChildrenNames() const;
     Object3d *GetObject3d() { return obj3d_.get(); }
+    PrimitiveType GetPrimitiveType() { return type_; }
     Vector3 &GetLocalPosition() { return transform_->translation_; }
     Vector3 &GetLocalRotation() { return transform_->rotation_; }
     Vector3 &GetLocalScale() { return transform_->scale_; }
+    Vector3 &GetWorldPosition();
+    Vector3 &GetWorldRotation();
+    Vector3 &GetWorldScale();
     bool AnimaIsFinish() { return obj3d_->IsFinish(); }
     bool &GetLighting() { return isLighting_; }
     bool &GetLoop() { return isLoop_; }

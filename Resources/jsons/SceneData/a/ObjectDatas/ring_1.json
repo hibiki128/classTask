@@ -1,15 +1,16 @@
 {
     "Lighting": true,
+    "PrimitiveType": 5,
     "blendMode": 0,
     "isLighting": true,
-    "modelName": "animation/walk.gltf",
+    "modelName": "",
     "objectColor": {
         "w": 1.0,
         "x": 1.0,
         "y": 1.0,
         "z": 1.0
     },
-    "objectName": "test",
+    "objectName": "ring_1",
     "rotation": {
         "x": 0.0,
         "y": -0.0,
@@ -20,11 +21,10 @@
         "y": 1.0,
         "z": 1.0
     },
-    "textureName": "debug/white1x1.png",
-    "texturePath": "debug/white1x1.png",
+    "textureName": "debug/uvChecker.png",
     "translation": {
-        "x": -8.102155685424805,
-        "y": 1.1929607391357422,
+        "x": 10.093208312988281,
+        "y": 7.363948822021484,
         "z": 0.0
     }
 }

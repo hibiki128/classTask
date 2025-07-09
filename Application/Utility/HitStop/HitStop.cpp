@@ -11,7 +11,7 @@ void HitStop::Update() {
     if (!isActive_)
         return;
 
-    elapsedTime_ += Frame::DeltaTime(); // 仮に60FPSとして進める
+    elapsedTime_ += Frame::DeltaTime();
     if (elapsedTime_ >= stopDuration_) {
         isActive_ = false;
         elapsedTime_ = 0.0f;

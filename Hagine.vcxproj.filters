@@ -320,10 +320,10 @@
     <ClCompile Include="Engine\3d\Model\Mesh\Mesh.cpp">
       <Filter>ソースファイル\Engine\3d\Model\Mesh</Filter>
     </ClCompile>
-    <ClCompile Include="Engine\3d\Object\BaseObject.cpp">
+    <ClCompile Include="Engine\3d\Object\Base\BaseObject.cpp">
       <Filter>ソースファイル\Engine\3d\Object</Filter>
     </ClCompile>
-    <ClCompile Include="Engine\3d\Object\BaseObjectManager.cpp">
+    <ClCompile Include="Engine\3d\Object\Base\BaseObjectManager.cpp">
       <Filter>ソースファイル\Engine\3d\Object</Filter>
     </ClCompile>
     <ClCompile Include="Engine\Scene\BaseScene.cpp">
@@ -597,10 +597,10 @@
     <ClInclude Include="Engine\3d\Model\Mesh\Mesh.h">
       <Filter>ソースファイル\Engine\3d\Model\Mesh</Filter>
     </ClInclude>
-    <ClInclude Include="Engine\3d\Object\BaseObject.h">
+    <ClInclude Include="Engine\3d\Object\Base\BaseObject.h">
       <Filter>ソースファイル\Engine\3d\Object</Filter>
     </ClInclude>
-    <ClInclude Include="Engine\3d\Object\BaseObjectManager.h">
+    <ClInclude Include="Engine\3d\Object\Base\BaseObjectManager.h">
       <Filter>ソースファイル\Engine\3d\Object</Filter>
     </ClInclude>
     <ClInclude Include="Engine\Scene\BaseScene.h">

@@ -92,7 +92,7 @@ class Object3d {
     /// <param name="fileName"></param>
     void AddAnimation(const std::string &fileName);
 
-    void DrawWireframe(const WorldTransform &worldTransform, const ViewProjection &viewProjection);
+    void DrawWireframe(const WorldTransform &worldTransform, const ViewProjection &viewProjection,bool isRainbow = false);
 
     /// <summary>
     /// 描画

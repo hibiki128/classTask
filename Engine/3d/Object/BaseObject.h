@@ -10,12 +10,12 @@
 
 class SkyBox;
 class BaseObject : public Collider {
-  private:
+  public:
     /// ===================================================
     /// private variaus
     /// ===================================================
 
-    std::unique_ptr<DataHandler> TransformDatas_;
+    std::unique_ptr<DataHandler> ObjectDatas_;
     std::unique_ptr<DataHandler> AnimaDatas_;
 
   protected:
@@ -36,13 +36,18 @@ class BaseObject : public Collider {
     bool isModelDraw_ = true;
     bool isWireframe_ = false;
     bool reflect_ = false;
+    bool isPrimitive_ = false;
+    bool isRainbow_ = false;
 
     std::string objectName_;
-    std::string modelName_;
-    std::string textureName_;
+    std::string modelPath_;
+    std::string texturePath_;
+    std::string foldarPath_ = "SceneData/Title/ObjectData";
 
     BaseObject *parent_ = nullptr;
     std::list<BaseObject *> children_;
+
+    PrimitiveType type_ = PrimitiveType::kCount;
 
   private:
     using json = nlohmann::json;
@@ -98,16 +103,27 @@ class BaseObject : public Collider {
     void LoadFromJson();
     void AnimaSaveToJson();
     void AnimaLoadFromJson();
+    void SaveParentChildRelationship();
+    void LoadParentChildRelationship();
+    void SetFolderPath(const std::string &folderPath) { foldarPath_ = folderPath; }
 
     /// ===================================================
     /// getter
     /// ===================================================
     const WorldTransform &GetTransform() { return *transform_; }
     std::string &GetName() { return objectName_; }
+    std::string &GetModelPath() { return modelPath_; }
+    std::string &GetTexturePath() { return texturePath_; }
+    std::string GetParentName() const;
+    std::vector<std::string> GetChildrenNames() const;
     Object3d *GetObject3d() { return obj3d_.get(); }
+    PrimitiveType GetPrimitiveType() { return type_; }
     Vector3 &GetLocalPosition() { return transform_->translation_; }
     Vector3 &GetLocalRotation() { return transform_->rotation_; }
     Vector3 &GetLocalScale() { return transform_->scale_; }
+    Vector3 &GetWorldPosition();
+    Vector3 &GetWorldRotation();
+    Vector3 &GetWorldScale();
     bool AnimaIsFinish() { return obj3d_->IsFinish(); }
     bool &GetLighting() { return isLighting_; }
     bool &GetLoop() { return isLoop_; }
@@ -115,7 +131,12 @@ class BaseObject : public Collider {
     /// ===================================================
     /// setter
     /// ===================================================
-    void SetTexture(const std::string &filePath, uint32_t index) { obj3d_->SetTexture(filePath, index); }
+    void SetTexture(const std::string &filePath, uint32_t index) {
+        if (filePath.empty()) {
+            return; // ファイルパスが空なら何もしない
+        }
+        obj3d_->SetTexture(filePath, index);
+    }
     void SetModel(std::unique_ptr<Object3d> obj) {
         obj3d_ = std::move(obj);
     }
@@ -136,6 +157,5 @@ class BaseObject : public Collider {
     std::vector<Collider *> colliders_;
 
     bool isCollider = false;
-    std::string texturePath_;
     BlendMode blendMode_;
 };

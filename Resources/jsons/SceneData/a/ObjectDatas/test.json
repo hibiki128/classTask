@@ -1,0 +1,30 @@
+{
+    "Lighting": true,
+    "PrimitiveType": 9,
+    "blendMode": 0,
+    "isLighting": true,
+    "modelName": "animation/walk.gltf",
+    "objectColor": {
+        "w": 1.0,
+        "x": 1.0,
+        "y": 1.0,
+        "z": 1.0
+    },
+    "objectName": "test",
+    "rotation": {
+        "x": 0.0,
+        "y": -0.0,
+        "z": 0.0
+    },
+    "scale": {
+        "x": 1.0,
+        "y": 1.0,
+        "z": 1.0
+    },
+    "textureName": "debug/white1x1.png",
+    "translation": {
+        "x": -4.737628936767578,
+        "y": 7.4669413566589355,
+        "z": 0.0
+    }
+}

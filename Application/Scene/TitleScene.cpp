@@ -16,7 +16,16 @@ void TitleScene::Initialize() {
     obj_->Init("test");
     obj_->CreateModel("animation/walk.gltf");
     
+    childObj_ = std::make_unique<BaseObject>();
+    childObj_->Init("child");
+    childObj_->CreateModel("debug/suzannu.obj");
+    childObj_->SetParent(obj_.get());
+    childObj_->SetTexture("debug/white1x1.png", 0);
+
     BaseObjectManager::GetInstance()->AddObject(std::move(obj_));
+    BaseObjectManager::GetInstance()->AddObject(std::move(childObj_));
+
+    SkyBox::GetInstance()->Initialize("debug/rostock_laage_airport_4k.dds");
 }
 
 void TitleScene::Finalize() {
@@ -34,6 +43,8 @@ void TitleScene::Update() {
 
 void TitleScene::Draw() {
     /// -------描画処理開始-------
+
+    SkyBox::GetInstance()->Draw(vp_);
 
     BaseObjectManager::GetInstance()->Draw(vp_);
 

@@ -389,7 +389,7 @@ void ImGuiManager::ShowMainMenu() {
                 }
 
                 if (ImGui::MenuItem(ICON_FA_TRASH_ALT " オブジェクト全削除")) {
-                    baseObjectManager_->DeleteObject();
+                    baseObjectManager_->RemoveAllObjects();
                     imGuizmoManager_->DeleteTarget();
                 }
 

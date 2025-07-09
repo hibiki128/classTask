@@ -274,8 +274,6 @@ Vector3 &BaseObject::GetWorldScale() {
     return worldScale;
 }
 
-
-
 void BaseObject::SaveToJson() {
     // JSONデータを扱うハンドラを作成
     ObjectDatas_ = std::make_unique<DataHandler>(foldarPath_, objectName_);
@@ -350,7 +348,7 @@ void BaseObject::AnimaLoadFromJson() {
 }
 
 void BaseObject::ImGui() {
-
+#ifdef _DEBUG
     if (ImGui::BeginTabBar(objectName_.c_str())) {
         if (ImGui::BeginTabItem(objectName_.c_str())) {
             DebugObject();
@@ -397,9 +395,14 @@ void BaseObject::ImGui() {
         }
         ImGui::EndTabBar();
     }
+
+#endif // _DEBUG
+
 }
 
 void BaseObject::DebugObject() {
+#ifdef _DEBUG
+
     // 全体のスタイル設定
     ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(8, 4));
     ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(6, 4));
@@ -689,9 +692,12 @@ void BaseObject::DebugObject() {
 
     ImGui::PopStyleColor(6);
     ImGui::PopStyleVar(2);
+#endif // _DEBUG
 }
 
 void BaseObject::ShowFileSelector() {
+#ifdef _DEBUG
+
     static int selectedIndex = -1;                              // 選択中のインデックス（-1は未選択）
     static std::vector<std::string> gltfFiles = GetGltfFiles(); // GLTFファイルのリスト
 
@@ -717,9 +723,12 @@ void BaseObject::ShowFileSelector() {
     if (selectedIndex >= 0 && ImGui::Button("Set Animation")) {
         obj3d_->SetAnimation(gltfFiles[selectedIndex]); // 選択されたファイルをSetAnimationに渡す
     }
+#endif // _DEBUG
 }
 
 void BaseObject::ShowBlendModeCombo(BlendMode &currentMode) {
+#ifdef _DEBUG
+
     // コンボボックスに表示する項目（日本語）
     static const char *blendModeItems[] = {
         "なし",      // kNone
@@ -738,6 +747,7 @@ void BaseObject::ShowBlendModeCombo(BlendMode &currentMode) {
         // ユーザーが選択を変更したときに反映
         currentMode = static_cast<BlendMode>(currentIndex);
     }
+#endif // _DEBUG
 }
 
 std::vector<std::string> BaseObject::GetGltfFiles() {

@@ -47,6 +47,8 @@ void BaseObjectManager::Draw(const ViewProjection &viewProjection, Vector3 offSe
 }
 
 void BaseObjectManager::DrawImGui() {
+#ifdef _DEBUG
+
     ImGui::Begin("オブジェクトエディター");
 
     // シーン保存モーダルを開くボタン
@@ -207,6 +209,7 @@ void BaseObjectManager::DrawImGui() {
     ShowParentChildHierarchy();
 
     ImGui::End();
+#endif // _DEBUG
 }
 
 void BaseObjectManager::SaveAll() {
@@ -301,6 +304,8 @@ BaseObject *BaseObjectManager::GetObjectByName(const std::string &name) {
 // BaseObjectManager.cpp に以下のメソッドを実装
 
 void BaseObjectManager::ShowParentChildHierarchy() {
+#ifdef _DEBUG
+
     if (ImGui::BeginTabBar("階層エディター")) {
         if (ImGui::BeginTabItem("階層エディター")) {
 
@@ -366,6 +371,7 @@ void BaseObjectManager::ShowParentChildHierarchy() {
         }
         ImGui::EndTabBar();
     };
+#endif // _DEBUG
 }
 
 void BaseObjectManager::ShowObjectHierarchy(BaseObject *obj, int depth) {

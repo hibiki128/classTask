@@ -1,7 +1,7 @@
 #pragma once
 
 #include "BaseScene.h"
-#include"Object/BaseObject.h"
+#include"Object/Base/BaseObject.h"
 #include"Easing.h"
 #include"SkyBox/SkyBox.h"
 

@@ -1,6 +1,6 @@
 #pragma once
 #include "Easing.h"
-#include <Object/BaseObject.h>
+#include <Object/Base/BaseObject.h>
 #include <functional>
 #include <memory>
 #include <string>
@@ -60,7 +60,7 @@ struct Motion {
     // 基準値（再生開始時の値）
     Vector3 basePos, baseRot, baseScale;
 
-    // 【追加】動き始めた時の初期位置を記録（リセット用）
+    // 動き始めた時の初期位置を記録（リセット用）
     Vector3 initialPos, initialRot, initialScale;
     bool hasInitialTransform = false; // 初期位置が記録されているかのフラグ
 
@@ -82,6 +82,9 @@ struct Motion {
 
 class MotionEditor {
   private:
+    /// ====================================
+    /// private methods
+    /// ====================================
     static MotionEditor *instance;
     MotionEditor() = default;
     ~MotionEditor() = default;
@@ -89,6 +92,9 @@ class MotionEditor {
     MotionEditor &operator=(MotionEditor &) = delete;
 
   public:
+    /// ====================================
+    /// public methods
+    /// ====================================
     static MotionEditor *GetInstance();
     void Finalize();
 
@@ -102,7 +108,7 @@ class MotionEditor {
     void DrawCatmullRomCurve();
     Vector3 CatmullRomInterpolation(const std::vector<Vector3> &points, float t);
 
-    // 再生関連（コールバック版は廃止）
+    // 再生関連
     void Play(const std::string &objectName);
     bool PlayFromFile(BaseObject *target, const std::string &fileName);
     void Stop(const std::string &objectName);
@@ -119,11 +125,19 @@ class MotionEditor {
     void ResetInitialPosition(const std::string &objectName);
 
   private:
+    /// ====================================
+    /// private variaus
+    /// ====================================
+    
     std::unordered_map<std::string, Motion> motions_;
     std::string selectedName_;
     std::string jsonName_;
     int selectedControlPoint_ = -1;
 
+  private:
+    /// ====================================
+    /// private methods
+    /// ====================================
     // ヘルパー関数
     Vector3 TransformLocalToWorld(const Vector3 &localOffset, const Matrix4x4 &worldMatrix);
 

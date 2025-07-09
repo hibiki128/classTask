@@ -9,16 +9,25 @@
 
 class Shake {
   public:
+    /// ====================================
+    /// public methods
+    /// ====================================
     void Initialize(ViewProjection *viewProjection);
     void Update();
     void imgui();
     void StartShake();
 
   private:
+    /// ====================================
+    /// private methods
+    /// ====================================
     void LoadSettings();
     void SaveSettings();
 
   private:
+    /// ====================================
+    /// private variaus
+    /// ====================================
     ViewProjection *viewProjection_ = nullptr;
     Vector2 shakeMin_ = {-0.5f, -0.5f};
     Vector2 shakeMax_ = {0.5f, 0.5f};

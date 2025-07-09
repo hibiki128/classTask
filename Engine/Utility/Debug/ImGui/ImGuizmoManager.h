@@ -1,13 +1,13 @@
 #pragma once
 #ifdef _DEBUG
 
-
 #include "imgui.h"
 #include "ImGuizmo.h"
+#include <Object/Base/BaseObject.h>
 #include <string>
 #include <unordered_map>
 #include <vector>
-#include <Object/BaseObject.h>
+
 class ImGuizmoManager {
   private:
     static ImGuizmoManager *instance;
@@ -53,14 +53,13 @@ class ImGuizmoManager {
 
     Matrix4x4 CreateLocalMatrix(WorldTransform *transform);
 
-    void ApplyLocalMatrix(const Matrix4x4 &matrix, WorldTransform *transform);
-
     /// <summary>現在選択されているWorldTransformを取得</summary>
     BaseObject *GetSelectedTarget();
 
     void DeleteTarget() { transformMap.clear(); }
 
   private:
+    void ApplyLocalMatrix(const Matrix4x4 &matrix, WorldTransform *transform);
     void ConvertMatrix4x4ToFloat16(const Matrix4x4 &matrix, float *outMatrix);
     void ConvertFloat16ToMatrix4x4(const float *inMatrix, Matrix4x4 &outMatrix);
     void DecomposeMatrix(WorldTransform *transform);

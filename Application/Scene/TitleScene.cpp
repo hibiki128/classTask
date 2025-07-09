@@ -42,6 +42,8 @@ void TitleScene::Update() {
 void TitleScene::Draw() {
     /// -------描画処理開始-------
 
+    SkyBox::GetInstance()->Draw(vp_);
+
     BaseObjectManager::GetInstance()->Draw(vp_);
 
     /// Spriteの描画準備
@@ -85,12 +87,4 @@ void TitleScene::CameraUpdate() {
 
 void TitleScene::ChangeScene() {
 
-#ifdef _DEBUG
-
-#endif // _DEBUG
-#ifndef _DEBUG
-    if (input_->TriggerKey(DIK_SPACE)) {
-        sceneManager_->NextSceneReservation("GAME");
-    }
-#endif // !_DEBUG
 }

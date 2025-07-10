@@ -12,18 +12,20 @@ void TitleScene::Initialize() {
     debugCamera_ = std::make_unique<DebugCamera>();
     debugCamera_->Initialize(&vp_);
 
+    player_ = std::make_unique<Player>();
+    player_->Init("Player");
+
     obj_ = std::make_unique<BaseObject>();
     obj_->Init("test");
     obj_->CreateModel("animation/walk.gltf");
-    
-    childObj_ = std::make_unique<BaseObject>();
-    childObj_->Init("child");
-    childObj_->CreateModel("debug/suzannu.obj");
-    childObj_->SetParent(obj_.get());
-    childObj_->SetTexture("debug/white1x1.png", 0);
 
+    followCamera_ = std::make_unique<FollowCamera>();
+    followCamera_->Init();
+    followCamera_->SetTarget(player_->GetWorldTransform());
+
+    BaseObjectManager::GetInstance()->AddObject(std::move(player_));
     BaseObjectManager::GetInstance()->AddObject(std::move(obj_));
-    BaseObjectManager::GetInstance()->AddObject(std::move(childObj_));
+
 }
 
 void TitleScene::Finalize() {
@@ -31,7 +33,6 @@ void TitleScene::Finalize() {
 }
 
 void TitleScene::Update() {
-
     // カメラ更新
     CameraUpdate();
 
@@ -41,8 +42,6 @@ void TitleScene::Update() {
 
 void TitleScene::Draw() {
     /// -------描画処理開始-------
-
-    SkyBox::GetInstance()->Draw(vp_);
 
     BaseObjectManager::GetInstance()->Draw(vp_);
 
@@ -81,10 +80,12 @@ void TitleScene::CameraUpdate() {
     if (debugCamera_->GetActive()) {
         debugCamera_->Update();
     } else {
-        vp_.UpdateMatrix();
+        followCamera_->Update();
+        vp_.matWorld_ = followCamera_->GetViewProjection().matWorld_;
+        vp_.matView_ = followCamera_->GetViewProjection().matView_;
+        vp_.matProjection_ = followCamera_->GetViewProjection().matProjection_;
     }
 }
 
 void TitleScene::ChangeScene() {
-
 }

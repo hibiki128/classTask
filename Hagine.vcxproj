@@ -115,6 +115,7 @@ copy "$(WindowsSdkDIr)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     <ClCompile Include="Application\Utility\HitStop\HitStop.cpp" />
     <ClCompile Include="Application\Utility\MotionEditor\MotionEditor.cpp" />
     <ClCompile Include="Application\Utility\Shake\Shake.cpp" />
+    <ClCompile Include="Engine\3d\Camera\FollowCamera\FollowCamera.cpp" />
     <ClCompile Include="Engine\3d\Object\Base\BaseObject.cpp" />
     <ClCompile Include="Engine\3d\Transform\ObjColor.cpp" />
     <ClCompile Include="Engine\Math\Easing.cpp" />
@@ -184,6 +185,7 @@ copy "$(WindowsSdkDIr)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     <ClCompile Include="Engine\3d\Animation\Skin.cpp" />
     <ClCompile Include="Engine\Utility\ShowFolder\ShowFolder.cpp" />
     <ClCompile Include="Engine\3d\SkyBox\SkyBox.cpp" />
+    <ClCompile Include="Application\Object\Player\Player.cpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include=".claudiaideconfig" />
@@ -231,6 +233,7 @@ copy "$(WindowsSdkDIr)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     <ClInclude Include="Application\Utility\HitStop\HitStop.h" />
     <ClInclude Include="Application\Utility\MotionEditor\MotionEditor.h" />
     <ClInclude Include="Application\Utility\Shake\Shake.h" />
+    <ClInclude Include="Engine\3d\Camera\FollowCamera\FollowCamera.h" />
     <ClInclude Include="Engine\3d\Object\Base\BaseObject.h" />
     <ClInclude Include="Engine\3d\Transform\ObjColor.h" />
     <ClInclude Include="Engine\Math\Easing.h" />
@@ -307,6 +310,7 @@ copy "$(WindowsSdkDIr)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     <ClInclude Include="Engine\3d\Animation\Skin.h" />
     <ClInclude Include="Engine\Utility\ShowFolder\ShowFolder.h" />
     <ClInclude Include="Engine\3d\SkyBox\SkyBox.h" />
+    <ClInclude Include="Application\Object\Player\Player.h" />
     <ClInclude Include="resource.h" />
   </ItemGroup>
   <ItemGroup>

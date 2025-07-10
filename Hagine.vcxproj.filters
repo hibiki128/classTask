@@ -404,6 +404,12 @@
     <ClCompile Include="Application\Utility\HitStop\HitStop.cpp">
       <Filter>ソースファイル</Filter>
     </ClCompile>
+    <ClCompile Include="Engine\3d\Camera\FollowCamera\FollowCamera.cpp">
+      <Filter>ソースファイル</Filter>
+    </ClCompile>
+    <ClCompile Include="Application\Object\Player\Player.cpp">
+      <Filter>ソースファイル</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="resources\shaders\Particle\Particle.hlsli">
@@ -699,6 +705,8 @@
     <ClInclude Include="Application\Utility\Shake\Shake.h" />
     <ClInclude Include="Application\Utility\MotionEditor\MotionEditor.h" />
     <ClInclude Include="Application\Utility\HitStop\HitStop.h" />
+    <ClInclude Include="Engine\3d\Camera\FollowCamera\FollowCamera.h" />
+    <ClInclude Include="Application\Object\Player\Player.h" />
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="resources\shaders\Particle\Particle.PS.hlsl">

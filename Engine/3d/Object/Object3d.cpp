@@ -38,7 +38,7 @@ void Object3d::CreateModel(const std::string &filePath) {
         model->SetAnimator(currentModelAnimation_->GetAnimator());
         model->SetBone(currentModelAnimation_->GetBone());
         model->SetSkin(currentModelAnimation_->GetSkin());
-        //AddAnimation(modelFilePath_);
+        // AddAnimation(modelFilePath_);
     }
 }
 
@@ -73,7 +73,7 @@ void Object3d::Update(const WorldTransform &worldTransform, const ViewProjection
     }
 }
 
-void Object3d::Draw(const WorldTransform &worldTransform, const ViewProjection &viewProjection, bool reflect, ObjColor *color, bool lighting) {
+void Object3d::Draw(const WorldTransform &worldTransform, const ViewProjection &viewProjection, bool reflect, ObjColor *color, bool lighting, bool modelDraw) {
     objectCommon_->SetBlendMode(blendMode_);
     Update(worldTransform, viewProjection);
 
@@ -96,9 +96,11 @@ void Object3d::Draw(const WorldTransform &worldTransform, const ViewProjection &
     }
 
     // モデル描画
-    if (model) {
-        Vector4 drawColor = color ? color->GetColor() : Vector4{1.0f, 1.0f, 1.0f, 1.0f};
-        model->Draw(drawColor, lighting, reflect);
+    if (modelDraw) {
+        if (model) {
+            Vector4 drawColor = color ? color->GetColor() : Vector4{1.0f, 1.0f, 1.0f, 1.0f};
+            model->Draw(drawColor, lighting, reflect);
+        }
     }
 }
 
@@ -129,7 +131,6 @@ void Object3d::AnimationUpdate(bool roop) {
         }
     }
 }
-
 
 bool Object3d::IsAnimationBlending() const {
     if (currentModelAnimation_ && currentModelAnimation_->GetAnimator()) {
@@ -326,6 +327,8 @@ void Object3d::DrawSkeleton(const WorldTransform &worldTransform, const ViewProj
         worldTransform.scale_,
         worldTransform.rotation_,
         worldTransform.translation_);
+    float jointRadius;
+    jointRadius = 0.03f * worldTransform.scale_.x;
     if (worldTransform.parent_) {
         worldMatrix *= worldTransform.parent_->matWorld_;
     }
@@ -336,7 +339,6 @@ void Object3d::DrawSkeleton(const WorldTransform &worldTransform, const ViewProj
         Vector3 jointPosition = ExtractTranslation(jointWorldMat);
 
         Vector4 jointColor = {0.8f, 0.2f, 0.2f, 1.0f};
-        float jointRadius = 0.03f;
         DrawLine3D::GetInstance()->DrawSphere(jointPosition, jointColor, jointRadius, 8);
 
         if (!joint.parent.has_value()) {

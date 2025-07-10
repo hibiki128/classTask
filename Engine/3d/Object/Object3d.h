@@ -100,7 +100,7 @@ class Object3d {
     /// <summary>
     /// 描画
     /// </summary>
-    void Draw(const WorldTransform &worldTransform, const ViewProjection &viewProjection, bool reflect, ObjColor *color = nullptr, bool Lighting = true);
+    void Draw(const WorldTransform &worldTransform, const ViewProjection &viewProjection, bool reflect, ObjColor *color = nullptr, bool Lighting = true, bool modelDraw = true);
 
     /// <summary>
     /// スケルトン描画

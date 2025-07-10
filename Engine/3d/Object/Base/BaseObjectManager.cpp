@@ -71,6 +71,7 @@ void BaseObjectManager::DrawImGui() {
             SaveAll();                         // 実際の保存処理
             SaveAllParentChildRelationships(); // 親子関係も保存
             ImGui::CloseCurrentPopup();        // モーダルを閉じる
+            sceneName_.clear();                // 入力欄をクリア
         }
 
         ImGui::SameLine();
@@ -99,9 +100,10 @@ void BaseObjectManager::DrawImGui() {
         // 横並びに「保存」ボタンと「キャンセル」ボタン
         if (ImGui::Button("読み込み", ImVec2(120, 0))) {
             sceneName_ = sceneNameBuffer;      // 入力内容を保存
-            LoadAll();                         // 実際の保存処理
+            LoadAll(sceneName_);               // 実際の保存処理
             LoadAllParentChildRelationships(); // 親子関係も読み込み
             ImGui::CloseCurrentPopup();        // モーダルを閉じる
+            sceneName_.clear();                // 読み込み後はシーン名をクリア
         }
 
         ImGui::SameLine();
@@ -220,9 +222,9 @@ void BaseObjectManager::SaveAll() {
     }
 }
 
-void BaseObjectManager::LoadAll() {
+void BaseObjectManager::LoadAll(std::string sceneName) {
     // シーンデータのフォルダパスを構築
-    std::string sceneDataPath = "Resources/jsons/SceneData/" + sceneName_ + "/ObjectDatas";
+    std::string sceneDataPath = "Resources/jsons/SceneData/" + sceneName + "/ObjectDatas";
 
     // フォルダが存在するかチェック
     if (!std::filesystem::exists(sceneDataPath)) {
@@ -250,7 +252,7 @@ void BaseObjectManager::LoadAll() {
         std::unique_ptr<BaseObject> newObject = std::make_unique<BaseObject>();
 
         // フォルダパスを設定
-        newObject->SetFolderPath("SceneData/" + sceneName_ + "/ObjectDatas");
+        newObject->SetFolderPath("SceneData/" + sceneName + "/ObjectDatas");
 
         // オブジェクト名でInit
         newObject->Init(objectName);
@@ -300,8 +302,6 @@ BaseObject *BaseObjectManager::GetObjectByName(const std::string &name) {
     }
     return nullptr;
 }
-
-// BaseObjectManager.cpp に以下のメソッドを実装
 
 void BaseObjectManager::ShowParentChildHierarchy() {
 #ifdef _DEBUG

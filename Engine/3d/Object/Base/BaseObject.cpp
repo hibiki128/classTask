@@ -44,10 +44,8 @@ void BaseObject::Draw(const ViewProjection &viewProjection, Vector3 offSet) {
         obj3d_->DrawSkeleton(*transform_, viewProjection);
     }
     if (!isWireframe_) {
-        if (isModelDraw_) {
             // オブジェクトの描画
-            obj3d_->Draw(*transform_, viewProjection, reflect_, &objColor_, isLighting_);
-        }
+            obj3d_->Draw(*transform_, viewProjection, reflect_, &objColor_, isLighting_,isModelDraw_);
     } else {
         obj3d_->DrawWireframe(*transform_, viewProjection, isRainbow_);
     }
@@ -287,6 +285,8 @@ void BaseObject::SaveToJson() {
     ObjectDatas_->Save<Vector3>("scale", transform_->scale_);
     ObjectDatas_->Save<bool>("Lighting", isLighting_);
     ObjectDatas_->Save<PrimitiveType>("PrimitiveType", type_);
+    ObjectDatas_->Save<bool>("skeletonDraw", skeletonDraw_);
+    ObjectDatas_->Save<bool>("isModelDraw", isModelDraw_);
 
     // カラーとライティング設定も保存
     Vector4 color = objColor_.GetColor();
@@ -308,6 +308,8 @@ void BaseObject::LoadFromJson() {
     transform_->scale_ = ObjectDatas_->Load<Vector3>("scale", {1.0f, 1.0f, 1.0f});
     isLighting_ = ObjectDatas_->Load<bool>("Lighting", true);
     type_ = ObjectDatas_->Load<PrimitiveType>("PrimitiveType", PrimitiveType::kCount);
+    skeletonDraw_ = ObjectDatas_->Load<bool>("skeletonDraw", false);
+    isModelDraw_ = ObjectDatas_->Load<bool>("isModelDraw", true);
 
     // モデルパスが未設定でプリミティブでなければデフォルトモデルを使用
     if (modelPath_.empty() && !isPrimitive_) {

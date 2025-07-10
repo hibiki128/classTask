@@ -9,6 +9,7 @@ void TitleScene::Initialize() {
     vp_.Initialize();
     vp_.translation_ = {0.0f, 0.0f, -30.0f};
 
+    BaseObjectManager::GetInstance()->LoadAll("CG4");
     debugCamera_ = std::make_unique<DebugCamera>();
     debugCamera_->Initialize(&vp_);
 
@@ -23,9 +24,10 @@ void TitleScene::Initialize() {
     followCamera_->Init();
     followCamera_->SetTarget(player_->GetWorldTransform());
 
+    player_->SetCamera(followCamera_.get());
+
     BaseObjectManager::GetInstance()->AddObject(std::move(player_));
     BaseObjectManager::GetInstance()->AddObject(std::move(obj_));
-
 }
 
 void TitleScene::Finalize() {

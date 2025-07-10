@@ -4,14 +4,15 @@
     "blendMode": 0,
     "childrenNames": [],
     "isLighting": true,
-    "modelName": "animation/BrainStem.gltf",
+    "isModelDraw": true,
+    "modelName": "debug/SkyDome.obj",
     "objectColor": {
         "w": 1.0,
         "x": 1.0,
         "y": 1.0,
         "z": 1.0
     },
-    "objectName": "test",
+    "objectName": "skydome",
     "parentName": "",
     "rotation": {
         "x": 0.0,
@@ -19,14 +20,15 @@
         "z": 0.0
     },
     "scale": {
-        "x": 20.0,
-        "y": 20.0,
-        "z": 20.0
+        "x": 100.0,
+        "y": 100.0,
+        "z": 100.0
     },
-    "textureName": "debug/white1x1.png",
+    "skeletonDraw": false,
+    "textureName": "debug/Fine_Basin.jpg",
     "translation": {
         "x": 0.0,
         "y": 0.0,
-        "z": 100.0
+        "z": 64.2290267944336
     }
 }

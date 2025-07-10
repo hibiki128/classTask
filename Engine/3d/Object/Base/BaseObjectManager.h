@@ -32,7 +32,7 @@ class BaseObjectManager {
 
     void SaveAll();
 
-    void LoadAll();
+    void LoadAll(std::string sceneName);
 
     void SetSceneName(std::string sceneName);
 

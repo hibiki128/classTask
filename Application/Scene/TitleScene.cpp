@@ -17,7 +17,7 @@ void TitleScene::Initialize() {
 
     obj_ = std::make_unique<BaseObject>();
     obj_->Init("test");
-    obj_->CreateModel("animation/walk.gltf");
+    obj_->CreateModel("animation/BrainStem.gltf");
 
     followCamera_ = std::make_unique<FollowCamera>();
     followCamera_->Init();

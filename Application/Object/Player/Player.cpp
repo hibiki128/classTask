@@ -4,6 +4,7 @@
 void Player::Init(const std::string objName) {
     BaseObject::Init(objName);
     BaseObject::CreateModel("animation/walk.gltf");
+    BaseObject::GetLoop() = true;
 }
 
 void Player::Update() {

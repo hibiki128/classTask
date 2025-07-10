@@ -7,8 +7,8 @@ void FollowCamera::Init() {
 	viewProjection_.Initialize();
 	worldTransform_.Initialize();
 	yaw_ = 0.0f; // 水平回転角度を初期化
-	distanceFromTarget_ = -25.0f; // ターゲットからの距離を初期化
-	heightOffset_ = 3.0f; // ターゲットの上方オフセット
+	distanceFromTarget_ = -7.0f; // ターゲットからの距離を初期化
+	heightOffset_ = 1.5f; // ターゲットの上方オフセット
 }
 
 void FollowCamera::Update() {
@@ -48,10 +48,10 @@ void FollowCamera::imgui() {
 }
 
 void FollowCamera::Move() {
-	//if (Input::GetInstance()->PushKey(DIK_LEFT)) {
-	//	yaw_ -= 0.04f; // 左回転
-	//}
-	//if (Input::GetInstance()->PushKey(DIK_RIGHT)) {
-	//	yaw_ += 0.04f; // 右回転
-	//}
+	if (Input::GetInstance()->PushKey(DIK_LEFT)) {
+		yaw_ -= 0.04f; // 左回転
+	}
+	if (Input::GetInstance()->PushKey(DIK_RIGHT)) {
+		yaw_ += 0.04f; // 右回転
+	}
 }

@@ -51,5 +51,6 @@ class TitleScene : public BaseScene {
     ViewProjection vp_;
     std::unique_ptr<DebugCamera> debugCamera_;
     std::unique_ptr<BaseObject> obj_;
+    BaseObject* obj_ptr;
     std::unique_ptr<BaseObject> childObj_;
 };

@@ -1,4 +1,5 @@
 #pragma once
+#include "Camera/ViewProjection/ViewProjection.h"
 #include "Object/Object3dCommon.h"
 #include "animation/ModelAnimation.h"
 #include "light/LightGroup.h"
@@ -8,10 +9,9 @@
 #include "type/Vector3.h"
 #include "type/Vector4.h"
 #include "vector"
-#include <Model/Model.h>
 #include <Graphics/PipeLine/PipeLineManager.h>
+#include <Model/Model.h>
 #include <Transform/ObjColor.h>
-#include"Camera/ViewProjection/ViewProjection.h"
 
 class ModelCommon;
 class Object3d {
@@ -50,10 +50,13 @@ class Object3d {
     Vector3 size = {1.0f, 1.0f, 1.0f};
     bool HaveAnimation;
     bool isPrimitive_ = false;
+    bool isAnimationSwitchPending_ = false;
+    std::string nextAnimationFileName_;
 
     std::string modelFilePath_;
     std::unique_ptr<Object3dCommon> objectCommon_;
     BlendMode blendMode_ = BlendMode::kNone;
+
   public: // メンバ関数
     void Initialize();
 
@@ -75,24 +78,29 @@ class Object3d {
     void AnimationUpdate(bool roop);
 
     /// <summary>
+    /// 補間状態を取得
+    /// </summary>
+    bool IsAnimationBlending() const;
+
+    /// <summary>
+    /// 即座にアニメーション切り替え（補間なし、デバッグ用）
+    /// </summary>
+    void SetAnimationImmediate(const std::string &fileName);
+
+    /// <summary>
     /// アニメーションの有無
     /// </summary>
     /// <param name="anime"></param>
     void SetStopAnimation(bool anime) { currentModelAnimation_->SetIsAnimation(anime); }
 
     /// <summary>
-    /// アニメーションのセット
+    /// アニメーション切り替え（補間付き）
     /// </summary>
-    /// <param name="fileName"></param>
-    void SetAnimation(const std::string &fileName);
+    /// <param name="fileName">切り替え先のアニメーションファイル名</param>
+    /// <param name="blendDuration">補間時間（秒）</param>
+    void SetAnimation(const std::string &fileName, float blendDuration = 0.2f);
 
-    /// <summary>
-    /// アニメーション追加
-    /// </summary>
-    /// <param name="fileName"></param>
-    void AddAnimation(const std::string &fileName);
-
-    void DrawWireframe(const WorldTransform &worldTransform, const ViewProjection &viewProjection,bool isRainbow = false);
+    void DrawWireframe(const WorldTransform &worldTransform, const ViewProjection &viewProjection, bool isRainbow = false);
 
     /// <summary>
     /// 描画
@@ -137,18 +145,23 @@ class Object3d {
     void SetTexture(const std::string &filePath, uint32_t materialIndex) {
         model->SetTexture(filePath, materialIndex);
     }
-    
+
     void SetEnvironmentCoefficients(float value) {
         model->SetEnvironmentCoefficients(value);
     }
 
-
   private: // メンバ関数
+    /// <summary>
+    /// アニメーション追加
+    /// </summary>
+    /// <param name="fileName"></param>
+    void AddAnimation(const std::string &fileName);
+
     /// <summary>
     /// 座標変換行列データ作成
     /// </summary>
     void CreateTransformationMatrix();
-    
+
     void DrawBoneArmature(const Vector3 &parentPos, const Vector3 &childPos);
 
     void DrawArmatureShape(const Vector3 &startPos, const Vector3 &endPos, float baseWidth, float tipWidth, const Vector4 &color);

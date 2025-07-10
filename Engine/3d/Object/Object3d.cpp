@@ -1,5 +1,6 @@
 #define NOMINMAX
 #include "Object3d.h"
+#include "Debug/Log/Logger.h"
 #include "DirectXCommon.h"
 #include "Graphics/Model/ModelManager.h"
 #include "Object3dCommon.h"
@@ -9,7 +10,6 @@
 #include <line/DrawLine3D.h>
 #include <myMath.h>
 #include <type/Matrix4x4.h>
-#include"Debug/Log/Logger.h"
 
 void Object3d::Initialize() {
     objectCommon_ = std::make_unique<Object3dCommon>();
@@ -38,6 +38,7 @@ void Object3d::CreateModel(const std::string &filePath) {
         model->SetAnimator(currentModelAnimation_->GetAnimator());
         model->SetBone(currentModelAnimation_->GetBone());
         model->SetSkin(currentModelAnimation_->GetSkin());
+        //AddAnimation(modelFilePath_);
     }
 }
 
@@ -104,36 +105,74 @@ void Object3d::Draw(const WorldTransform &worldTransform, const ViewProjection &
 void Object3d::AnimationUpdate(bool roop) {
     if (currentModelAnimation_) {
         currentModelAnimation_->Update(roop);
+        // 補間完了後の切り替え処理
+        if (isAnimationSwitchPending_ && !currentModelAnimation_->GetAnimator()->IsBlending()) {
+           
+            Animator *currentAnimator = currentModelAnimation_->GetAnimator();
+
+            if (currentAnimator->GetCurrentFilename() != nextAnimationFileName_) {
+               currentAnimator->UpdateCurrentFileInfo("resources/models/", nextAnimationFileName_);
+            }
+
+            modelFilePath_ = nextAnimationFileName_;
+            isAnimationSwitchPending_ = false;
+            nextAnimationFileName_.clear();
+        }
     }
 }
 
-void Object3d::SetAnimation(const std::string &fileName) {
-    // すでにセット済みのアニメーションなら何もしない
+
+bool Object3d::IsAnimationBlending() const {
+    if (currentModelAnimation_ && currentModelAnimation_->GetAnimator()) {
+        return currentModelAnimation_->GetAnimator()->IsBlending();
+    }
+    return false;
+}
+
+void Object3d::SetAnimationImmediate(const std::string &fileName) {
     if (fileName == modelFilePath_) {
         return;
     }
 
-    // modelAnimations_ 内に fileName に対応するアニメーションがあるか検索
     auto it = modelAnimations_.find(fileName);
-
-    // アニメーションが見つからなかった場合、強制的にプログラムを停止
     assert(it != modelAnimations_.end() && "Error: Animation file not found in modelAnimations_!");
 
-    // 見つかったアニメーションを shared_ptr に格納
     currentModelAnimation_ = it->second;
+    currentModelAnimation_->GetAnimator()->SetAnimationTime(0.0f);
+    currentModelAnimation_->GetAnimator()->SetIsAnimation(true);
 
-    // Animator などを model にセット
     model->SetAnimator(currentModelAnimation_->GetAnimator());
     model->SetBone(currentModelAnimation_->GetBone());
     model->SetSkin(currentModelAnimation_->GetSkin());
-    currentModelAnimation_->GetAnimator()->SetIsAnimation(true);
-    currentModelAnimation_->GetAnimator()->SetAnimationTime(0.0f);
 
-    // ファイルパスを更新
     modelFilePath_ = fileName;
 }
 
+void Object3d::SetAnimation(const std::string &fileName, float blendDuration) {
+    if (fileName == modelFilePath_ && !isAnimationSwitchPending_) {
+        return;
+    }
+
+    // 切り替え先アニメーションが未登録なら追加
+    AddAnimation(fileName);
+
+    // 切り替え先のModelAnimation取得
+    auto it = modelAnimations_.find(fileName);
+    assert(it != modelAnimations_.end() && "Error: Animation not found");
+
+    Animator *currentAnimator = currentModelAnimation_->GetAnimator();
+
+    // 補間中でも新しいアニメーションに切り替える（シンプルな実装）
+    currentAnimator->BlendToAnimation("resources/models/", fileName, blendDuration);
+    nextAnimationFileName_ = fileName;
+    isAnimationSwitchPending_ = true;
+}
+
 void Object3d::AddAnimation(const std::string &fileName) {
+    if (modelAnimations_.count(fileName) > 0) {
+        return;
+    }
+
     auto animation = std::make_unique<ModelAnimation>();
 
     animation->SetModelData(model->GetModelData());
@@ -143,7 +182,7 @@ void Object3d::AddAnimation(const std::string &fileName) {
     modelAnimations_.emplace(fileName, std::move(animation));
 }
 
-void Object3d::DrawWireframe(const WorldTransform &worldTransform, const ViewProjection &viewProjection,bool isRainbow) {
+void Object3d::DrawWireframe(const WorldTransform &worldTransform, const ViewProjection &viewProjection, bool isRainbow) {
     // worldTransformを更新
     Update(worldTransform, viewProjection);
     if (!model) {

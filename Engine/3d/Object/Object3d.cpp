@@ -105,18 +105,27 @@ void Object3d::Draw(const WorldTransform &worldTransform, const ViewProjection &
 void Object3d::AnimationUpdate(bool roop) {
     if (currentModelAnimation_) {
         currentModelAnimation_->Update(roop);
+
         // 補間完了後の切り替え処理
-        if (isAnimationSwitchPending_ && !currentModelAnimation_->GetAnimator()->IsBlending()) {
-           
+        if (isAnimationSwitchPending_) {
             Animator *currentAnimator = currentModelAnimation_->GetAnimator();
 
-            if (currentAnimator->GetCurrentFilename() != nextAnimationFileName_) {
-               currentAnimator->UpdateCurrentFileInfo("resources/models/", nextAnimationFileName_);
-            }
+            // 補間が完了しているかチェック
+            if (!currentAnimator->IsBlending()) {
+                // ファイル名の比較（パスを除いた部分のみ比較）
+                std::string currentFile = currentAnimator->GetCurrentFilename();
+                std::string nextFile = nextAnimationFileName_;
 
-            modelFilePath_ = nextAnimationFileName_;
-            isAnimationSwitchPending_ = false;
-            nextAnimationFileName_.clear();
+                // ファイル名が異なる場合のみ更新
+                if (currentFile != nextFile) {
+                    currentAnimator->UpdateCurrentFileInfo("resources/models/", nextFile);
+                    modelFilePath_ = nextFile;
+                }
+
+                // 切り替え完了フラグをリセット
+                isAnimationSwitchPending_ = false;
+                nextAnimationFileName_.clear();
+            }
         }
     }
 }
@@ -148,24 +157,35 @@ void Object3d::SetAnimationImmediate(const std::string &fileName) {
     modelFilePath_ = fileName;
 }
 
-void Object3d::SetAnimation(const std::string &fileName, float blendDuration) {
-    if (fileName == modelFilePath_ && !isAnimationSwitchPending_) {
+void Object3d::SetAnimation(const std::string &animationFileName) {
+    if (!currentModelAnimation_) {
         return;
     }
 
-    // 切り替え先アニメーションが未登録なら追加
-    AddAnimation(fileName);
+    Animator *animator = currentModelAnimation_->GetAnimator();
+    if (!animator) {
+        return;
+    }
 
-    // 切り替え先のModelAnimation取得
-    auto it = modelAnimations_.find(fileName);
-    assert(it != modelAnimations_.end() && "Error: Animation not found");
+    // 現在のファイル名と比較
+    std::string currentFile = animator->GetCurrentFilename();
 
-    Animator *currentAnimator = currentModelAnimation_->GetAnimator();
+    // 同じアニメーションの場合は何もしない
+    if (currentFile == animationFileName && !isAnimationSwitchPending_) {
+        return;
+    }
 
-    // 補間中でも新しいアニメーションに切り替える（シンプルな実装）
-    currentAnimator->BlendToAnimation("resources/models/", fileName, blendDuration);
-    nextAnimationFileName_ = fileName;
+    // 既に同じアニメーションへの切り替えが待機中の場合は何もしない
+    if (isAnimationSwitchPending_ && nextAnimationFileName_ == animationFileName) {
+        return;
+    }
+
+    // 新しいアニメーションへの補間開始
+    animator->BlendToAnimation("resources/models/", animationFileName, 0.5f); // 0.5秒で補間
+
+    // 切り替え待機状態にする
     isAnimationSwitchPending_ = true;
+    nextAnimationFileName_ = animationFileName;
 }
 
 void Object3d::AddAnimation(const std::string &fileName) {

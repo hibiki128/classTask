@@ -48,6 +48,7 @@ void Animator::UpdateBlend(bool loop) {
         directorypath_ = blendState_.toDirectoryPath;
         filename_ = blendState_.toFilename;
 
+        // アニメーション状態をリセット
         isAnimation_ = true;
         isFinish_ = false;
 
@@ -57,6 +58,11 @@ void Animator::UpdateBlend(bool loop) {
             animationTime = std::fmod(animationTime, currentAnimation_.duration);
         } else {
             animationTime = std::min(animationTime, currentAnimation_.duration);
+            // ループしない場合、終了チェック
+            if (animationTime >= currentAnimation_.duration) {
+                isFinish_ = true;
+                isAnimation_ = false;
+            }
         }
 
         return;
@@ -83,7 +89,6 @@ void Animator::UpdateBlend(bool loop) {
 
     animationTime = blendState_.toAnimationTime;
 }
-
 void Animator::UpdateSingle(bool loop) {
     if (loop) {
         // ループアニメーションの場合、アニメーション時間を進めて、超えたら最初に戻る

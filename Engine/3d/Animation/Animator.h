@@ -93,6 +93,16 @@ class Animator {
     /// </summary>
     static Quaternion CalculateValue(const std::vector<KeyframeQuaternion> &keyframes, float time);
 
+    // アニメーションが終了したかどうかを返す
+    bool IsFinished() const {
+        return isFinish_;
+    }
+
+    // アニメーションが再生中かどうかを返す
+    bool IsPlaying() const {
+        return isAnimation_;
+    }
+
   private:
     /// <summary>
     /// アニメーションファイル読み込み

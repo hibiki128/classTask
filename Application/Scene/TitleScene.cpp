@@ -15,7 +15,7 @@ void TitleScene::Initialize() {
     obj_ = std::make_unique<BaseObject>();
     obj_->Init("test");
     obj_->CreateModel("animation/walk.gltf");
-    
+
     obj_ptr = obj_.get();
 
     childObj_ = std::make_unique<BaseObject>();
@@ -33,6 +33,12 @@ void TitleScene::Finalize() {
 }
 
 void TitleScene::Update() {
+
+    if (input_->PushKey(DIK_LSHIFT)) {
+        obj_ptr->SetAnima("animation/walk.gltf");
+    } else {
+        obj_ptr->SetAnima("animation/sneakWalk.gltf");
+    }
 
     // カメラ更新
     CameraUpdate();
@@ -69,12 +75,6 @@ void TitleScene::DrawForOffScreen() {
 
 void TitleScene::AddSceneSetting() {
     debugCamera_->imgui();
-    if (ImGui::Button("歩く")) {
-        obj_ptr->SetAnima("animation/walk.gltf");
-    }
-    if (ImGui::Button("スニーク")) {
-        obj_ptr->SetAnima("animation/sneakWalk.gltf");
-    }
 }
 
 void TitleScene::AddObjectSetting() {
@@ -92,5 +92,4 @@ void TitleScene::CameraUpdate() {
 }
 
 void TitleScene::ChangeScene() {
-
 }

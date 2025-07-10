@@ -87,18 +87,13 @@ class Object3d {
     /// </summary>
     void SetAnimationImmediate(const std::string &fileName);
 
+    void SetAnimation(const std::string &animationFileName);
+
     /// <summary>
     /// アニメーションの有無
     /// </summary>
     /// <param name="anime"></param>
     void SetStopAnimation(bool anime) { currentModelAnimation_->SetIsAnimation(anime); }
-
-    /// <summary>
-    /// アニメーション切り替え（補間付き）
-    /// </summary>
-    /// <param name="fileName">切り替え先のアニメーションファイル名</param>
-    /// <param name="blendDuration">補間時間（秒）</param>
-    void SetAnimation(const std::string &fileName, float blendDuration = 0.2f);
 
     void DrawWireframe(const WorldTransform &worldTransform, const ViewProjection &viewProjection, bool isRainbow = false);
 

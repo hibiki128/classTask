@@ -57,7 +57,7 @@ class ImGuizmoManager {
     BaseObject *GetSelectedTarget();
 
     void DeleteTarget() { transformMap.clear(); }
-
+    void DeleteSelectedObject();
   private:
     void ApplyLocalMatrix(const Matrix4x4 &matrix, WorldTransform *transform);
     void ConvertMatrix4x4ToFloat16(const Matrix4x4 &matrix, float *outMatrix);

@@ -3,6 +3,7 @@
 #include "ImGuizmoManager.h"
 #include "Input.h"
 #include <Transform/WorldTransform.h>
+#include <Object/Base/BaseObjectManager.h>
 
 ImGuizmoManager *ImGuizmoManager::instance = nullptr;
 
@@ -154,6 +155,23 @@ void ImGuizmoManager::Update(const ImVec2 &scenePosition, const ImVec2 &sceneSiz
         ImGui::Separator();
 
         targetTransform->ImGui();
+
+        ImGui::Spacing();
+        ImGui::Spacing();
+
+        // === 削除ボタン ===
+        ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.8f, 0.3f, 0.3f, 0.8f));
+        ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(1.0f, 0.4f, 0.4f, 1.0f));
+        ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(0.7f, 0.2f, 0.2f, 1.0f));
+
+        if (ImGui::Button("オブジェクトを削除", ImVec2(-1, 0))) {
+            DeleteSelectedObject();
+        }
+        if (ImGui::IsItemHovered()) {
+            ImGui::SetTooltip("選択中のオブジェクトを削除します");
+        }
+
+        ImGui::PopStyleColor(3);
     }
 
     ImGui::PopStyleColor(); // Header color
@@ -310,6 +328,29 @@ Matrix4x4 ImGuizmoManager::CreateLocalMatrix(WorldTransform *transform) {
     Matrix4x4 translateMatrix = MakeTranslateMatrix(transform->translation_);
 
     return (scaleMatrix * rotateMatrix) * translateMatrix;
+}
+
+void ImGuizmoManager::DeleteSelectedObject() {
+    if (selectedName.empty()) {
+        return; // 何も選択されていない場合は何もしない
+    }
+
+    // BaseObjectManagerから削除
+    BaseObjectManager::GetInstance()->RemoveObject(selectedName);
+
+    // ImGuizmoManagerの管理からも削除
+    auto it = transformMap.find(selectedName);
+    if (it != transformMap.end()) {
+        transformMap.erase(it);
+    }
+
+    // 選択をクリア
+    selectedName.clear();
+
+    // 他にオブジェクトがある場合は最初のものを選択
+    if (!transformMap.empty()) {
+        selectedName = transformMap.begin()->first;
+    }
 }
 
 // ローカル行列を適用

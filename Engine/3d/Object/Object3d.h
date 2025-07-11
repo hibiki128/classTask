@@ -121,6 +121,9 @@ class Object3d {
     std::string GetTextureFilePath(uint32_t materialIndex) const {
         return model->GetMaterial(materialIndex)->GetMaterialData().textureFilePath;
     }
+    ModelAnimation *GetCurrentModelAnimation() const {
+        return currentModelAnimation_.get();
+    }
 
     const bool &GetHaveAnimation() const { return HaveAnimation; }
     bool IsFinish() { return currentModelAnimation_->IsFinish(); }
@@ -157,7 +160,7 @@ class Object3d {
     /// </summary>
     void CreateTransformationMatrix();
 
-    void DrawBoneArmature(const Vector3 &parentPos, const Vector3 &childPos);
+    void DrawBoneArmature(const Vector3 &parentPos, const Vector3 &childPos, float scale);
 
     void DrawArmatureShape(const Vector3 &startPos, const Vector3 &endPos, float baseWidth, float tipWidth, const Vector4 &color);
 

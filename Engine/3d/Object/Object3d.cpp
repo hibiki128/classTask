@@ -327,8 +327,7 @@ void Object3d::DrawSkeleton(const WorldTransform &worldTransform, const ViewProj
         worldTransform.scale_,
         worldTransform.rotation_,
         worldTransform.translation_);
-    float jointRadius;
-    jointRadius = 0.03f * worldTransform.scale_.x;
+
     if (worldTransform.parent_) {
         worldMatrix *= worldTransform.parent_->matWorld_;
     }
@@ -337,6 +336,9 @@ void Object3d::DrawSkeleton(const WorldTransform &worldTransform, const ViewProj
         // ローカル座標 → ワールド座標に変換
         Matrix4x4 jointWorldMat = joint.skeletonSpaceMatrix * worldMatrix;
         Vector3 jointPosition = ExtractTranslation(jointWorldMat);
+
+        // Jointの大きさに応じて半径を決定
+        float jointRadius = 0.03f * worldTransform.scale_.x;
 
         Vector4 jointColor = {0.8f, 0.2f, 0.2f, 1.0f};
         DrawLine3D::GetInstance()->DrawSphere(jointPosition, jointColor, jointRadius, 8);
@@ -349,11 +351,12 @@ void Object3d::DrawSkeleton(const WorldTransform &worldTransform, const ViewProj
         Matrix4x4 parentWorldMat = parentJoint.skeletonSpaceMatrix * worldMatrix;
         Vector3 parentPosition = ExtractTranslation(parentWorldMat);
 
-        DrawBoneArmature(parentPosition, jointPosition);
+        // アーマチュアの描画
+        DrawBoneArmature(parentPosition, jointPosition, worldTransform.scale_.x);
     }
 }
 
-void Object3d::DrawBoneArmature(const Vector3 &parentPos, const Vector3 &childPos) {
+void Object3d::DrawBoneArmature(const Vector3 &parentPos, const Vector3 &childPos, float scale) {
     // ボーンの方向ベクトル
     Vector3 boneDirection = childPos - parentPos;
     float boneLength = boneDirection.Length();
@@ -361,16 +364,13 @@ void Object3d::DrawBoneArmature(const Vector3 &parentPos, const Vector3 &childPo
     if (boneLength < 0.001f)
         return; // 長さが短すぎる場合はスキップ
 
-    // 正規化された方向ベクトル
-    Vector3 normalizedDirection = boneDirection.Normalize();
-
-    // ボーンの太さ（長さに比例）
-    float baseWidth = boneLength * 0.1f; // 基部の太さ
-    float tipWidth = boneLength * 0.02f; // 先端の太さ
+    // ボーンの太さ（長さに応じてスケーリング）
+    float baseWidth = boneLength * 0.1f * scale; // 基部の太さ
+    float tipWidth = boneLength * 0.02f * scale; // 先端の太さ
 
     // 最小・最大の太さを制限
-    baseWidth = std::max(0.02f, std::min(baseWidth, 0.15f));
-    tipWidth = std::max(0.005f, std::min(tipWidth, 0.05f));
+    baseWidth = std::max(0.02f, std::min(baseWidth, 0.15f * scale / 5.0f));
+    tipWidth = std::max(0.005f, std::min(tipWidth, 0.05f * scale / 5.0f));
 
     // ボーンの色
     Vector4 boneColor = {0.2f, 0.6f, 1.0f, 1.0f}; // 青系の色

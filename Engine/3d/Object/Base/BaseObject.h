@@ -75,7 +75,8 @@ class BaseObject : public Collider {
 
     // 中心座標取得
     virtual Vector3 GetWorldPosition() const;
-    WorldTransform* GetWorldTransform() { return transform_.get(); }
+    WorldTransform *GetWorldTransform() { return transform_.get(); }
+    ModelAnimation *GetModelAnimation() { return obj3d_->GetCurrentModelAnimation(); }
 
     /// =================================================
     /// 親子付け
@@ -91,7 +92,7 @@ class BaseObject : public Collider {
 
     BaseObject *GetParent();
 
-    std::list<BaseObject*>* GetChildren();
+    std::list<BaseObject *> *GetChildren();
 
     BaseObject *GetChildByName(const std::string &name);
 
@@ -142,7 +143,7 @@ class BaseObject : public Collider {
     }
     void SetModel(const std::string &filePath) { obj3d_->SetModel(filePath); }
     void SetAnima(const std::string &filePath) { obj3d_->SetAnimation(filePath); }
-    //void AddAnimation(std::string filePath) { obj3d_->AddAnimation(filePath); }
+    // void AddAnimation(std::string filePath) { obj3d_->AddAnimation(filePath); }
     void SetBlendMode(BlendMode blendMode) { obj3d_->SetBlendMode(blendMode); }
     void SetReflect(bool reflect) { reflect_ = reflect; }
 

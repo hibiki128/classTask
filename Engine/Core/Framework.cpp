@@ -224,6 +224,7 @@ void Framework::Update() {
 }
 
 void Framework::LoadResource() {
+    particleEditor_->AddParticleEmitter("fire");
 }
 
 void Framework::PlaySounds() {

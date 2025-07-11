@@ -9,16 +9,12 @@ void TitleScene::Initialize() {
     vp_.Initialize();
     vp_.translation_ = {0.0f, 0.0f, -30.0f};
 
-    BaseObjectManager::GetInstance()->LoadAll("CG4");
+   // BaseObjectManager::GetInstance()->LoadAll("CG4");
     debugCamera_ = std::make_unique<DebugCamera>();
     debugCamera_->Initialize(&vp_);
 
     player_ = std::make_unique<Player>();
     player_->Init("Player");
-
-    obj_ = std::make_unique<BaseObject>();
-    obj_->Init("test");
-    obj_->CreateModel("animation/BrainStem.gltf");
 
     followCamera_ = std::make_unique<FollowCamera>();
     followCamera_->Init();
@@ -27,7 +23,6 @@ void TitleScene::Initialize() {
     player_->SetCamera(followCamera_.get());
 
     BaseObjectManager::GetInstance()->AddObject(std::move(player_));
-    BaseObjectManager::GetInstance()->AddObject(std::move(obj_));
 }
 
 void TitleScene::Finalize() {

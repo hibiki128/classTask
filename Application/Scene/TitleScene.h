@@ -53,5 +53,4 @@ class TitleScene : public BaseScene {
     std::unique_ptr<DebugCamera> debugCamera_;
     std::unique_ptr<Player> player_;
     std::unique_ptr<FollowCamera> followCamera_;
-    std::unique_ptr<BaseObject> obj_;
 };

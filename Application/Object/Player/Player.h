@@ -1,6 +1,7 @@
 #pragma once
 #include "Camera/FollowCamera/FollowCamera.h"
 #include "Object/Base/BaseObject.h"
+#include "Particle/ParticleEmitter.h"
 
 class Player : public BaseObject {
   public:
@@ -26,6 +27,8 @@ class Player : public BaseObject {
     bool IsInputDash();
 
   private:
+    std::unique_ptr<ParticleEmitter> particleEmitter_;
+
     FollowCamera *camera_ = nullptr;
 
     // 移動関連
@@ -38,7 +41,7 @@ class Player : public BaseObject {
 
     // ジャンプ関連
     bool isGrounded_ = true;
-    float jumpPower_ = 0.3f;
-    float gravity_ = 0.02f;
+    float jumpPower_ = 0.8f;
+    float gravity_ = 0.05f;
     float groundY_ = 0.0f; // 地面の高さ
 };

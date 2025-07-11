@@ -1,4 +1,5 @@
 #include "Player.h"
+#include "Particle/ParticleEditor.h"
 #include <Input.h>
 #include <cmath>
 
@@ -13,6 +14,8 @@ void Player::Init(const std::string objName) {
     isDashing_ = false;
     dashTimer_ = 0;
     groundY_ = 0.0f;
+
+    particleEmitter_ = ParticleEditor::GetInstance()->CreateEmitterFromTemplate("fire");
 }
 
 void Player::Update() {
@@ -20,6 +23,15 @@ void Player::Update() {
     Move();
     Jump();
     Dash();
+
+    auto handPos = obj3d_->GetCurrentModelAnimation()->GetBone()->GetJointWorldPosition("mixamorig:RightHand",transform_->matWorld_);
+    if (handPos.has_value()) {
+        Vector3 worldHandPos = handPos.value();
+        particleEmitter_->SetPosition(worldHandPos);
+    }
+    particleEmitter_->SetStartAcceX(-velocity_.x);
+    particleEmitter_->SetStartAcceZ(-velocity_.z);
+    particleEmitter_->Update();
 
     // 速度を位置に適用
     transform_->translation_.x += velocity_.x;
@@ -49,6 +61,7 @@ void Player::Update() {
 
 void Player::Draw(const ViewProjection &viewProjection, Vector3 offSet) {
     BaseObject::Draw(viewProjection, offSet);
+    particleEmitter_->Draw(viewProjection);
 }
 
 void Player::UpdateAnimation() {

@@ -13,7 +13,7 @@
 
 ImGuiManager *ImGuiManager::instance = nullptr;
 
-void ImGuiManager::Initialize(WinApp *winApp) {
+void ImGuiManager::Initialize(WinApp *winApp,ImGuizmoManager* imguizmoManager) {
 
     dxCommon_ = DirectXCommon::GetInstance();
     baseObjectManager_ = BaseObjectManager::GetInstance();
@@ -70,7 +70,7 @@ void ImGuiManager::Initialize(WinApp *winApp) {
         srvManager_->GetDescriptorHeap(),
         srvManager_->GetCPUDescriptorHandle(srvIndex),
         srvManager_->GetGPUDescriptorHandle(srvIndex));
-    imGuizmoManager_ = ImGuizmoManager::GetInstance();
+    imGuizmoManager_ = imguizmoManager;
 }
 
 void ImGuiManager::SetupTheme() {
@@ -247,7 +247,7 @@ void ImGuiManager::ShowMainMenu() {
             ImGui::Separator();
             if (ImGui::MenuItem(ICON_FA_DOOR_OPEN " 終了", "Alt+F4")) {
                 // アプリケーション終了処理
-                WinApp::GetInstance()->ProcessMessage(); // 終了メッセージ送信
+                WinApp::GetInstance()->ClosedWindow(); // 終了メッセージ送信
             }
             ImGui::EndMenu();
         }
@@ -269,7 +269,7 @@ void ImGuiManager::ShowMainMenu() {
             }
             ImGui::Separator();
             if (ImGui::MenuItem(ICON_FA_COG " 環境設定", "Ctrl+,")) {
-                // showSettingsWindow_ = true;
+                
             }
             ImGui::EndMenu();
         }

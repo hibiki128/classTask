@@ -15,7 +15,7 @@
 #include "Graphics/Texture/TextureManager.h"
 #include "Input.h"
 #include "Object/Base/BaseObjectManager.h"
-#include "Object/Object3dCommon.h"
+#include "Model/ModelCommon.h"
 #include "Particle/ParticleCommon.h"
 #include "Particle/ParticleEditor.h"
 #include "Particle/ParticleGroupManager.h"
@@ -92,6 +92,10 @@ class Framework {
 
     SpriteCommon *spriteCommon_ = nullptr;
     ParticleCommon *particleCommon_ = nullptr;
+    ModelCommon *modelCommon_ = nullptr;
+
+    LightGroup *lightGroup_ = nullptr;
+
     ParticleEditor *particleEditor_ = nullptr;
 
     PrimitiveModel *primitiveModel_ = nullptr;

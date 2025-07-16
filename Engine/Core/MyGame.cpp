@@ -26,14 +26,8 @@ void MyGame::Finalize() {
 void MyGame::Update() {
     Framework::Update();
     // -----ゲーム固有の処理-----
-    if (input_->TriggerKey(DIK_F11)) {
-        winApp_->ToggleFullScreen();
-    }
-
 #ifdef _DEBUG
-    if (input_->TriggerKey(DIK_F5)) {
-        imGuiManager_->GetIsShowMainUI() = !imGuiManager_->GetIsShowMainUI();
-    }
+
     imGuiManager_->Begin();
     imGuizmoManager_->BeginFrame();
     imGuizmoManager_->SetViewProjection(sceneManager_->GetBaseScene()->GetViewProjection());

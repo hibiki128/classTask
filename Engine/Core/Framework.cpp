@@ -46,17 +46,17 @@ void Framework::Initialize() {
     baseObjectManager_ = BaseObjectManager::GetInstance();
     ///---------------------------------
 
-    /// ---------ImGui---------
-#ifdef _DEBUG
-    imGuiManager_ = ImGuiManager::GetInstance();
-    imGuiManager_->Initialize(winApp_);
-    imGuiManager_->GetIsShowMainUI() = true;
-#endif // _DEBUG
-       /// -----------------------
-
     /// ---------ImGuizmo---------
 #ifdef _DEBUG
     imGuizmoManager_ = ImGuizmoManager::GetInstance();
+#endif // _DEBUG
+       /// -----------------------
+
+    /// ---------ImGui---------
+#ifdef _DEBUG
+    imGuiManager_ = ImGuiManager::GetInstance();
+    imGuiManager_->Initialize(winApp_,imGuizmoManager_);
+    imGuiManager_->GetIsShowMainUI() = true;
 #endif // _DEBUG
        /// -----------------------
 
@@ -76,14 +76,19 @@ void Framework::Initialize() {
     pipeLineManager_->Initialize(dxCommon_);
     ///-------------------------------------
 
-     ///-----------PipeLineManager-----------
+    ///-----------PipeLineManager-----------
     computePipeLineManager_ = ComputePipeLineManager::GetInstance();
     computePipeLineManager_->Initialize(dxCommon_);
     ///-------------------------------------
-  
+
     ///-----------TextureManager----------
     textureManager_ = TextureManager::GetInstance();
     textureManager_->Initialize(srvManager_);
+    ///-----------------------------------
+
+    ///-----------ModelCommon-------------
+    modelCommon_ = ModelCommon::GetInstance();
+    modelCommon_->Initialize();
     ///-----------------------------------
 
     ///-----------ModelManager------------
@@ -137,7 +142,10 @@ void Framework::Initialize() {
     skyBox_->Initialize("debug/rostock_laage_airport_4k.dds");
     ///--------------------
 
-    LightGroup::GetInstance()->Initialize();
+    ///--------LightGroup------------
+    lightGroup_ = LightGroup::GetInstance();
+    lightGroup_->Initialize();
+    ///------------------------------
 
     ///-------ParticleEditor-------
     particleEditor_ = ParticleEditor::GetInstance();
@@ -185,16 +193,18 @@ void Framework::Finalize() {
 
 #ifdef _DEBUG
     imGuiManager_->Finalize();
+    imGuizmoManager_->Finalize();
 #endif // _DEBUG
     baseObjectManager_->Finalize();
     line3d_->Finalize();
     skyBox_->Finalize();
     srvManager_->Finalize();
     audio_->Finalize();
-    LightGroup::GetInstance()->Finalize();
+    lightGroup_->Finalize();
     particleEditor_->Finalize();
     spriteCommon_->Finalize();
     particleCommon_->Finalize();
+    modelCommon_->Finalize();
     dxCommon_->Finalize();
     delete sceneFactory_;
 }
@@ -205,7 +215,7 @@ void Framework::Update() {
     Frame::Update();
 
     baseObjectManager_->Update();
-  
+
     sceneManager_->Update();
 
     collisionManager_->Update();

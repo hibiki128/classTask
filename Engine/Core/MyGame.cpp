@@ -5,6 +5,7 @@ void MyGame::Initialize() {
     Framework::Initialize();
     Framework::LoadResource();
     Framework::PlaySounds();
+    Framework::RegisterShortcutKey();
     // -----ゲーム固有の処理-----
 
     // 最初のシーンの生成

@@ -55,7 +55,7 @@ void Framework::Initialize() {
     /// ---------ImGui---------
 #ifdef _DEBUG
     imGuiManager_ = ImGuiManager::GetInstance();
-    imGuiManager_->Initialize(winApp_,imGuizmoManager_);
+    imGuiManager_->Initialize(winApp_, imGuizmoManager_);
     imGuiManager_->GetIsShowMainUI() = true;
 #endif // _DEBUG
        /// -----------------------
@@ -157,6 +157,11 @@ void Framework::Initialize() {
     particleGroupManager_->Initialize();
     ///---------------------------------
 
+    ///--------ShortcutManager------------
+    shortcutManager_ = ShortcutManager::GetInstance();
+    shortcutManager_->Initialize(input_);
+    ///-----------------------------------
+
     /// 時間の初期化
     Frame::Init();
 }
@@ -195,6 +200,7 @@ void Framework::Finalize() {
     imGuiManager_->Finalize();
     imGuizmoManager_->Finalize();
 #endif // _DEBUG
+    shortcutManager_->Finalize();
     baseObjectManager_->Finalize();
     line3d_->Finalize();
     skyBox_->Finalize();
@@ -207,6 +213,55 @@ void Framework::Finalize() {
     modelCommon_->Finalize();
     dxCommon_->Finalize();
     delete sceneFactory_;
+}
+
+void Framework::RegisterShortcutKey() {
+#ifdef _DEBUG
+    // フルスクリーン
+    shortcutManager_->RegisterShortcut("FullScreen", DIK_F11, [this]() {
+        winApp_->ToggleFullScreen();
+    });
+    // 終了
+    shortcutManager_->RegisterShortcut("End", {DIK_LALT, DIK_F4}, [this]() {
+        winApp_->ClosedWindow();
+    });
+    // シーンセーブ
+    shortcutManager_->RegisterShortcut("SceneSave", {DIK_LCONTROL, DIK_S}, [this]() {
+        baseObjectManager_->OpenSceneSaveModal();
+    });
+    // シーン読み込み
+    shortcutManager_->RegisterShortcut("SceneLoad", {DIK_LCONTROL, DIK_L}, [this]() {
+        baseObjectManager_->OpenSceneLoadModal();
+    });
+    // モデル作成
+    shortcutManager_->RegisterShortcut("CreateModel", {DIK_LCONTROL, DIK_LSHIFT, DIK_N}, [this]() {
+        baseObjectManager_->OpenObjectCreationModal();
+    });
+    // タイトル
+    shortcutManager_->RegisterShortcut("TitleScene", {DIK_LCONTROL, DIK_1}, [this]() {
+        sceneManager_->SceneSelection("TITLE");
+    });
+    // セレクト
+    shortcutManager_->RegisterShortcut("SelectScene", {DIK_LCONTROL, DIK_2}, [this]() {
+        sceneManager_->SceneSelection("SELECT");
+    });
+    // ゲーム
+    shortcutManager_->RegisterShortcut("GameScene", {DIK_LCONTROL, DIK_3}, [this]() {
+        sceneManager_->SceneSelection("GAME");
+    });
+    // クリア
+    shortcutManager_->RegisterShortcut("ClearScene", {DIK_LCONTROL, DIK_4}, [this]() {
+        sceneManager_->SceneSelection("CLEAR");
+    });
+    // デモ
+    shortcutManager_->RegisterShortcut("DemoScene", {DIK_LCONTROL, DIK_5}, [this]() {
+        sceneManager_->SceneSelection("DEMO");
+    });
+    // ゲームデバッグ画面切り替え
+    shortcutManager_->RegisterShortcut("SwichMode", DIK_F5, [this]() {
+        imGuiManager_->GetIsShowMainUI() = !imGuiManager_->GetIsShowMainUI();
+    });
+#endif // _DEBUG
 }
 
 void Framework::Update() {
@@ -222,14 +277,10 @@ void Framework::Update() {
 
     LightGroup::GetInstance()->Update(*sceneManager_->GetBaseScene()->GetViewProjection());
 
-    /// -------更新処理開始----------
-
-    // -------Input-------
-    // 入力の更新
     input_->Update();
-    // -------------------
 
-    /// -------更新処理終了----------
+    shortcutManager_->Update();
+
     endRequest_ = winApp_->ProcessMessage();
 }
 

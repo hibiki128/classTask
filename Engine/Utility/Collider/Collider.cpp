@@ -64,6 +64,30 @@ void Collider::UpdateWorldTransform() {
     UpdateOBB();
 }
 
+void Collider::MakeOBBOrientations(OBB &obb, const Vector3 &rotate) {
+    // 回転行列を作成
+    Matrix4x4 rotateMatrix = MakeRotateXMatrix(rotate.x) *
+                             MakeRotateYMatrix(rotate.y) *
+                             MakeRotateZMatrix(rotate.z);
+
+    // 方向ベクトルを更新
+    obb.orientations[0] = Vector3(rotateMatrix.m[0][0], rotateMatrix.m[0][1], rotateMatrix.m[0][2]);
+    obb.orientations[1] = Vector3(rotateMatrix.m[1][0], rotateMatrix.m[1][1], rotateMatrix.m[1][2]);
+    obb.orientations[2] = Vector3(rotateMatrix.m[2][0], rotateMatrix.m[2][1], rotateMatrix.m[2][2]);
+
+    // サイズを設定
+    obb.size = OBBOffset_.size;
+
+    // 回転中心を基準とした変換が必要な場合は、ここで中心位置を調整
+    // 例：回転中心とオブジェクト中心が異なる場合
+    if (obb.rotationCenter != GetCenterPosition()) {
+        // 回転中心を基準とした回転変換を適用
+        Vector3 offset = GetCenterPosition() - obb.rotationCenter;
+        Vector3 rotatedOffset = TransformNormal(offset, rotateMatrix);
+        // 必要に応じて位置を調整
+    }
+}
+
 void Collider::SetCollisionType(CollisionType collisionType) {
     switch (collisionType) {
     case Collider::CollisionType::Sphere:
@@ -476,25 +500,6 @@ void Collider::DrawRotationCenter(const ViewProjection &viewProjection) {
             DrawLine3D::GetInstance()->SetPoints(start, end2);
         }
     }
-}
-
-
-void Collider::MakeOBBOrientations(OBB &obb, const Vector3 &rotate) {
-    // 回転行列を作成
-    Matrix4x4 rotateMatrix = MakeRotateXMatrix(rotate.x) * MakeRotateYMatrix(rotate.y) * MakeRotateZMatrix(rotate.z);
-
-    // 各方向ベクトルを計算
-    obb.orientations[0].x = rotateMatrix.m[0][0];
-    obb.orientations[0].y = rotateMatrix.m[0][1];
-    obb.orientations[0].z = rotateMatrix.m[0][2];
-
-    obb.orientations[1].x = rotateMatrix.m[1][0];
-    obb.orientations[1].y = rotateMatrix.m[1][1];
-    obb.orientations[1].z = rotateMatrix.m[1][2];
-
-    obb.orientations[2].x = rotateMatrix.m[2][0];
-    obb.orientations[2].y = rotateMatrix.m[2][1];
-    obb.orientations[2].z = rotateMatrix.m[2][2];
 }
 
 void Collider::UpdateOBB() {

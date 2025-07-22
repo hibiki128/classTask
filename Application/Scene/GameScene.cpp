@@ -1,15 +1,18 @@
 #include "GameScene.h"
 
+#include <Application/Utility/MotionEditor/MotionEditor.h>
+
 void GameScene::Initialize() {
     audio_ = Audio::GetInstance();
     spCommon_ = SpriteCommon::GetInstance();
     ptCommon_ = ParticleCommon::GetInstance();
     input_ = Input::GetInstance();
     vp_.Initialize();
-    vp_.translation_ = {12.0f, -4.0f, -30.0f};
+    vp_.translation_ = {0.0f, 0.0f, -30.0f};
 
     debugCamera_ = std::make_unique<DebugCamera>();
     debugCamera_->Initialize(&vp_);
+
 }
 
 void GameScene::Finalize() {
@@ -27,11 +30,25 @@ void GameScene::Update() {
 void GameScene::Draw() {
     /// -------描画処理開始-------
 
+    BaseObjectManager::GetInstance()->Draw(vp_);
+
     /// Spriteの描画準備
     spCommon_->DrawCommonSetting();
     //-----Spriteの描画開始-----
 
-    //------------------------
+    //-------------------------
+
+    //-----3DObjectの開始-----
+ 
+    //-----------------------
+
+    //------Particleの描画開始-------
+
+    //-----------------------------
+
+    /// Spriteの描画準備
+    spCommon_->DrawCommonSetting();
+    //-----Spriteの描画開始-----
 
     /// -------描画処理終了-------
 }
@@ -45,14 +62,28 @@ void GameScene::DrawForOffScreen() {
 
     //------------------------
 
+    //-----3DObjectの描画-----
+
+    //-----------------------
+
+    //------Particleの描画開始-------
+
+    //-----------------------------
+
+    /// ----------------------------------
+
     /// -------描画処理終了-------
 }
 
 void GameScene::AddSceneSetting() {
     debugCamera_->imgui();
+
+    MotionEditor::GetInstance()->DrawImGui();
+
 }
 
 void GameScene::AddObjectSetting() {
+
 }
 
 void GameScene::AddParticleSetting() {

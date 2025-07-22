@@ -2,22 +2,39 @@
 #include "externals/nlohmann/json.hpp"
 #include "myMath.h"
 #include "wrl.h"
+#include <d3d12.h>
 #include <type/Matrix4x4.h>
 #include <type/Vector2.h>
-#include <d3d12.h>
+#include <vector>
 
 #include <Graphics/PipeLine/PipeLineManager.h>
 #include <Graphics/Srv/SrvManager.h>
+#include"Data/DataHandler.h"
+
 class DirectXCommon;
+
+// エフェクトの設定を保存する構造体
+struct PostEffectSettings {
+    ShaderMode shaderMode = ShaderMode::kNone;
+    bool enabled = false;
+};
+
 class OffScreen {
   public:
     void Initialize();
-
     void Draw();
-
     void Setting();
-
     void SetProjection(Matrix4x4 projectionMatrix) { projectionInverse_ = projectionMatrix; }
+
+    // 新しいメソッド
+    void AddEffect(ShaderMode mode);
+    void RemoveEffect(int index);
+    void SetEffectEnabled(int index, bool enabled);
+    void MoveEffectUp(int index);
+    void MoveEffectDown(int index);
+
+    void SaveData();
+    void LoadData();
 
   private:
     void CreateSmooth();
@@ -26,15 +43,35 @@ class OffScreen {
     void CreateDepth();
     void CreateRadial();
     void CreateCinematic();
-    void SaveToJson();
-    void LoadFromJson(ShaderMode shaderMode);
-    void LoadFromJson();
+
+    // 新しいメソッド
+    void CreatePingPongBuffers();
+    void DrawSingleEffect(ShaderMode mode, bool isFirstInput, int inputPingPongIndex, int outputRtvIndex);
+
+    
+    // データハンドラー関連メソッド
+    void InitializeDataHandler();
+    void SaveEffectChain();
+    void LoadEffectChain();
+    void SaveEffectParameters();
+    void LoadEffectParameters();
 
   private:
     DirectXCommon *dxCommon;
     SrvManager *srvManager_;
     PipeLineManager *psoManager_ = nullptr;
-    ShaderMode shaderMode_ = ShaderMode::kNone;
+
+    // エフェクトチェーン管理
+    std::vector<PostEffectSettings> effectChain_;
+    int currentPingPongBuffer_ = 0;
+
+    // ピンポンバッファ用リソース
+    static const int kPingPongBufferCount = 2;
+    Microsoft::WRL::ComPtr<ID3D12Resource> pingPongResources_[kPingPongBufferCount];
+    uint32_t pingPongSrvIndices_[kPingPongBufferCount];
+    D3D12_CPU_DESCRIPTOR_HANDLE pingPongRtvHandles_[kPingPongBufferCount];
+    D3D12_CPU_DESCRIPTOR_HANDLE pingPongSrvHandlesCPU_[kPingPongBufferCount];
+    D3D12_GPU_DESCRIPTOR_HANDLE pingPongSrvHandlesGPU_[kPingPongBufferCount];
 
     using json = nlohmann::json;
 
@@ -72,35 +109,28 @@ class OffScreen {
         float brightness;
     };
 
-    // バッファリソース
+    // バッファリソース（既存のまま）
     Microsoft::WRL::ComPtr<ID3D12Resource> vignetteResource;
-    // バッファリソース内のデータを指すポインタ
     VignetteParameter *vignetteData = nullptr;
 
-    // バッファリソース
     Microsoft::WRL::ComPtr<ID3D12Resource> smoothResource;
-    // バッファリソース内のデータを指すポインタ
     KernelSettings *smoothData = nullptr;
 
-    // バッファリソース
     Microsoft::WRL::ComPtr<ID3D12Resource> gaussianResouce;
-    // バッファリソース内のデータを指すポインタ
     GaussianParams *gaussianData = nullptr;
 
-    // バッファリソース
     Microsoft::WRL::ComPtr<ID3D12Resource> depthResouce;
-    // バッファリソース内のデータを指すポインタ
     Depth *depthData = nullptr;
 
     Matrix4x4 projectionInverse_;
 
-    // バッファリソース
     Microsoft::WRL::ComPtr<ID3D12Resource> radialResource;
-    // バッファリソース内のデータを指すポインタ
     RadialBlur *radialData = nullptr;
 
-    // バッファリソース
     Microsoft::WRL::ComPtr<ID3D12Resource> cinematicResource;
-    // バッファリソース内のデータを指すポインタ
     Cinematic *cinematicData = nullptr;
+
+     // データハンドラー
+    std::unique_ptr<DataHandler> dataHandler_;
+
 };

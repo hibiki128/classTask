@@ -27,6 +27,10 @@ class BaseObject : public Collider {
     std::unique_ptr<Object3d> obj3d_;
     // ベースのワールド変換データ
     std::unique_ptr<WorldTransform> transform_;
+
+    Vector3 worldPos;
+    Quaternion q;
+    Vector3 worldScale;
     // カラー
     ObjColor objColor_;
     // ライティング
@@ -71,7 +75,7 @@ class BaseObject : public Collider {
     virtual void ImGui();
 
     Vector3 GetCenterPosition() override;
-    Vector3 GetCenterRotation() override;
+    Quaternion GetCenterRotation() override;
 
     // 中心座標取得
     WorldTransform *GetWorldTransform() { return transform_.get(); }
@@ -119,10 +123,10 @@ class BaseObject : public Collider {
     Object3d *GetObject3d() { return obj3d_.get(); }
     PrimitiveType GetPrimitiveType() { return type_; }
     Vector3 &GetLocalPosition() { return transform_->translation_; }
-    Vector3 &GetLocalRotation() { return transform_->rotation_; }
+    Quaternion &GetLocalRotation() { return transform_->rotation_; }
     Vector3 &GetLocalScale() { return transform_->scale_; }
     Vector3 GetWorldPosition();
-    Vector3 GetWorldRotation();
+    Quaternion GetWorldRotation();
     Vector3 GetWorldScale();
     bool AnimaIsFinish() { return obj3d_->IsFinish(); }
     bool &GetLighting() { return isLighting_; }
@@ -131,7 +135,7 @@ class BaseObject : public Collider {
     /// ===================================================
     /// setter
     /// ===================================================
-    void SetTexture(const std::string &filePath, uint32_t index) {
+    void SetTexture(const std::string &filePath, uint32_t index = 0) {
         if (filePath.empty()) {
             return; // ファイルパスが空なら何もしない
         }
@@ -145,6 +149,7 @@ class BaseObject : public Collider {
     // void AddAnimation(std::string filePath) { obj3d_->AddAnimation(filePath); }
     void SetBlendMode(BlendMode blendMode) { obj3d_->SetBlendMode(blendMode); }
     void SetReflect(bool reflect) { reflect_ = reflect; }
+    void SetColor(const Vector4 &color) { objColor_.GetColor() = color; }
 
   private:
     void DebugObject();

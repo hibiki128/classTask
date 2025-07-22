@@ -21,9 +21,6 @@ void Framework::Run() {
 }
 
 void Framework::Initialize() {
-
-    D3DResourceLeakChecker();
-
     ///---------WinApp--------
     // WindowsAPIの初期化
     winApp_ = WinApp::GetInstance();
@@ -162,11 +159,17 @@ void Framework::Initialize() {
     shortcutManager_->Initialize(input_);
     ///-----------------------------------
 
+    ///-------AttackManager-------
+    motionEditor_ = MotionEditor::GetInstance();
+    ///---------------------------
+
     /// 時間の初期化
     Frame::Init();
 }
 
 void Framework::Finalize() {
+    baseObjectManager_->Finalize();
+
     sceneManager_->Finalize();
 
     // WindowsAPIの終了処理
@@ -201,12 +204,14 @@ void Framework::Finalize() {
     imGuizmoManager_->Finalize();
 #endif // _DEBUG
     shortcutManager_->Finalize();
-    baseObjectManager_->Finalize();
+
     line3d_->Finalize();
     skyBox_->Finalize();
     srvManager_->Finalize();
     audio_->Finalize();
     lightGroup_->Finalize();
+    motionEditor_->Finalize();
+    LightGroup::GetInstance()->Finalize();
     particleEditor_->Finalize();
     spriteCommon_->Finalize();
     particleCommon_->Finalize();
@@ -217,6 +222,9 @@ void Framework::Finalize() {
 
 void Framework::RegisterShortcutKey() {
 #ifdef _DEBUG
+    shortcutManager_->RegisterShortcut("ShowShortcuts", DIK_F1, [this]() {
+        imGuiManager_->SetShortcutWindow(true);
+    });
     // フルスクリーン
     shortcutManager_->RegisterShortcut("FullScreen", DIK_F11, [this]() {
         winApp_->ToggleFullScreen();
@@ -226,11 +234,11 @@ void Framework::RegisterShortcutKey() {
         winApp_->ClosedWindow();
     });
     // シーンセーブ
-    shortcutManager_->RegisterShortcut("SceneSave", {DIK_LCONTROL, DIK_S}, [this]() {
+    shortcutManager_->RegisterShortcut("SceneSave", {DIK_LCONTROL, DIK_LSHIFT, DIK_S}, [this]() {
         baseObjectManager_->OpenSceneSaveModal();
     });
     // シーン読み込み
-    shortcutManager_->RegisterShortcut("SceneLoad", {DIK_LCONTROL, DIK_L}, [this]() {
+    shortcutManager_->RegisterShortcut("SceneLoad", {DIK_LCONTROL, DIK_LSHIFT, DIK_L}, [this]() {
         baseObjectManager_->OpenSceneLoadModal();
     });
     // モデル作成
@@ -269,9 +277,9 @@ void Framework::Update() {
     /// deltaTimeの更新
     Frame::Update();
 
-    baseObjectManager_->Update();
-
     sceneManager_->Update();
+
+    baseObjectManager_->Update();
 
     collisionManager_->Update();
 
@@ -286,6 +294,10 @@ void Framework::Update() {
 
 void Framework::LoadResource() {
     particleEditor_->AddParticleEmitter("fire");
+    particleEditor_->AddParticleEmitter("hitEmitter");
+    particleEditor_->AddParticleEmitter("chageEmitter");
+    particleEditor_->AddParticleEmitter("bulletEmitter");
+    particleEditor_->AddParticleEmitter("chageBullet");
 }
 
 void Framework::PlaySounds() {

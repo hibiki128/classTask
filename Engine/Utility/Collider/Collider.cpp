@@ -40,53 +40,40 @@ Collider &Collider::AddCollider(const std::string &objName) {
 
 
 void Collider::UpdateWorldTransform() {
-
-    // 球用のワールドトランスフォームを更新
+    // 球の情報更新
     sphere_.center = GetCenterPosition() + SphereOffset_.center;
     sphere_.radius = radius_ + SphereOffset_.radius;
 
-    // AABBの現在の最小点と最大点を取得
-    aabb_.min = GetCenterPosition() - Vector3(1.0f, 1.0f, 1.0f);
-    aabb_.max = GetCenterPosition() + Vector3(1.0f, 1.0f, 1.0f);
-    aabb_.min = aabb_.min + AABBOffset_.min;
-    aabb_.max = aabb_.max + AABBOffset_.max;
+    // AABBの情報更新
+    aabb_.min = GetCenterPosition() - Vector3(1.0f, 1.0f, 1.0f) + AABBOffset_.min;
+    aabb_.max = GetCenterPosition() + Vector3(1.0f, 1.0f, 1.0f) + AABBOffset_.max;
 
-    // OBBの各プロパティを更新
-    obb_.rotationCenter = GetCenterPosition() + OBBOffset_.rotationCenter; // 回転中心
-    obb_.scaleCenter = GetCenterPosition() + OBBOffset_.scaleCenter;       // スケール中心
+    // OBBの中心を更新
+    obb_.rotationCenter = GetCenterPosition() + OBBOffset_.rotationCenter;
+    obb_.scaleCenter = GetCenterPosition() + OBBOffset_.scaleCenter;
 
-    // OBBの向きベクトルを計算
+    // クォータニオン回転を取得して OBB の向きを更新
     MakeOBBOrientations(obb_, GetCenterRotation());
 
-    // サイズを更新
+    // OBBのサイズ更新
     obb_.size = OBBOffset_.size;
 
     UpdateOBB();
 }
 
-void Collider::MakeOBBOrientations(OBB &obb, const Vector3 &rotate) {
-    // 回転行列を作成
-    Matrix4x4 rotateMatrix = MakeRotateXMatrix(rotate.x) *
-                             MakeRotateYMatrix(rotate.y) *
-                             MakeRotateZMatrix(rotate.z);
 
-    // 方向ベクトルを更新
-    obb.orientations[0] = Vector3(rotateMatrix.m[0][0], rotateMatrix.m[0][1], rotateMatrix.m[0][2]);
-    obb.orientations[1] = Vector3(rotateMatrix.m[1][0], rotateMatrix.m[1][1], rotateMatrix.m[1][2]);
-    obb.orientations[2] = Vector3(rotateMatrix.m[2][0], rotateMatrix.m[2][1], rotateMatrix.m[2][2]);
+// クォータニオンを使ってOBBの向きを更新する関数
+void Collider::MakeOBBOrientations(OBB &obb, const Quaternion &rotateQuat) {
+    // クォータニオン → 回転行列（左手座標系）へ変換
+    Matrix4x4 rotateMatrix = QuaternionToMatrix4x4(rotateQuat);
 
-    // サイズを設定
-    obb.size = OBBOffset_.size;
-
-    // 回転中心を基準とした変換が必要な場合は、ここで中心位置を調整
-    // 例：回転中心とオブジェクト中心が異なる場合
-    if (obb.rotationCenter != GetCenterPosition()) {
-        // 回転中心を基準とした回転変換を適用
-        Vector3 offset = GetCenterPosition() - obb.rotationCenter;
-        Vector3 rotatedOffset = TransformNormal(offset, rotateMatrix);
-        // 必要に応じて位置を調整
-    }
+    // 回転行列の各列ベクトルをOBBの方向ベクトルとして設定
+    obb.orientations[0] = Vector3(rotateMatrix.m[0][0], rotateMatrix.m[0][1], rotateMatrix.m[0][2]); // X軸方向
+    obb.orientations[1] = Vector3(rotateMatrix.m[1][0], rotateMatrix.m[1][1], rotateMatrix.m[1][2]); // Y軸方向
+    obb.orientations[2] = Vector3(rotateMatrix.m[2][0], rotateMatrix.m[2][1], rotateMatrix.m[2][2]); // Z軸方向
 }
+
+
 
 void Collider::SetCollisionType(CollisionType collisionType) {
     switch (collisionType) {
@@ -115,7 +102,7 @@ void Collider::SetCollisionType(CollisionType collisionType) {
 
 
 void Collider::DebugDraw(const ViewProjection &viewProjection) {
-    if (!isVisible_ || !isCollisionEnabled_) {
+    if (isVisible_ || !isCollisionEnabled_) {
         return;
     }
     if (isSphere_) {
@@ -301,7 +288,7 @@ void Collider::OffsetImgui() {
 
         ImGui::BeginGroup();
         ImGui::BeginChild("BasicSettings", ImVec2(0, 40), true);
-        ImGui::Checkbox("可視化", &isVisible_);
+        ImGui::Checkbox("不可視化", &isVisible_);
         ImGui::SameLine(0, 30.0f);
         ImGui::Checkbox("コライダーの有無", &isCollisionEnabled_);
         ImGui::EndChild();
@@ -501,6 +488,7 @@ void Collider::DrawRotationCenter(const ViewProjection &viewProjection) {
         }
     }
 }
+
 
 void Collider::UpdateOBB() {
     // 回転後にscaleCenterの位置を計算

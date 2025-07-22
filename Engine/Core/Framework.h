@@ -25,6 +25,7 @@
 #include "SkyBox/SkyBox.h"
 #include "SpriteCommon.h"
 #include "line/DrawLine3D.h"
+#include <Application/Utility/MotionEditor/MotionEditor.h>
 
 class Framework {
   public: // メンバ関数
@@ -94,6 +95,7 @@ class Framework {
     BaseObjectManager *baseObjectManager_ = nullptr;
     ParticleGroupManager *particleGroupManager_ = nullptr;
     PipeLineManager *pipeLineManager_ = nullptr;
+    MotionEditor *motionEditor_ = nullptr;
     ComputePipeLineManager *computePipeLineManager_ = nullptr;
     ShortcutManager *shortcutManager_ = nullptr;
 
@@ -106,6 +108,8 @@ class Framework {
     ParticleEditor *particleEditor_ = nullptr;
 
     PrimitiveModel *primitiveModel_ = nullptr;
+
+    D3DResourceLeakChecker LeakChecker_;
 
     std::unique_ptr<CollisionManager> collisionManager_;
     std::unique_ptr<OffScreen> offscreen_;

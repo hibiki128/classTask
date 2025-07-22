@@ -1,5 +1,6 @@
 #include "MyGame.h"
 #include "Scene/SceneFactory.h"
+#include <Frame.h>
 
 void MyGame::Initialize() {
     Framework::Initialize();
@@ -12,7 +13,7 @@ void MyGame::Initialize() {
     sceneFactory_ = new SceneFactory();
     // シーンマネージャに最初のシーンをセット
     sceneManager_->SetSceneFactory(sceneFactory_);
-    sceneManager_->NextSceneReservation("TITLE");
+    sceneManager_->NextSceneReservation("GAME");
     // -----------------------
 }
 
@@ -26,6 +27,7 @@ void MyGame::Finalize() {
 
 void MyGame::Update() {
     Framework::Update();
+
     // -----ゲーム固有の処理-----
 #ifdef _DEBUG
 
@@ -42,8 +44,9 @@ void MyGame::Update() {
     imGuiManager_->ShowMainUI(offscreen_.get());
     baseObjectManager_->DrawImGui();
     imGuiManager_->End();
-
 #endif // _DEBUG
+
+    motionEditor_->Update(Frame::DeltaTime());
 
     // -----------------------
 }
@@ -84,6 +87,7 @@ void MyGame::Draw() {
 #endif // _DEBUG
        // ------------------------
 
+      
     // -----描画終了-----
     dxCommon_->PostDraw();
 }

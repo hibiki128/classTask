@@ -550,14 +550,13 @@ void ImGuiManager::FixAspectRatio() {
     }
 }
 
-void ImGuiManager::ShowSceneWindow() {
+void ImGuiManager::ShowSceneWindow(OffScreen* offScreen) {
     // ImGuiウィンドウ開始前にNextWindowSizeは設定しない（手動サイズ変更を許可）
     ImGuiWindowFlags flags = ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoScrollbar;
     // フォーカスされていない場合は描画を最適化
     if (!isShowMainUI_) {
         flags |= ImGuiWindowFlags_NoBringToFrontOnFocus;
     }
-
     ImGui::Begin("Scene", nullptr, flags);
 
     // ウィンドウ内の位置を取得（ImGuizmoのためにシーンウィンドウの絶対位置を計算）
@@ -595,7 +594,6 @@ void ImGuiManager::ShowSceneWindow() {
     }
 
     // 背景カラー設定
-    uint32_t srvIndex = dxCommon_->GetOffScreenSrvIndex();
     static ImVec4 lastBgColor = ImVec4(0, 0, 0, 0);
     ImVec4 backgroundColor;
 
@@ -619,6 +617,16 @@ void ImGuiManager::ShowSceneWindow() {
     // テクスチャ描画位置を調整
     ImGui::SetCursorPos(ImVec2(ImGui::GetCursorPosX() + sceneOffset.x, ImGui::GetCursorPosY() + sceneOffset.y));
 
+    // ポストエフェクトが適用された最終結果のテクスチャを取得
+    uint32_t srvIndex;
+    if (offScreen != nullptr) {
+        // ポストエフェクトが適用された最終結果を使用
+        srvIndex = offScreen->GetFinalResultSrvIndex();
+    } else {
+        // フォールバック：通常のオフスクリーンバッファを使用
+        srvIndex = dxCommon_->GetOffScreenSrvIndex();
+    }
+
     // レンダーテクスチャをImGuiウィンドウに描画
     ImGui::ImageWithBg(
         static_cast<ImTextureID>(SrvManager::GetInstance()->GetGPUDescriptorHandle(srvIndex).ptr),
@@ -629,7 +637,6 @@ void ImGuiManager::ShowSceneWindow() {
     ImVec2 actualScenePos = ImVec2(
         contentPos.x + sceneOffset.x,
         contentPos.y + sceneOffset.y);
-
     imGuizmoManager_->Update(actualScenePos, sceneTextureSize_);
 
     ImGui::End();

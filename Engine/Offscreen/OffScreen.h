@@ -22,7 +22,10 @@ struct PostEffectSettings {
 class OffScreen {
   public:
     void Initialize();
+    void CreateFinalResultTexture();
     void Draw();
+    void DrawToFinalResult();
+    void CopyFinalResultToBackBuffer();
     void Setting();
     void SetProjection(Matrix4x4 projectionMatrix) { projectionInverse_ = projectionMatrix; }
 
@@ -35,6 +38,8 @@ class OffScreen {
 
     void SaveData();
     void LoadData();
+
+      uint32_t GetFinalResultSrvIndex() const { return finalResultSrvIndex_; }
 
   private:
     void CreateSmooth();
@@ -72,6 +77,12 @@ class OffScreen {
     D3D12_CPU_DESCRIPTOR_HANDLE pingPongRtvHandles_[kPingPongBufferCount];
     D3D12_CPU_DESCRIPTOR_HANDLE pingPongSrvHandlesCPU_[kPingPongBufferCount];
     D3D12_GPU_DESCRIPTOR_HANDLE pingPongSrvHandlesGPU_[kPingPongBufferCount];
+
+     Microsoft::WRL::ComPtr<ID3D12Resource> finalResultResource_;
+    uint32_t finalResultSrvIndex_;
+    D3D12_CPU_DESCRIPTOR_HANDLE finalResultRtvHandle_;
+    D3D12_CPU_DESCRIPTOR_HANDLE finalResultSrvHandleCPU_;
+    D3D12_GPU_DESCRIPTOR_HANDLE finalResultSrvHandleGPU_;
 
     using json = nlohmann::json;
 

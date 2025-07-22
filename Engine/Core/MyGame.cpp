@@ -39,7 +39,7 @@ void MyGame::Update() {
     imGuiManager_->ShowMainMenu();
     if (imGuiManager_->GetIsShowMainUI()) {
         imGuiManager_->ShowDockSpace();
-        imGuiManager_->ShowSceneWindow();
+        imGuiManager_->ShowSceneWindow(offscreen_.get());
     }
     imGuiManager_->ShowMainUI(offscreen_.get());
     baseObjectManager_->DrawImGui();

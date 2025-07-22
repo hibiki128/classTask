@@ -19,8 +19,38 @@ void OffScreen::Initialize() {
     CreateRadial();
     CreateCinematic();
     CreatePingPongBuffers();
+    CreateFinalResultTexture();
     InitializeDataHandler();
     LoadData();
+}
+
+void OffScreen::CreateFinalResultTexture() {
+    // 最終結果用のレンダーターゲットリソースを作成
+    finalResultResource_ = dxCommon->CreateRenderTextureResource(
+        WinApp::kClientWidth,
+        WinApp::kClientHeight,
+        dxCommon->GetClearColorValue().Format,
+        dxCommon->GetClearColorValue());
+
+    // SRV作成（ImGui表示用）
+    finalResultSrvIndex_ = srvManager_->Allocate();
+    srvManager_->CreateSRVforRenderTexture(finalResultSrvIndex_, finalResultResource_.Get());
+    finalResultSrvHandleCPU_ = srvManager_->GetCPUDescriptorHandle(finalResultSrvIndex_);
+    finalResultSrvHandleGPU_ = srvManager_->GetGPUDescriptorHandle(finalResultSrvIndex_);
+
+    // RTVハンドルを取得（ピンポンバッファの次の位置を使用）
+    int rtvIndex = 3 + kPingPongBufferCount; // バックバッファ(0,1) + オフスクリーン(2) + ピンポンバッファ(3,4) の次
+
+    D3D12_CPU_DESCRIPTOR_HANDLE rtvStartHandle = dxCommon->GetRTVDescriptorHeap()->GetCPUDescriptorHandleForHeapStart();
+    UINT descriptorSize = dxCommon->GetDevice()->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
+    finalResultRtvHandle_.ptr = rtvStartHandle.ptr + (rtvIndex * descriptorSize);
+
+    // RTVを作成
+    D3D12_RENDER_TARGET_VIEW_DESC rtvDesc{};
+    rtvDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM_SRGB;
+    rtvDesc.ViewDimension = D3D12_RTV_DIMENSION_TEXTURE2D;
+
+    dxCommon->GetDevice()->CreateRenderTargetView(finalResultResource_.Get(), &rtvDesc, finalResultRtvHandle_);
 }
 
 void OffScreen::InitializeDataHandler() {
@@ -59,14 +89,13 @@ void OffScreen::CreatePingPongBuffers() {
 
 void OffScreen::Draw() {
     if (effectChain_.empty()) {
-        // エフェクトが無い場合は元の処理
-        psoManager_->DrawCommonSetting(PipelineType::kRender, BlendMode::kNormal, ShaderMode::kNone);
-        dxCommon->GetCommandList()->SetGraphicsRootDescriptorTable(0, dxCommon->GetOffScreenGPUHandle());
-        dxCommon->GetCommandList()->DrawInstanced(3, 1, 0, 0);
+        // エフェクトが無い場合
+        DrawToFinalResult();
+        CopyFinalResultToBackBuffer();
         return;
     }
 
-    bool isFirstInput = true; // 最初の入力はオフスクリーンバッファ
+    bool isFirstInput = true;
     int currentPingPongBuffer = 0;
     int outputBuffer = 0;
 
@@ -79,10 +108,9 @@ void OffScreen::Draw() {
     }
 
     if (enabledEffects.empty()) {
-        // 有効なエフェクトがない場合は元の処理
-        psoManager_->DrawCommonSetting(PipelineType::kRender, BlendMode::kNormal, ShaderMode::kNone);
-        dxCommon->GetCommandList()->SetGraphicsRootDescriptorTable(0, dxCommon->GetOffScreenGPUHandle());
-        dxCommon->GetCommandList()->DrawInstanced(3, 1, 0, 0);
+        // 有効なエフェクトがない場合
+        DrawToFinalResult();
+        CopyFinalResultToBackBuffer();
         return;
     }
 
@@ -92,21 +120,76 @@ void OffScreen::Draw() {
         bool isLastEffect = (i == enabledEffects.size() - 1);
 
         if (isLastEffect) {
-            // 最後のエフェクトはバックバッファに直接描画
-            DrawSingleEffect(effectChain_[effectIndex].shaderMode, isFirstInput, currentPingPongBuffer, -1);
+            // 最後のエフェクトは最終結果テクスチャに描画
+            DrawSingleEffect(effectChain_[effectIndex].shaderMode, isFirstInput, currentPingPongBuffer, -2); // -2は最終結果を示す特別な値
         } else {
             // 中間エフェクトはピンポンバッファに描画
             DrawSingleEffect(effectChain_[effectIndex].shaderMode, isFirstInput, currentPingPongBuffer, outputBuffer);
             currentPingPongBuffer = outputBuffer;
-            outputBuffer = 1 - outputBuffer; // 0→1、1→0にスワップ
-            isFirstInput = false;            // 2回目以降はピンポンバッファから入力
+            outputBuffer = 1 - outputBuffer;
+            isFirstInput = false;
         }
     }
+
+    // 最終結果をバックバッファにコピー
+    CopyFinalResultToBackBuffer();
+}
+
+void OffScreen::DrawToFinalResult() {
+    // 最終結果テクスチャに直接描画（エフェクトなし）
+    dxCommon->GetCommandList()->OMSetRenderTargets(1, &finalResultRtvHandle_, false, nullptr);
+
+    // バリア遷移
+    dxCommon->BarrierTransition(finalResultResource_.Get(),
+                                D3D12_RESOURCE_STATE_GENERIC_READ, D3D12_RESOURCE_STATE_RENDER_TARGET);
+
+    // レンダーターゲットをクリア
+    const float clearColor[4] = {0.0f, 0.0f, 0.0f, 1.0f};
+    dxCommon->GetCommandList()->ClearRenderTargetView(finalResultRtvHandle_, clearColor, 0, nullptr);
+
+    // パイプライン設定
+    psoManager_->DrawCommonSetting(PipelineType::kRender, BlendMode::kNormal, ShaderMode::kNone);
+
+    // 入力テクスチャを設定
+    dxCommon->GetCommandList()->SetGraphicsRootDescriptorTable(0, dxCommon->GetOffScreenGPUHandle());
+
+    // 描画
+    dxCommon->GetCommandList()->DrawInstanced(3, 1, 0, 0);
+
+    // バリア遷移
+    dxCommon->BarrierTransition(finalResultResource_.Get(),
+                                D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_GENERIC_READ);
+}
+
+void OffScreen::CopyFinalResultToBackBuffer() {
+    // バックバッファに最終結果をコピー
+    UINT backBufferIndex = dxCommon->GetSwapChain()->GetCurrentBackBufferIndex();
+    D3D12_CPU_DESCRIPTOR_HANDLE rtvHandle = dxCommon->GetRTVCPUDescriptorHandle(backBufferIndex);
+    dxCommon->GetCommandList()->OMSetRenderTargets(1, &rtvHandle, false, nullptr);
+
+    // パイプライン設定
+    psoManager_->DrawCommonSetting(PipelineType::kRender, BlendMode::kNormal, ShaderMode::kNone);
+
+    // 最終結果テクスチャを入力として設定
+    dxCommon->GetCommandList()->SetGraphicsRootDescriptorTable(0, finalResultSrvHandleGPU_);
+
+    // 描画
+    dxCommon->GetCommandList()->DrawInstanced(3, 1, 0, 0);
 }
 
 void OffScreen::DrawSingleEffect(ShaderMode mode, bool isFirstInput, int inputPingPongIndex, int outputRtvIndex) {
     // 出力先を設定
-    if (outputRtvIndex != -1) {
+    if (outputRtvIndex == -2) {
+        // 最終結果テクスチャに描画
+        dxCommon->GetCommandList()->OMSetRenderTargets(1, &finalResultRtvHandle_, false, nullptr);
+        // バリア遷移
+        dxCommon->BarrierTransition(finalResultResource_.Get(),
+                                    D3D12_RESOURCE_STATE_GENERIC_READ, D3D12_RESOURCE_STATE_RENDER_TARGET);
+
+        // レンダーターゲットをクリア
+        const float clearColor[4] = {0.0f, 0.0f, 0.0f, 1.0f};
+        dxCommon->GetCommandList()->ClearRenderTargetView(finalResultRtvHandle_, clearColor, 0, nullptr);
+    } else if (outputRtvIndex != -1) {
         // ピンポンバッファに描画
         dxCommon->GetCommandList()->OMSetRenderTargets(1, &pingPongRtvHandles_[outputRtvIndex], false, nullptr);
         // バリア遷移
@@ -117,16 +200,16 @@ void OffScreen::DrawSingleEffect(ShaderMode mode, bool isFirstInput, int inputPi
         const float clearColor[4] = {0.0f, 0.0f, 0.0f, 1.0f};
         dxCommon->GetCommandList()->ClearRenderTargetView(pingPongRtvHandles_[outputRtvIndex], clearColor, 0, nullptr);
     } else {
-        // バックバッファに描画（最終出力）
+        // バックバッファに描画（この分岐は使われなくなる）
         UINT backBufferIndex = dxCommon->GetSwapChain()->GetCurrentBackBufferIndex();
         D3D12_CPU_DESCRIPTOR_HANDLE rtvHandle = dxCommon->GetRTVCPUDescriptorHandle(backBufferIndex);
         dxCommon->GetCommandList()->OMSetRenderTargets(1, &rtvHandle, false, nullptr);
     }
 
-    // パイプライン設定
+    // パイプライン設定とシェーダーパラメータ設定（既存のコードと同じ）
     psoManager_->DrawCommonSetting(PipelineType::kRender, BlendMode::kNormal, mode);
 
-    // シェーダーモードに応じた定数バッファ設定
+    // シェーダーモードに応じた定数バッファ設定（既存のコードと同じ）
     switch (mode) {
     case ShaderMode::kVigneet:
         dxCommon->GetCommandList()->SetGraphicsRootConstantBufferView(1, vignetteResource->GetGPUVirtualAddress());
@@ -166,8 +249,13 @@ void OffScreen::DrawSingleEffect(ShaderMode mode, bool isFirstInput, int inputPi
     // 描画
     dxCommon->GetCommandList()->DrawInstanced(3, 1, 0, 0);
 
-    // バリア遷移（ピンポンバッファの場合）
-    if (outputRtvIndex != -1) {
+    // バリア遷移
+    if (outputRtvIndex == -2) {
+        // 最終結果テクスチャの場合
+        dxCommon->BarrierTransition(finalResultResource_.Get(),
+                                    D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_GENERIC_READ);
+    } else if (outputRtvIndex != -1) {
+        // ピンポンバッファの場合
         dxCommon->BarrierTransition(pingPongResources_[outputRtvIndex].Get(),
                                     D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_GENERIC_READ);
     }

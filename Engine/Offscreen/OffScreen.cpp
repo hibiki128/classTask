@@ -3,6 +3,7 @@
 #ifdef _DEBUG
 #include "imgui.h"
 #endif // _DEBUG
+#include <Graphics/Texture/TextureManager.h>
 #include <filesystem>
 #include <fstream>
 #include <iostream>
@@ -11,13 +12,14 @@ void OffScreen::Initialize() {
     dxCommon = DirectXCommon::GetInstance();
     psoManager_ = PipeLineManager::GetInstance();
     srvManager_ = SrvManager::GetInstance();
-
+    TextureManager::GetInstance()->LoadTexture(folderPath_);
     CreateSmooth();
     CreateGauss();
     CreateVignette();
     CreateDepth();
     CreateRadial();
     CreateCinematic();
+    CreateDissolve();
     CreatePingPongBuffers();
     CreateFinalResultTexture();
     InitializeDataHandler();
@@ -209,6 +211,20 @@ void OffScreen::DrawSingleEffect(ShaderMode mode, bool isFirstInput, int inputPi
     // パイプライン設定とシェーダーパラメータ設定（既存のコードと同じ）
     psoManager_->DrawCommonSetting(PipelineType::kRender, BlendMode::kNormal, mode);
 
+    // 入力テクスチャを設定
+    if (isFirstInput) {
+        // 最初の入力はオフスクリーンバッファ
+        dxCommon->GetCommandList()->SetGraphicsRootDescriptorTable(0, dxCommon->GetOffScreenGPUHandle());
+    } else {
+        // 2回目以降はピンポンバッファ
+        if (inputPingPongIndex >= 0 && inputPingPongIndex < kPingPongBufferCount) {
+            dxCommon->GetCommandList()->SetGraphicsRootDescriptorTable(0, pingPongSrvHandlesGPU_[inputPingPongIndex]);
+        } else {
+            // エラーハンドリング - フォールバックとしてオフスクリーンバッファを使用
+            dxCommon->GetCommandList()->SetGraphicsRootDescriptorTable(0, dxCommon->GetOffScreenGPUHandle());
+        }
+    }
+
     // シェーダーモードに応じた定数バッファ設定（既存のコードと同じ）
     switch (mode) {
     case ShaderMode::kVigneet:
@@ -230,20 +246,10 @@ void OffScreen::DrawSingleEffect(ShaderMode mode, bool isFirstInput, int inputPi
     case ShaderMode::kCinematic:
         dxCommon->GetCommandList()->SetGraphicsRootConstantBufferView(1, cinematicResource->GetGPUVirtualAddress());
         break;
-    }
-
-    // 入力テクスチャを設定
-    if (isFirstInput) {
-        // 最初の入力はオフスクリーンバッファ
-        dxCommon->GetCommandList()->SetGraphicsRootDescriptorTable(0, dxCommon->GetOffScreenGPUHandle());
-    } else {
-        // 2回目以降はピンポンバッファ
-        if (inputPingPongIndex >= 0 && inputPingPongIndex < kPingPongBufferCount) {
-            dxCommon->GetCommandList()->SetGraphicsRootDescriptorTable(0, pingPongSrvHandlesGPU_[inputPingPongIndex]);
-        } else {
-            // エラーハンドリング - フォールバックとしてオフスクリーンバッファを使用
-            dxCommon->GetCommandList()->SetGraphicsRootDescriptorTable(0, dxCommon->GetOffScreenGPUHandle());
-        }
+    case ShaderMode::kDissolve:
+        srvManager_->SetGraphicsRootDescriptorTable(1, TextureManager::GetInstance()->GetTextureIndexByFilePath(folderPath_));
+        dxCommon->GetCommandList()->SetGraphicsRootConstantBufferView(2, dissolveResource->GetGPUVirtualAddress());
+        break;
     }
 
     // 描画
@@ -266,7 +272,7 @@ void OffScreen::Setting() {
     ImGui::Text("ポストエフェクト");
 
     // エフェクト追加ボタン
-    const char *shaderModeItems[] = {"なし", "グレイ", "ビネット", "スムース", "ガウス", "アウトライン(エッジ検出)", "アウトライン(深度ベース)", "ブラー", "シネマティック"};
+    const char *shaderModeItems[] = {"なし", "グレイ", "ビネット", "スムース", "ガウス", "アウトライン(エッジ検出)", "アウトライン(深度ベース)", "ブラー", "シネマティック", "ディゾルブ"};
     static int selectedEffect = 0;
 
     ImGui::Combo("追加するエフェクト", &selectedEffect, shaderModeItems, IM_ARRAYSIZE(shaderModeItems));
@@ -334,9 +340,11 @@ void OffScreen::Setting() {
                 ImGui::DragFloat("彩度", &cinematicData->saturation, 0.01f);
                 ImGui::DragFloat("輝度", &cinematicData->brightness, 0.01f);
                 break;
+            case ShaderMode::kDissolve:
+                ImGui::DragFloat("ディゾルブ値", &dissolveData->value, 0.01f, 0.0f, 1.0f);
+                break;
             }
         }
-
         ImGui::PopID();
         ImGui::Separator();
     }
@@ -424,6 +432,12 @@ void OffScreen::CreateCinematic() {
     cinematicData->contrast = 1.05f;
     cinematicData->saturation = 0.68f;
     cinematicData->brightness = 0.13f;
+}
+
+void OffScreen::CreateDissolve() {
+    dissolveResource = dxCommon->CreateBufferResource(sizeof(Dissolve));
+    dissolveResource->Map(0, nullptr, reinterpret_cast<void **>(&dissolveData));
+    dissolveData->value = 0.0f; // 初期値
 }
 
 // メインのセーブ関数
@@ -514,6 +528,10 @@ void OffScreen::SaveEffectParameters() {
         dataHandler_->Save<float>("cinematic_saturation", cinematicData->saturation);
         dataHandler_->Save<float>("cinematic_brightness", cinematicData->brightness);
     }
+
+    if (dissolveData) {
+        dataHandler_->Save<float>("dissolve_value", dissolveData->value);
+    }
 }
 
 // エフェクトパラメータの読み込み
@@ -554,5 +572,9 @@ void OffScreen::LoadEffectParameters() {
         cinematicData->contrast = dataHandler_->Load<float>("cinematic_contrast", 1.05f);
         cinematicData->saturation = dataHandler_->Load<float>("cinematic_saturation", 0.68f);
         cinematicData->brightness = dataHandler_->Load<float>("cinematic_brightness", 0.13f);
+    }
+
+    if (dissolveData) {
+        dissolveData->value = dataHandler_->Load<float>("dissolve_value", 0.0f); // 初期値
     }
 }

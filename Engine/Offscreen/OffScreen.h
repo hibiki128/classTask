@@ -7,9 +7,9 @@
 #include <type/Vector2.h>
 #include <vector>
 
+#include "Data/DataHandler.h"
 #include <Graphics/PipeLine/PipeLineManager.h>
 #include <Graphics/Srv/SrvManager.h>
-#include"Data/DataHandler.h"
 
 class DirectXCommon;
 
@@ -39,7 +39,7 @@ class OffScreen {
     void SaveData();
     void LoadData();
 
-      uint32_t GetFinalResultSrvIndex() const { return finalResultSrvIndex_; }
+    uint32_t GetFinalResultSrvIndex() const { return finalResultSrvIndex_; }
 
   private:
     void CreateSmooth();
@@ -48,12 +48,12 @@ class OffScreen {
     void CreateDepth();
     void CreateRadial();
     void CreateCinematic();
+    void CreateDissolve();
 
     // 新しいメソッド
     void CreatePingPongBuffers();
     void DrawSingleEffect(ShaderMode mode, bool isFirstInput, int inputPingPongIndex, int outputRtvIndex);
 
-    
     // データハンドラー関連メソッド
     void InitializeDataHandler();
     void SaveEffectChain();
@@ -78,7 +78,7 @@ class OffScreen {
     D3D12_CPU_DESCRIPTOR_HANDLE pingPongSrvHandlesCPU_[kPingPongBufferCount];
     D3D12_GPU_DESCRIPTOR_HANDLE pingPongSrvHandlesGPU_[kPingPongBufferCount];
 
-     Microsoft::WRL::ComPtr<ID3D12Resource> finalResultResource_;
+    Microsoft::WRL::ComPtr<ID3D12Resource> finalResultResource_;
     uint32_t finalResultSrvIndex_;
     D3D12_CPU_DESCRIPTOR_HANDLE finalResultRtvHandle_;
     D3D12_CPU_DESCRIPTOR_HANDLE finalResultSrvHandleCPU_;
@@ -120,6 +120,10 @@ class OffScreen {
         float brightness;
     };
 
+    struct Dissolve {
+        float value;
+    };
+
     // バッファリソース（既存のまま）
     Microsoft::WRL::ComPtr<ID3D12Resource> vignetteResource;
     VignetteParameter *vignetteData = nullptr;
@@ -141,7 +145,11 @@ class OffScreen {
     Microsoft::WRL::ComPtr<ID3D12Resource> cinematicResource;
     Cinematic *cinematicData = nullptr;
 
-     // データハンドラー
-    std::unique_ptr<DataHandler> dataHandler_;
+    Microsoft::WRL::ComPtr<ID3D12Resource> dissolveResource;
+    Dissolve *dissolveData = nullptr;
 
+    std::string folderPath_ = "debug/noise0.png";
+
+    // データハンドラー
+    std::unique_ptr<DataHandler> dataHandler_;
 };

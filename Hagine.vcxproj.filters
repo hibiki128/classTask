@@ -1069,5 +1069,6 @@
     <FxCompile Include="resources\shaders\Sprite\Sprite.PS.hlsl">
       <Filter>リソース ファイル\Sprite</Filter>
     </FxCompile>
+    <FxCompile Include="Resources\shaders\OffScreen\Dissolve.PS.hlsl" />
   </ItemGroup>
 </Project>

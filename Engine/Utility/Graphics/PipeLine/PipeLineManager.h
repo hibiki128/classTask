@@ -30,6 +30,7 @@ enum class ShaderMode {
     kDepth,
     kBlur,
     kCinematic,
+    kDissolve,
 };
 
 enum class PipelineType {
@@ -130,6 +131,7 @@ class PipeLineManager {
     Microsoft::WRL::ComPtr<ID3D12RootSignature> CreateDepthRootSignature();
     Microsoft::WRL::ComPtr<ID3D12RootSignature> CreateBlurRootSignature();
     Microsoft::WRL::ComPtr<ID3D12RootSignature> CreateCinematicRootSignature();
+    Microsoft::WRL::ComPtr<ID3D12RootSignature> CreateDissolveRootSignature();
 
     // シェーダーモード別のパイプライン作成
     Microsoft::WRL::ComPtr<ID3D12PipelineState> CreateNoneGraphicsPipeLine(Microsoft::WRL::ComPtr<ID3D12RootSignature> rootSignature);
@@ -141,6 +143,7 @@ class PipeLineManager {
     Microsoft::WRL::ComPtr<ID3D12PipelineState> CreateDepthGraphicsPipeLine(Microsoft::WRL::ComPtr<ID3D12RootSignature> rootSignature);
     Microsoft::WRL::ComPtr<ID3D12PipelineState> CreateBlurGraphicsPipeLine(Microsoft::WRL::ComPtr<ID3D12RootSignature> rootSignature);
     Microsoft::WRL::ComPtr<ID3D12PipelineState> CreateCinematicGraphicsPipeLine(Microsoft::WRL::ComPtr<ID3D12RootSignature> rootSignature);
+    Microsoft::WRL::ComPtr<ID3D12PipelineState> CreateDissolveGraphicsPipeLine(Microsoft::WRL::ComPtr<ID3D12RootSignature> rootSignature);
 
   private:
     DirectXCommon *dxCommon_;

@@ -6,16 +6,19 @@
 #include <filesystem>
 #include <fstream>
 #include <iostream>
+#include <Graphics/Texture/TextureManager.h>
 void OffScreen::Initialize() {
     dxCommon = DirectXCommon::GetInstance();
     psoManager_ = PipeLineManager::GetInstance();
     srvManager_ = SrvManager::GetInstance();
+    TextureManager::GetInstance()->LoadTexture(a);
     CreateSmooth();
     CreateGauss();
     CreateVignette();
     CreateDepth();
     CreateRadial();
     CreateCinematic();
+    CreateDissolve();
     LoadFromJson();
     LoadFromJson(shaderMode_);
 }
@@ -48,6 +51,11 @@ void OffScreen::Draw() {
         break;
     case ShaderMode::kCinematic:
         dxCommon->GetCommandList()->SetGraphicsRootConstantBufferView(1, cinematicResource->GetGPUVirtualAddress());
+        break;
+    case ShaderMode::kDissolve:
+        dxCommon->GetCommandList()->SetGraphicsRootConstantBufferView(1, dissolveResource->GetGPUVirtualAddress());
+        srvManager_->SetGraphicsRootDescriptorTable(2, TextureManager::GetInstance()->GetTextureIndexByFilePath(a));
+        break;
     default:
         break;
     }
@@ -59,7 +67,7 @@ void OffScreen::Setting() {
 #ifdef _DEBUG
 
     // ShaderModeを文字列で表現
-    const char *shaderModeItems[] = {"なし", "グレイ", "ビネット", "スムース", "ガウス", "アウトライン(エッジ検出)", "アウトライン(深度ベース)", "ブラー", "シネマティック"};
+    const char *shaderModeItems[] = {"なし", "グレイ", "ビネット", "スムース", "ガウス", "アウトライン(エッジ検出)", "アウトライン(深度ベース)", "ブラー", "シネマティック", "ディゾルブ"};
     int currentShaderMode = static_cast<int>(shaderMode_);
 
     // Comboを描画してユーザーが選択した場合に値を更新
@@ -100,6 +108,9 @@ void OffScreen::Setting() {
         ImGui::DragFloat("コンストラクト", &cinematicData->contrast, 0.01f);
         ImGui::DragFloat("彩度", &cinematicData->saturation, 0.01f);
         ImGui::DragFloat("輝度", &cinematicData->brightness, 0.01f);
+        break;
+    case ShaderMode::kDissolve:
+        ImGui::DragFloat("ディゾルブ値", &dissolveData->value, 0.01f, 0.0f, 1.0f);
         break;
     default:
         break;
@@ -155,6 +166,12 @@ void OffScreen::CreateCinematic() {
     cinematicData->contrast = 1.05f;
     cinematicData->saturation = 0.68f;
     cinematicData->brightness = 0.13f;
+}
+
+void OffScreen::CreateDissolve() {
+    dissolveResource = dxCommon->CreateBufferResource(sizeof(Dissolve));
+    dissolveResource->Map(0, nullptr, reinterpret_cast<void **>(&dissolveData));
+    dissolveData->value = 0.5f;
 }
 
 void OffScreen::SaveToJson() {

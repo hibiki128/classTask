@@ -2,9 +2,9 @@
 #include "externals/nlohmann/json.hpp"
 #include "myMath.h"
 #include "wrl.h"
+#include <d3d12.h>
 #include <type/Matrix4x4.h>
 #include <type/Vector2.h>
-#include <d3d12.h>
 
 #include <Graphics/PipeLine/PipeLineManager.h>
 #include <Graphics/Srv/SrvManager.h>
@@ -26,6 +26,7 @@ class OffScreen {
     void CreateDepth();
     void CreateRadial();
     void CreateCinematic();
+    void CreateDissolve();
     void SaveToJson();
     void LoadFromJson(ShaderMode shaderMode);
     void LoadFromJson();
@@ -72,6 +73,10 @@ class OffScreen {
         float brightness;
     };
 
+    struct Dissolve {
+        float value;
+    };
+
     // バッファリソース
     Microsoft::WRL::ComPtr<ID3D12Resource> vignetteResource;
     // バッファリソース内のデータを指すポインタ
@@ -103,4 +108,11 @@ class OffScreen {
     Microsoft::WRL::ComPtr<ID3D12Resource> cinematicResource;
     // バッファリソース内のデータを指すポインタ
     Cinematic *cinematicData = nullptr;
+
+    // バッファリソース
+    Microsoft::WRL::ComPtr<ID3D12Resource> dissolveResource;
+    // バッファリソース内のデータを指すポインタ
+    Dissolve *dissolveData = nullptr;
+
+    std::string a = "debug/noise0.png";
 };

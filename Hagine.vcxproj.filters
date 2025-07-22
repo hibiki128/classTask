@@ -775,6 +775,7 @@
     <FxCompile Include="Resources\shaders\Skinning\Skinning.VS.hlsl">
       <Filter>リソース ファイル\Skinning</Filter>
     </FxCompile>
+    <FxCompile Include="Resources\shaders\OffScreen\Dissolve.PS.hlsl" />
   </ItemGroup>
   <ItemGroup>
     <Text Include="externals\imgui\LICENSE.txt">

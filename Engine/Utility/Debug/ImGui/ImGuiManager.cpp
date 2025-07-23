@@ -418,7 +418,6 @@ void ImGuiManager::ShowMainMenu() {
                 showShortcutWindow = !showShortcutWindow;
             }
             if (ImGui::MenuItem(ICON_FA_INFO_CIRCLE " バージョン情報")) {
-                
             }
             ImGui::EndMenu();
         }
@@ -550,7 +549,7 @@ void ImGuiManager::FixAspectRatio() {
     }
 }
 
-void ImGuiManager::ShowSceneWindow(OffScreen* offScreen) {
+void ImGuiManager::ShowSceneWindow(OffScreen *offScreen) {
     // ImGuiウィンドウ開始前にNextWindowSizeは設定しない（手動サイズ変更を許可）
     ImGuiWindowFlags flags = ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoScrollbar;
     // フォーカスされていない場合は描画を最適化
@@ -619,13 +618,8 @@ void ImGuiManager::ShowSceneWindow(OffScreen* offScreen) {
 
     // ポストエフェクトが適用された最終結果のテクスチャを取得
     uint32_t srvIndex;
-    if (offScreen != nullptr) {
-        // ポストエフェクトが適用された最終結果を使用
-        srvIndex = offScreen->GetFinalResultSrvIndex();
-    } else {
-        // フォールバック：通常のオフスクリーンバッファを使用
-        srvIndex = dxCommon_->GetOffScreenSrvIndex();
-    }
+
+    srvIndex = dxCommon_->GetOffScreenSrvIndex();
 
     // レンダーテクスチャをImGuiウィンドウに描画
     ImGui::ImageWithBg(

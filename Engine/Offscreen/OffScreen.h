@@ -22,24 +22,12 @@ struct PostEffectSettings {
 class OffScreen {
   public:
     void Initialize();
-    void CreateFinalResultTexture();
     void Draw();
-    void DrawToFinalResult();
-    void CopyFinalResultToBackBuffer();
     void Setting();
     void SetProjection(Matrix4x4 projectionMatrix) { projectionInverse_ = projectionMatrix; }
 
-    // 新しいメソッド
-    void AddEffect(ShaderMode mode);
-    void RemoveEffect(int index);
-    void SetEffectEnabled(int index, bool enabled);
-    void MoveEffectUp(int index);
-    void MoveEffectDown(int index);
-
     void SaveData();
     void LoadData();
-
-    uint32_t GetFinalResultSrvIndex() const { return finalResultSrvIndex_; }
 
   private:
     void CreateSmooth();
@@ -50,14 +38,8 @@ class OffScreen {
     void CreateCinematic();
     void CreateDissolve();
 
-    // 新しいメソッド
-    void CreatePingPongBuffers();
-    void DrawSingleEffect(ShaderMode mode, bool isFirstInput, int inputPingPongIndex, int outputRtvIndex);
-
     // データハンドラー関連メソッド
     void InitializeDataHandler();
-    void SaveEffectChain();
-    void LoadEffectChain();
     void SaveEffectParameters();
     void LoadEffectParameters();
 
@@ -65,24 +47,7 @@ class OffScreen {
     DirectXCommon *dxCommon;
     SrvManager *srvManager_;
     PipeLineManager *psoManager_ = nullptr;
-
-    // エフェクトチェーン管理
-    std::vector<PostEffectSettings> effectChain_;
-    int currentPingPongBuffer_ = 0;
-
-    // ピンポンバッファ用リソース
-    static const int kPingPongBufferCount = 2;
-    Microsoft::WRL::ComPtr<ID3D12Resource> pingPongResources_[kPingPongBufferCount];
-    uint32_t pingPongSrvIndices_[kPingPongBufferCount];
-    D3D12_CPU_DESCRIPTOR_HANDLE pingPongRtvHandles_[kPingPongBufferCount];
-    D3D12_CPU_DESCRIPTOR_HANDLE pingPongSrvHandlesCPU_[kPingPongBufferCount];
-    D3D12_GPU_DESCRIPTOR_HANDLE pingPongSrvHandlesGPU_[kPingPongBufferCount];
-
-    Microsoft::WRL::ComPtr<ID3D12Resource> finalResultResource_;
-    uint32_t finalResultSrvIndex_;
-    D3D12_CPU_DESCRIPTOR_HANDLE finalResultRtvHandle_;
-    D3D12_CPU_DESCRIPTOR_HANDLE finalResultSrvHandleCPU_;
-    D3D12_GPU_DESCRIPTOR_HANDLE finalResultSrvHandleGPU_;
+    ShaderMode shaderMode_ = ShaderMode::kNone;
 
     using json = nlohmann::json;
 

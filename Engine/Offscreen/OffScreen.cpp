@@ -247,8 +247,8 @@ void OffScreen::DrawSingleEffect(ShaderMode mode, bool isFirstInput, int inputPi
         dxCommon->GetCommandList()->SetGraphicsRootConstantBufferView(1, cinematicResource->GetGPUVirtualAddress());
         break;
     case ShaderMode::kDissolve:
-        srvManager_->SetGraphicsRootDescriptorTable(1, TextureManager::GetInstance()->GetTextureIndexByFilePath(folderPath_));
-        dxCommon->GetCommandList()->SetGraphicsRootConstantBufferView(2, dissolveResource->GetGPUVirtualAddress());
+        dxCommon->GetCommandList()->SetGraphicsRootConstantBufferView(1, dissolveResource->GetGPUVirtualAddress());
+        srvManager_->SetGraphicsRootDescriptorTable(2, TextureManager::GetInstance()->GetTextureIndexByFilePath(folderPath_));
         break;
     }
 

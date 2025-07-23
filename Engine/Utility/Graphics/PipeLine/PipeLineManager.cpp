@@ -243,7 +243,7 @@ void PipeLineManager::CreateSpritePipelines() {
 // レンダーパイプラインの作成
 void PipeLineManager::CreateRenderPipelines() {
     // 各シェーダーモード用のルートシグネチャとパイプラインを作成
-    for (int i = 0; i <= static_cast<int>(ShaderMode::kCount) - 1; i++) {
+    for (int i = 0; i <= static_cast<int>(ShaderMode::kDissolve); i++) {
         ShaderMode shaderMode = static_cast<ShaderMode>(i);
 
         // ルートシグネチャを作成し、マップに格納
@@ -1510,22 +1510,17 @@ Microsoft::WRL::ComPtr<ID3D12RootSignature> PipeLineManager::CreateDissolveRootS
     D3D12_ROOT_SIGNATURE_DESC descriptionRootSignature{};
     descriptionRootSignature.Flags = D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT;
 
-    //// DescriptorRangeの設定（SRV用: gTexture, gMaskTexture）
-    //D3D12_DESCRIPTOR_RANGE descriptorRanges[1] = {};
-    //descriptorRanges[0].BaseShaderRegister = 0; // gTexture用 (t0)
-    //descriptorRanges[0].NumDescriptors = 1;     // 1つのSRV
-    //descriptorRanges[0].RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
-    //descriptorRanges[0].OffsetInDescriptorsFromTableStart = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND;
+    // DescriptorRangeの設定（SRV用: gTexture, gDepthTexture）
+    D3D12_DESCRIPTOR_RANGE descriptorRanges[2] = {};
+    descriptorRanges[0].BaseShaderRegister = 0; // gTexture用 (t0)
+    descriptorRanges[0].NumDescriptors = 1;     // 1つのSRV
+    descriptorRanges[0].RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
+    descriptorRanges[0].OffsetInDescriptorsFromTableStart = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND;
 
-    //D3D12_DESCRIPTOR_RANGE maskDescriptorRanges[1] = {};
-    //maskDescriptorRanges[0].BaseShaderRegister = 1; // gMaskTexture用 (t1)
-    //maskDescriptorRanges[0].NumDescriptors = 1;     // 1つのSRV
-    //maskDescriptorRanges[0].RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
-    //maskDescriptorRanges[0].OffsetInDescriptorsFromTableStart = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND;
-
-    CD3DX12_DESCRIPTOR_RANGE descriptorRanges[2] = {};
-    descriptorRanges[0].Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 0);
-    descriptorRanges[1].Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 1);
+    descriptorRanges[1].BaseShaderRegister = 1; // gDepthTexture用 (t1)
+    descriptorRanges[1].NumDescriptors = 1;     // 1つのSRV
+    descriptorRanges[1].RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
+    descriptorRanges[1].OffsetInDescriptorsFromTableStart = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND;
 
     // RootParameterの設定
     D3D12_ROOT_PARAMETER rootParameters[3] = {};
@@ -1536,16 +1531,15 @@ Microsoft::WRL::ComPtr<ID3D12RootSignature> PipeLineManager::CreateDissolveRootS
     rootParameters[0].DescriptorTable.pDescriptorRanges = &descriptorRanges[0];
     rootParameters[0].DescriptorTable.NumDescriptorRanges = 1;
 
-    rootParameters[1].ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
-    rootParameters[1].ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL; // PixelShaderで使用
-    rootParameters[1].DescriptorTable.pDescriptorRanges = &descriptorRanges[1];
-    rootParameters[1].DescriptorTable.NumDescriptorRanges = 1;
-
     // ConstantBuffer用 (gMaterial)
-    rootParameters[2].ParameterType = D3D12_ROOT_PARAMETER_TYPE_CBV;
-    rootParameters[2].ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
-    rootParameters[2].Descriptor.ShaderRegister = 0; // b0
+    rootParameters[1].ParameterType = D3D12_ROOT_PARAMETER_TYPE_CBV;
+    rootParameters[1].ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
+    rootParameters[1].Descriptor.ShaderRegister = 0; // b0
 
+    rootParameters[2].ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
+    rootParameters[2].ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL; // PixelShaderで使用
+    rootParameters[2].DescriptorTable.pDescriptorRanges = &descriptorRanges[1];
+    rootParameters[2].DescriptorTable.NumDescriptorRanges = 1;
 
     descriptionRootSignature.pParameters = rootParameters;
     descriptionRootSignature.NumParameters = _countof(rootParameters);

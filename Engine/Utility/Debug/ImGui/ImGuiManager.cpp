@@ -626,7 +626,6 @@ void ImGuiManager::ShowSceneWindow(OffScreen *offScreen) {
         srvIndex = dxCommon_->GetOffScreenSrvIndex();
     }
 
-
     // レンダーテクスチャをImGuiウィンドウに描画
     ImGui::ImageWithBg(
         static_cast<ImTextureID>(SrvManager::GetInstance()->GetGPUDescriptorHandle(srvIndex).ptr),
@@ -798,6 +797,8 @@ void ImGuiManager::LoadLayoutForCurrentMode() {
 }
 
 void ImGuiManager::ShowHelpWindow() {
+#ifdef _DEBUG
+
     // ショートカット一覧ウィンドウの表示
     if (showShortcutWindow) {
         ImGui::SetNextWindowSize(ImVec2(500, 400), ImGuiCond_FirstUseEver);
@@ -911,4 +912,5 @@ void ImGuiManager::ShowHelpWindow() {
         }
         ImGui::End();
     }
+#endif // _DEBUG
 }

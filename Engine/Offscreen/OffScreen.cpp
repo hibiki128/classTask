@@ -36,7 +36,7 @@ void OffScreen::CreatePingPongBuffers() {
         pingPongResources_[i] = dxCommon->CreateRenderTextureResource(WinApp::kClientWidth, WinApp::kClientHeight, dxCommon->GetClearColorValue().Format, dxCommon->GetClearColorValue());
 
         // SRV作成
-        pingPongSrvIndices_[i] = srvManager_->Allocate();
+        pingPongSrvIndices_[i] = srvManager_->Allocate() + 1;
         srvManager_->CreateSRVforRenderTexture(pingPongSrvIndices_[i], pingPongResources_[i].Get());
         pingPongSrvHandlesCPU_[i] = srvManager_->GetCPUDescriptorHandle(pingPongSrvIndices_[i]);
         pingPongSrvHandlesGPU_[i] = srvManager_->GetGPUDescriptorHandle(pingPongSrvIndices_[i]);

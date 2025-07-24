@@ -429,6 +429,9 @@
     <ClCompile Include="application\Utility\ComboSystem\ComboSystem.cpp">
       <Filter>ソースファイル</Filter>
     </ClCompile>
+    <ClCompile Include="Engine\3d\Particle\CSParticle\ParticleCS.cpp">
+      <Filter>ソースファイル</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="resources\shaders\Particle\Particle.hlsli">
@@ -735,6 +738,7 @@
       <Filter>ソースファイル\Engine\Utility\Edit\ShotcutManager</Filter>
     </ClInclude>
     <ClInclude Include="application\Utility\ComboSystem\ComboSystem.h" />
+    <ClInclude Include="Engine\3d\Particle\CSParticle\ParticleCS.h" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="Hagine.rc" />
@@ -1072,5 +1076,6 @@
     <FxCompile Include="Resources\shaders\OffScreen\Dissolve.PS.hlsl" />
     <FxCompile Include="Resources\shaders\OffScreen\Random.PS.hlsl" />
     <FxCompile Include="Resources\shaders\OffScreen\FocusLine.PS.hlsl" />
+    <FxCompile Include="Resources\shaders\Particle\Particle.CS.hlsl" />
   </ItemGroup>
 </Project>

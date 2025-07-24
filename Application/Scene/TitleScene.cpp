@@ -11,6 +11,10 @@ void TitleScene::Initialize() {
 
     debugCamera_ = std::make_unique<DebugCamera>();
     debugCamera_->Initialize(&vp_);
+
+    particleCS_ = std::make_unique<ParticleCS>();
+    particleCS_->Initialize();
+
 }
 
 void TitleScene::Finalize() {
@@ -35,6 +39,8 @@ void TitleScene::Draw() {
     //-----Spriteの描画開始-----
 
     //-------------------------
+
+    particleCS_->Draw(vp_);
 
     /// -------描画処理終了-------
 }

@@ -1,6 +1,6 @@
 {
     "Lighting": true,
-    "PrimitiveType": 2,
+    "PrimitiveType": 1,
     "blendMode": 0,
     "childrenNames": [],
     "isLighting": true,
@@ -12,11 +12,11 @@
         "y": 1.0,
         "z": 1.0
     },
-    "objectName": "sphere_1",
+    "objectName": "plane_1",
     "parentName": "",
     "rotation": {
-        "w": 1.0,
-        "x": 0.0,
+        "w": -0.7071062922477722,
+        "x": 0.7071073055267334,
         "y": 0.0,
         "z": 0.0
     },
@@ -26,10 +26,10 @@
         "z": 1000.0
     },
     "skeletonDraw": false,
-    "textureName": "debug/Fine_Basin.jpg",
+    "textureName": "debug/ground.png",
     "translation": {
         "x": 0.0,
-        "y": 0.0,
+        "y": -7.599999904632568,
         "z": 0.0
     }
 }

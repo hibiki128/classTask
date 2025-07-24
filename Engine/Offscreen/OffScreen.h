@@ -37,6 +37,14 @@ class OffScreen {
     void CreateRadial();
     void CreateCinematic();
     void CreateDissolve();
+    void CreatePingPongBuffers();
+    void DrawSingleEffect(ShaderMode mode, bool isFirstInput, int inputPingPongIndex, int outputRtvIndex);
+
+    void AddEffect(ShaderMode mode);
+    void RemoveEffect(int index);
+    void SetEffectEnabled(int index, bool enabled);
+    void MoveEffectUp(int index);
+    void MoveEffectDown(int index);
 
     // データハンドラー関連メソッド
     void InitializeDataHandler();
@@ -48,6 +56,17 @@ class OffScreen {
     SrvManager *srvManager_;
     PipeLineManager *psoManager_ = nullptr;
     ShaderMode shaderMode_ = ShaderMode::kNone;
+
+    std::vector<PostEffectSettings> effectChain_;
+    int currentPingPongBuffer_ = 0;
+
+    // ピンポンバッファ用リソース
+    static const int kPingPongBufferCount = 2;
+    Microsoft::WRL::ComPtr<ID3D12Resource> pingPongResources_[kPingPongBufferCount];
+    uint32_t pingPongSrvIndices_[kPingPongBufferCount];
+    D3D12_CPU_DESCRIPTOR_HANDLE pingPongRtvHandles_[kPingPongBufferCount];
+    D3D12_CPU_DESCRIPTOR_HANDLE pingPongSrvHandlesCPU_[kPingPongBufferCount];
+    D3D12_GPU_DESCRIPTOR_HANDLE pingPongSrvHandlesGPU_[kPingPongBufferCount];
 
     using json = nlohmann::json;
 

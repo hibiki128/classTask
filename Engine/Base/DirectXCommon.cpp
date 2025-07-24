@@ -298,7 +298,7 @@ void DirectXCommon::CreateVariousDesctiptorHeap() {
 
     ///==========ディスクリプタヒープの生成=============
     // RTV用のヒープでディスクリプタの数は2。RTVはShader内で触るものではないが、ShaderVisibleはfalse
-    rtvDescriptorHeap = CreateDescriptorHeap(D3D12_DESCRIPTOR_HEAP_TYPE_RTV, 6, false);
+    rtvDescriptorHeap = CreateDescriptorHeap(D3D12_DESCRIPTOR_HEAP_TYPE_RTV, 5, false);
     // DSV用のヒープでディスクリプタの数は1。DSVはShader内で触るものではないので、ShaderVisibleはfalse
     dsvDescriptorHeap = CreateDescriptorHeap(D3D12_DESCRIPTOR_HEAP_TYPE_DSV, 1, false);
     ///=================================================

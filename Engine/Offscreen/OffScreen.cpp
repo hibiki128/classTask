@@ -13,6 +13,7 @@ void OffScreen::Initialize() {
     psoManager_ = PipeLineManager::GetInstance();
     srvManager_ = SrvManager::GetInstance();
     TextureManager::GetInstance()->LoadTexture(folderPath_);
+    CreatePingPongBuffers();
     CreateSmooth();
     CreateGauss();
     CreateVignette();
@@ -28,14 +29,121 @@ void OffScreen::InitializeDataHandler() {
     dataHandler_ = std::make_unique<DataHandler>("OffScreen", "OffScreenData");
 }
 
+void OffScreen::CreatePingPongBuffers() {
+    // ピンポンバッファを作成
+    for (int i = 0; i < kPingPongBufferCount; ++i) {
+        // レンダーターゲットリソースを作成
+        pingPongResources_[i] = dxCommon->CreateRenderTextureResource(WinApp::kClientWidth, WinApp::kClientHeight, dxCommon->GetClearColorValue().Format, dxCommon->GetClearColorValue());
+
+        // SRV作成
+        pingPongSrvIndices_[i] = srvManager_->Allocate();
+        srvManager_->CreateSRVforRenderTexture(pingPongSrvIndices_[i], pingPongResources_[i].Get());
+        pingPongSrvHandlesCPU_[i] = srvManager_->GetCPUDescriptorHandle(pingPongSrvIndices_[i]);
+        pingPongSrvHandlesGPU_[i] = srvManager_->GetGPUDescriptorHandle(pingPongSrvIndices_[i]);
+
+        // RTVハンドルを取得（DirectXCommonのRTVディスクリプタヒープから）
+        // バックバッファ(0,1) + オフスクリーン(2) の後の位置を使用
+        int rtvIndex = 3 + i; // オフスクリーン(2)の次から使用
+
+        // RTVディスクリプタハンドルを取得
+        D3D12_CPU_DESCRIPTOR_HANDLE rtvStartHandle = dxCommon->GetRTVDescriptorHeap()->GetCPUDescriptorHandleForHeapStart();
+        UINT descriptorSize = dxCommon->GetDevice()->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
+        pingPongRtvHandles_[i].ptr = rtvStartHandle.ptr + (rtvIndex * descriptorSize);
+
+        // RTVを作成
+        D3D12_RENDER_TARGET_VIEW_DESC rtvDesc{};
+        rtvDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM_SRGB;
+        rtvDesc.ViewDimension = D3D12_RTV_DIMENSION_TEXTURE2D;
+
+        dxCommon->GetDevice()->CreateRenderTargetView(pingPongResources_[i].Get(), &rtvDesc, pingPongRtvHandles_[i]);
+    }
+}
+
 void OffScreen::Draw() {
-    psoManager_->DrawCommonSetting(PipelineType::kRender, BlendMode::kNormal, shaderMode_);
-    // 選択されたShaderModeに基づいて描画設定を実行
-    switch (shaderMode_) {
-    case ShaderMode::kNone:
-        break;
-    case ShaderMode::kGray:
-        break;
+    if (effectChain_.empty()) {
+        // エフェクトが無い場合は元の処理
+        psoManager_->DrawCommonSetting(PipelineType::kRender, BlendMode::kNormal, ShaderMode::kNone);
+        dxCommon->GetCommandList()->SetGraphicsRootDescriptorTable(0, dxCommon->GetOffScreenGPUHandle());
+        dxCommon->GetCommandList()->DrawInstanced(3, 1, 0, 0);
+        return;
+    }
+
+    bool isFirstInput = true; // 最初の入力はオフスクリーンバッファ
+    int currentPingPongBuffer = 0;
+    int outputBuffer = 0;
+
+    // 有効なエフェクトのみを処理
+    std::vector<int> enabledEffects;
+    for (size_t i = 0; i < effectChain_.size(); ++i) {
+        if (effectChain_[i].enabled) {
+            enabledEffects.push_back(static_cast<int>(i));
+        }
+    }
+
+    if (enabledEffects.empty()) {
+        // 有効なエフェクトがない場合は元の処理
+        psoManager_->DrawCommonSetting(PipelineType::kRender, BlendMode::kNormal, ShaderMode::kNone);
+        dxCommon->GetCommandList()->SetGraphicsRootDescriptorTable(0, dxCommon->GetOffScreenGPUHandle());
+        dxCommon->GetCommandList()->DrawInstanced(3, 1, 0, 0);
+        return;
+    }
+
+    // 有効なエフェクトチェーンを順番に適用
+    for (size_t i = 0; i < enabledEffects.size(); ++i) {
+        int effectIndex = enabledEffects[i];
+        bool isLastEffect = (i == enabledEffects.size() - 1);
+
+        if (isLastEffect) {
+            // 最後のエフェクトはバックバッファに直接描画
+            DrawSingleEffect(effectChain_[effectIndex].shaderMode, isFirstInput, currentPingPongBuffer, -1);
+        } else {
+            // 中間エフェクトはピンポンバッファに描画
+            DrawSingleEffect(effectChain_[effectIndex].shaderMode, isFirstInput, currentPingPongBuffer, outputBuffer);
+            currentPingPongBuffer = outputBuffer;
+            outputBuffer = 1 - outputBuffer; // 0→1、1→0にスワップ
+            isFirstInput = false;            // 2回目以降はピンポンバッファから入力
+        }
+    }
+}
+
+void OffScreen::DrawSingleEffect(ShaderMode mode, bool isFirstInput, int inputPingPongIndex, int outputRtvIndex) {
+    // 出力先を設定
+    if (outputRtvIndex != -1) {
+        // ピンポンバッファに描画
+        dxCommon->GetCommandList()->OMSetRenderTargets(1, &pingPongRtvHandles_[outputRtvIndex], false, nullptr);
+        // バリア遷移
+        dxCommon->BarrierTransition(pingPongResources_[outputRtvIndex].Get(),
+                                    D3D12_RESOURCE_STATE_GENERIC_READ, D3D12_RESOURCE_STATE_RENDER_TARGET);
+
+        // レンダーターゲットをクリア
+        const float clearColor[4] = {0.0f, 0.0f, 0.0f, 1.0f};
+        dxCommon->GetCommandList()->ClearRenderTargetView(pingPongRtvHandles_[outputRtvIndex], clearColor, 0, nullptr);
+    } else {
+        // バックバッファに描画（最終出力）
+        UINT backBufferIndex = dxCommon->GetSwapChain()->GetCurrentBackBufferIndex();
+        D3D12_CPU_DESCRIPTOR_HANDLE rtvHandle = dxCommon->GetRTVCPUDescriptorHandle(backBufferIndex);
+        dxCommon->GetCommandList()->OMSetRenderTargets(1, &rtvHandle, false, nullptr);
+    }
+
+    // パイプライン設定
+    psoManager_->DrawCommonSetting(PipelineType::kRender, BlendMode::kNormal, mode);
+
+    // 入力テクスチャを設定（メインテクスチャ - スロット0）
+    if (isFirstInput) {
+        // 最初の入力はオフスクリーンバッファ
+        dxCommon->GetCommandList()->SetGraphicsRootDescriptorTable(0, dxCommon->GetOffScreenGPUHandle());
+    } else {
+        // 2回目以降はピンポンバッファ
+        if (inputPingPongIndex >= 0 && inputPingPongIndex < kPingPongBufferCount) {
+            dxCommon->GetCommandList()->SetGraphicsRootDescriptorTable(0, pingPongSrvHandlesGPU_[inputPingPongIndex]);
+        } else {
+            // エラーハンドリング - フォールバックとしてオフスクリーンバッファを使用
+            dxCommon->GetCommandList()->SetGraphicsRootDescriptorTable(0, dxCommon->GetOffScreenGPUHandle());
+        }
+    }
+
+    // シェーダーモードに応じた定数バッファとテクスチャ設定
+    switch (mode) {
     case ShaderMode::kVigneet:
         dxCommon->GetCommandList()->SetGraphicsRootConstantBufferView(1, vignetteResource->GetGPUVirtualAddress());
         break;
@@ -44,8 +152,6 @@ void OffScreen::Draw() {
         break;
     case ShaderMode::kGauss:
         dxCommon->GetCommandList()->SetGraphicsRootConstantBufferView(1, gaussianResouce->GetGPUVirtualAddress());
-        break;
-    case ShaderMode::kOutLine:
         break;
     case ShaderMode::kDepth:
         dxCommon->GetCommandList()->SetGraphicsRootConstantBufferView(1, depthResouce->GetGPUVirtualAddress());
@@ -61,70 +167,137 @@ void OffScreen::Draw() {
         dxCommon->GetCommandList()->SetGraphicsRootConstantBufferView(1, dissolveResource->GetGPUVirtualAddress());
         srvManager_->SetGraphicsRootDescriptorTable(2, TextureManager::GetInstance()->GetTextureIndexByFilePath(folderPath_));
         break;
-    default:
-        break;
     }
-    dxCommon->GetCommandList()->SetGraphicsRootDescriptorTable(0, dxCommon->GetOffScreenGPUHandle());
+
+    // 描画
     dxCommon->GetCommandList()->DrawInstanced(3, 1, 0, 0);
+
+    // バリア遷移（ピンポンバッファの場合）
+    if (outputRtvIndex != -1) {
+        dxCommon->BarrierTransition(pingPongResources_[outputRtvIndex].Get(),
+                                    D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_GENERIC_READ);
+    }
 }
 
 void OffScreen::Setting() {
 #ifdef _DEBUG
+    ImGui::Text("ポストエフェクト");
 
-    // ShaderModeを文字列で表現
+    // エフェクト追加ボタン
     const char *shaderModeItems[] = {"なし", "グレイ", "ビネット", "スムース", "ガウス", "アウトライン(エッジ検出)", "アウトライン(深度ベース)", "ブラー", "シネマティック", "ディゾルブ"};
-    int currentShaderMode = static_cast<int>(shaderMode_);
+    static int selectedEffect = 0;
 
-    // Comboを描画してユーザーが選択した場合に値を更新
-    if (ImGui::Combo("シェーダーモード", &currentShaderMode, shaderModeItems, IM_ARRAYSIZE(shaderModeItems))) {
-        shaderMode_ = static_cast<ShaderMode>(currentShaderMode);
+    ImGui::Combo("追加するエフェクト", &selectedEffect, shaderModeItems, IM_ARRAYSIZE(shaderModeItems));
+
+    if (ImGui::Button("エフェクトを追加")) {
+        AddEffect(static_cast<ShaderMode>(selectedEffect));
     }
 
-    switch (shaderMode_) {
-    case ShaderMode::kNone:
-        break;
-    case ShaderMode::kGray:
-        break;
-    case ShaderMode::kVigneet:
-        ImGui::DragFloat("滑らかさ", &vignetteData->vignetteExponent, 0.1f, 0.0f, 10.0f);
-        ImGui::DragFloat("半径", &vignetteData->vignetteRadius, 0.01f, 0.0f, 10.0f);
-        ImGui::DragFloat("強度", &vignetteData->vignetteStrength, 0.01f);
-        ImGui::DragFloat2("中心", &vignetteData->vignetteCenter.x, 0.01f, -10.0f, 10.0f);
-        break;
-    case ShaderMode::kSmooth:
-        ImGui::DragInt("カーネルサイズ", &smoothData->kernelSize, 2, 3, 7);
-        break;
-    case ShaderMode::kGauss:
-        ImGui::DragInt("カーネルサイズ", &gaussianData->kernelSize, 2, 3, 7);
-        ImGui::DragFloat("シグマ", &gaussianData->sigma, 0.01f, 0.01f, 10.0f);
-        break;
-    case ShaderMode::kOutLine:
-        break;
-    case ShaderMode::kDepth:
-        depthData->projectionInverse = Inverse(projectionInverse_);
-        ImGui::DragInt("カーネルサイズ", &depthData->kernelSize, 2, 3, 7);
-        break;
-    case ShaderMode::kBlur:
-        ImGui::DragFloat2("中心座標", &radialData->kCenter.x, 0.1f);
-        ImGui::DragFloat("幅", &radialData->kBlurWidth, 0.01f);
-        break;
-    case ShaderMode::kCinematic:
-        ImGui::DragFloat("コンストラクト", &cinematicData->contrast, 0.01f);
-        ImGui::DragFloat("彩度", &cinematicData->saturation, 0.01f);
-        ImGui::DragFloat("輝度", &cinematicData->brightness, 0.01f);
-        break;
-    case ShaderMode::kDissolve:
-        ImGui::DragFloat("ディゾルブ値", &dissolveData->value, 0.01f, 0.0f, 1.0f);
-        break;
-    default:
-        break;
+    ImGui::Separator();
+
+    // エフェクトチェーン表示・編集
+    for (int i = 0; i < effectChain_.size(); ++i) {
+        ImGui::PushID(i);
+
+        ImGui::Text("エフェクト %d: %s", i + 1, shaderModeItems[static_cast<int>(effectChain_[i].shaderMode)]);
+
+        ImGui::SameLine();
+        if (ImGui::Checkbox("有効", &effectChain_[i].enabled)) {
+            SetEffectEnabled(i, effectChain_[i].enabled);
+        }
+
+        ImGui::SameLine();
+        if (ImGui::Button("上へ") && i > 0) {
+            MoveEffectUp(i);
+        }
+
+        ImGui::SameLine();
+        if (ImGui::Button("下へ") && i < effectChain_.size() - 1) {
+            MoveEffectDown(i);
+        }
+
+        ImGui::SameLine();
+        if (ImGui::Button("削除")) {
+            RemoveEffect(i);
+            ImGui::PopID();
+            break; // インデックスが変わるのでbreak
+        }
+
+        // 各エフェクトの個別設定
+        if (effectChain_[i].enabled) {
+            switch (effectChain_[i].shaderMode) {
+            case ShaderMode::kVigneet:
+                ImGui::DragFloat("滑らかさ", &vignetteData->vignetteExponent, 0.1f, 0.0f, 10.0f);
+                ImGui::DragFloat("半径", &vignetteData->vignetteRadius, 0.01f, 0.0f, 10.0f);
+                ImGui::DragFloat("強度", &vignetteData->vignetteStrength, 0.01f);
+                ImGui::DragFloat2("中心", &vignetteData->vignetteCenter.x, 0.01f, -10.0f, 10.0f);
+                break;
+            case ShaderMode::kSmooth:
+                ImGui::DragInt("カーネルサイズ", &smoothData->kernelSize, 2, 3, 7);
+                break;
+            case ShaderMode::kGauss:
+                ImGui::DragInt("カーネルサイズ", &gaussianData->kernelSize, 2, 3, 7);
+                ImGui::DragFloat("シグマ", &gaussianData->sigma, 0.01f, 0.01f, 10.0f);
+                break;
+            case ShaderMode::kDepth:
+                depthData->projectionInverse = Inverse(projectionInverse_);
+                ImGui::DragInt("カーネルサイズ", &depthData->kernelSize, 2, 3, 7);
+                break;
+            case ShaderMode::kBlur:
+                ImGui::DragFloat2("中心座標", &radialData->kCenter.x, 0.1f);
+                ImGui::DragFloat("幅", &radialData->kBlurWidth, 0.01f);
+                break;
+            case ShaderMode::kCinematic:
+                ImGui::DragFloat("コンストラクト", &cinematicData->contrast, 0.01f);
+                ImGui::DragFloat("彩度", &cinematicData->saturation, 0.01f);
+                ImGui::DragFloat("輝度", &cinematicData->brightness, 0.01f);
+                break;
+            case ShaderMode::kDissolve:
+                ImGui::DragFloat("ディゾルブ値", &dissolveData->value, 0.01f, 0.0f, 1.0f);
+            }
+        }
+
+        ImGui::PopID();
+        ImGui::Separator();
     }
+
     if (ImGui::Button("セーブ")) {
-
+        SaveData();
         std::string message = std::format("OffScreen saved.");
         MessageBoxA(nullptr, message.c_str(), "OffScreen", 0);
     }
 #endif // _DEBUG
+}
+
+void OffScreen::AddEffect(ShaderMode mode) {
+    PostEffectSettings settings;
+    settings.shaderMode = mode;
+    settings.enabled = true;
+    effectChain_.push_back(settings);
+}
+
+void OffScreen::RemoveEffect(int index) {
+    if (index >= 0 && index < effectChain_.size()) {
+        effectChain_.erase(effectChain_.begin() + index);
+    }
+}
+
+void OffScreen::SetEffectEnabled(int index, bool enabled) {
+    if (index >= 0 && index < effectChain_.size()) {
+        effectChain_[index].enabled = enabled;
+    }
+}
+
+void OffScreen::MoveEffectUp(int index) {
+    if (index > 0 && index < effectChain_.size()) {
+        std::swap(effectChain_[index], effectChain_[index - 1]);
+    }
+}
+
+void OffScreen::MoveEffectDown(int index) {
+    if (index >= 0 && index < effectChain_.size() - 1) {
+        std::swap(effectChain_[index], effectChain_[index + 1]);
+    }
 }
 
 void OffScreen::CreateSmooth() {

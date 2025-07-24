@@ -360,23 +360,26 @@ void OffScreen::Setting() {
                 ImGui::DragFloat("輝度", &cinematicData->brightness, 0.01f);
                 break;
             case ShaderMode::kDissolve:
-                ImGui::DragFloat("値", &dissolveData->value, 0.01f, 0.0f, 1.0f);
+                ImGui::SliderFloat("Threshold", &dissolveData->threshold, 0.0f, 1.0f, "%.2f");   // 閾値
+                ImGui::SliderFloat("Edge Width", &dissolveData->edgeWidth, 0.0f, 0.5f, "%.3f");  // エッジ幅
+                ImGui::ColorEdit3("Edge Color", reinterpret_cast<float *>(&dissolveData->edgeColor)); // 色
+                ImGui::Checkbox("Invert", &dissolveData->invert);
                 break;
             case ShaderMode::kFocusLine:
-                    ImGui::SliderFloat("Time", &focusLineData->time, 0.0f, 10.0f);
-                    ImGui::SliderFloat("Lines", &focusLineData->lines, 8.0f, 64.0f);
-                    ImGui::SliderFloat("Width", &focusLineData->width, 0.01f, 0.05f);
-                    ImGui::SliderFloat("Speed", &focusLineData->speed, 1.0f, 8.0f);
-                    ImGui::SliderFloat("Intensity", &focusLineData->intensity, 0.2f, 1.5f);
+                ImGui::DragFloat("Time", &focusLineData->time, 0.1f);
+                ImGui::DragFloat("Lines", &focusLineData->lines, 0.1f);
+                ImGui::DragFloat("Width", &focusLineData->width, 0.01f);
+                ImGui::DragFloat("Speed", &focusLineData->speed, 0.1f);
+                ImGui::DragFloat("Intensity", &focusLineData->intensity, 0.2f, 1.5f);
 
-                    ImGui::Separator();
-                    ImGui::Text("Area Settings");
-                    ImGui::SliderFloat("Center Radius", &focusLineData->centerRadius, 0.1f, 0.5f);
-                    ImGui::SliderFloat("Max Distance", &focusLineData->maxDistance, 0.5f, 1.0f);
+                ImGui::Separator();
+                ImGui::Text("Area Settings");
+                ImGui::DragFloat("Center Radius", &focusLineData->centerRadius, 0.1f);
+                ImGui::DragFloat("Max Distance", &focusLineData->maxDistance, 0.1f);
 
-                    ImGui::Separator();
-                    ImGui::Text("Line Color");
-                    ImGui::ColorEdit3("Color", &focusLineData->lineColor.x);
+                ImGui::Separator();
+                ImGui::Text("Line Color");
+                ImGui::ColorEdit3("Color", &focusLineData->lineColor.x);
                 break;
             }
         }
@@ -473,7 +476,10 @@ void OffScreen::CreateCinematic() {
 void OffScreen::CreateDissolve() {
     dissolveResource = dxCommon->CreateBufferResource(sizeof(Dissolve));
     dissolveResource->Map(0, nullptr, reinterpret_cast<void **>(&dissolveData));
-    dissolveData->value = 0.0f;
+    dissolveData->threshold = 0.0f;
+    dissolveData->edgeWidth = 0.01f;
+    dissolveData->edgeColor = {1.0f, 1.0f, 1.0f}; // 白色
+    dissolveData->invert = false;                 // 初期値はfalse
 }
 
 void OffScreen::CreateRandom() {
@@ -581,7 +587,9 @@ void OffScreen::SaveEffectParameters() {
     }
 
     if (dissolveData) {
-        dataHandler_->Save<float>("dissolve_value", dissolveData->value);
+        dataHandler_->Save<float>("dissolve_threshold", dissolveData->threshold);
+        dataHandler_->Save<float>("dissolve_edgeWidth", dissolveData->edgeWidth);
+        dataHandler_->Save<Vector3>("dissolve_edgeColor", dissolveData->edgeColor);
     }
 }
 
@@ -626,6 +634,8 @@ void OffScreen::LoadEffectParameters() {
     }
 
     if (dissolveData) {
-        dissolveData->value = dataHandler_->Load<float>("dissolve_value", 0.0f);
+        dissolveData->threshold = dataHandler_->Load<float>("dissolve_threshold", 0.0f);
+        dissolveData->edgeWidth = dataHandler_->Load<float>("dissolve_edgeWidth", 0.01f);
+        dissolveData->edgeColor = dataHandler_->Load<Vector3>("dissolve_edgeColor", {1.0f, 0.0f, 0.0f});
     }
 }

@@ -122,14 +122,20 @@ class OffScreen {
     };
 
     struct Dissolve {
-        float value;
+        float threshold;
+        float edgeWidth;
+        float _pad[2];
+        Vector3 edgeColor;
+        float _pad1;
+        bool invert;
+        float _pad2[3];
     };
 
     struct Random {
         float time;
     };
 
-struct FocusLine {
+    struct FocusLine {
         float time;
         float lines;
         float width;
@@ -137,7 +143,7 @@ struct FocusLine {
         float intensity;
         float centerRadius;
         float maxDistance;
-        float padding1;   
+        float padding1;
         Vector4 lineColor;
     };
 
@@ -172,6 +178,8 @@ struct FocusLine {
     FocusLine *focusLineData = nullptr;
 
     std::string texPath_ = "debug/noise0.png";
+
+    float color[3]{};
 
     // データハンドラー
     std::unique_ptr<DataHandler> dataHandler_;

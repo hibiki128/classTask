@@ -3,17 +3,17 @@
 #ifdef _DEBUG
 #include "imgui.h"
 #endif // _DEBUG
-#include <Graphics/Texture/TextureManager.h>
 #include <filesystem>
 #include <fstream>
 #include <iostream>
+#include <Graphics/Texture/TextureManager.h>
+#include <Frame.h>
 
 void OffScreen::Initialize() {
     dxCommon = DirectXCommon::GetInstance();
     psoManager_ = PipeLineManager::GetInstance();
     srvManager_ = SrvManager::GetInstance();
-    TextureManager::GetInstance()->LoadTexture(folderPath_);
-    CreatePingPongBuffers();
+    TextureManager::GetInstance()->LoadTexture(texPath_);
     CreateSmooth();
     CreateGauss();
     CreateVignette();
@@ -21,8 +21,40 @@ void OffScreen::Initialize() {
     CreateRadial();
     CreateCinematic();
     CreateDissolve();
+    CreateRandom();
+    CreatePingPongBuffers();
+    CreateFinalResultTexture();
     InitializeDataHandler();
     LoadData();
+}
+
+void OffScreen::CreateFinalResultTexture() {
+    // 最終結果用のレンダーターゲットリソースを作成
+    finalResultResource_ = dxCommon->CreateRenderTextureResource(
+        WinApp::kClientWidth,
+        WinApp::kClientHeight,
+        dxCommon->GetClearColorValue().Format,
+        dxCommon->GetClearColorValue());
+
+    // SRV作成（ImGui表示用）
+    finalResultSrvIndex_ = srvManager_->Allocate() + 1;
+    srvManager_->CreateSRVforRenderTexture(finalResultSrvIndex_, finalResultResource_.Get());
+    finalResultSrvHandleCPU_ = srvManager_->GetCPUDescriptorHandle(finalResultSrvIndex_);
+    finalResultSrvHandleGPU_ = srvManager_->GetGPUDescriptorHandle(finalResultSrvIndex_);
+
+    // RTVハンドルを取得（ピンポンバッファの次の位置を使用）
+    int rtvIndex = 3 + kPingPongBufferCount; // バックバッファ(0,1) + オフスクリーン(2) + ピンポンバッファ(3,4) の次
+
+    D3D12_CPU_DESCRIPTOR_HANDLE rtvStartHandle = dxCommon->GetRTVDescriptorHeap()->GetCPUDescriptorHandleForHeapStart();
+    UINT descriptorSize = dxCommon->GetDevice()->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
+    finalResultRtvHandle_.ptr = rtvStartHandle.ptr + (rtvIndex * descriptorSize);
+
+    // RTVを作成
+    D3D12_RENDER_TARGET_VIEW_DESC rtvDesc{};
+    rtvDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM_SRGB;
+    rtvDesc.ViewDimension = D3D12_RTV_DIMENSION_TEXTURE2D;
+
+    dxCommon->GetDevice()->CreateRenderTargetView(finalResultResource_.Get(), &rtvDesc, finalResultRtvHandle_);
 }
 
 void OffScreen::InitializeDataHandler() {
@@ -61,14 +93,13 @@ void OffScreen::CreatePingPongBuffers() {
 
 void OffScreen::Draw() {
     if (effectChain_.empty()) {
-        // エフェクトが無い場合は元の処理
-        psoManager_->DrawCommonSetting(PipelineType::kRender, BlendMode::kNormal, ShaderMode::kNone);
-        dxCommon->GetCommandList()->SetGraphicsRootDescriptorTable(0, dxCommon->GetOffScreenGPUHandle());
-        dxCommon->GetCommandList()->DrawInstanced(3, 1, 0, 0);
+        // エフェクトが無い場合
+        DrawToFinalResult();
+        CopyFinalResultToBackBuffer();
         return;
     }
 
-    bool isFirstInput = true; // 最初の入力はオフスクリーンバッファ
+    bool isFirstInput = true;
     int currentPingPongBuffer = 0;
     int outputBuffer = 0;
 
@@ -81,10 +112,9 @@ void OffScreen::Draw() {
     }
 
     if (enabledEffects.empty()) {
-        // 有効なエフェクトがない場合は元の処理
-        psoManager_->DrawCommonSetting(PipelineType::kRender, BlendMode::kNormal, ShaderMode::kNone);
-        dxCommon->GetCommandList()->SetGraphicsRootDescriptorTable(0, dxCommon->GetOffScreenGPUHandle());
-        dxCommon->GetCommandList()->DrawInstanced(3, 1, 0, 0);
+        // 有効なエフェクトがない場合
+        DrawToFinalResult();
+        CopyFinalResultToBackBuffer();
         return;
     }
 
@@ -94,55 +124,98 @@ void OffScreen::Draw() {
         bool isLastEffect = (i == enabledEffects.size() - 1);
 
         if (isLastEffect) {
-            // 最後のエフェクトはバックバッファに直接描画
-            DrawSingleEffect(effectChain_[effectIndex].shaderMode, isFirstInput, currentPingPongBuffer, -1);
+            // 最後のエフェクトは最終結果テクスチャに描画
+            DrawSingleEffect(effectChain_[effectIndex].shaderMode, isFirstInput, currentPingPongBuffer, -2); // -2は最終結果を示す特別な値
         } else {
             // 中間エフェクトはピンポンバッファに描画
             DrawSingleEffect(effectChain_[effectIndex].shaderMode, isFirstInput, currentPingPongBuffer, outputBuffer);
             currentPingPongBuffer = outputBuffer;
-            outputBuffer = 1 - outputBuffer; // 0→1、1→0にスワップ
-            isFirstInput = false;            // 2回目以降はピンポンバッファから入力
+            outputBuffer = 1 - outputBuffer;
+            isFirstInput = false;
         }
     }
+
+    // 最終結果をバックバッファにコピー
+    CopyFinalResultToBackBuffer();
+}
+
+void OffScreen::DrawToFinalResult() {
+    // 最終結果テクスチャに直接描画（エフェクトなし）
+    dxCommon->GetCommandList()->OMSetRenderTargets(1, &finalResultRtvHandle_, false, nullptr);
+
+    // バリア遷移
+    dxCommon->BarrierTransition(finalResultResource_.Get(),
+                                D3D12_RESOURCE_STATE_GENERIC_READ, D3D12_RESOURCE_STATE_RENDER_TARGET);
+
+    // レンダーターゲットをクリア
+    const float clearColor[4] = {0.0f, 0.0f, 0.0f, 1.0f};
+    dxCommon->GetCommandList()->ClearRenderTargetView(finalResultRtvHandle_, clearColor, 0, nullptr);
+
+    // パイプライン設定
+    psoManager_->DrawCommonSetting(PipelineType::kRender, BlendMode::kNormal, ShaderMode::kNone);
+
+    // 入力テクスチャを設定
+    dxCommon->GetCommandList()->SetGraphicsRootDescriptorTable(0, dxCommon->GetOffScreenGPUHandle());
+
+    // 描画
+    dxCommon->GetCommandList()->DrawInstanced(3, 1, 0, 0);
+
+    // バリア遷移
+    dxCommon->BarrierTransition(finalResultResource_.Get(),
+                                D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_GENERIC_READ);
+}
+
+void OffScreen::CopyFinalResultToBackBuffer() {
+    // バックバッファに最終結果をコピー
+    UINT backBufferIndex = dxCommon->GetSwapChain()->GetCurrentBackBufferIndex();
+    D3D12_CPU_DESCRIPTOR_HANDLE rtvHandle = dxCommon->GetRTVCPUDescriptorHandle(backBufferIndex);
+    dxCommon->GetCommandList()->OMSetRenderTargets(1, &rtvHandle, false, nullptr);
+
+    // パイプライン設定
+    psoManager_->DrawCommonSetting(PipelineType::kRender, BlendMode::kNormal, ShaderMode::kNone);
+
+    // 最終結果テクスチャを入力として設定
+    dxCommon->GetCommandList()->SetGraphicsRootDescriptorTable(0, finalResultSrvHandleGPU_);
+
+    // 描画
+    dxCommon->GetCommandList()->DrawInstanced(3, 1, 0, 0);
 }
 
 void OffScreen::DrawSingleEffect(ShaderMode mode, bool isFirstInput, int inputPingPongIndex, int outputRtvIndex) {
+    // DirectXCommonからクリアカラーを取得
+    D3D12_CLEAR_VALUE clearValue = dxCommon->GetClearColorValue();
+    const float clearColor[4] = {
+        clearValue.Color[0],
+        clearValue.Color[1],
+        clearValue.Color[2],
+        clearValue.Color[3]};
+
     // 出力先を設定
-    if (outputRtvIndex != -1) {
+    if (outputRtvIndex == -2) {
+        // 最終結果テクスチャに描画
+        dxCommon->GetCommandList()->OMSetRenderTargets(1, &finalResultRtvHandle_, false, nullptr);
+        dxCommon->BarrierTransition(finalResultResource_.Get(),
+                                    D3D12_RESOURCE_STATE_GENERIC_READ, D3D12_RESOURCE_STATE_RENDER_TARGET);
+
+        dxCommon->GetCommandList()->ClearRenderTargetView(finalResultRtvHandle_, clearColor, 0, nullptr);
+    } else if (outputRtvIndex != -1) {
         // ピンポンバッファに描画
         dxCommon->GetCommandList()->OMSetRenderTargets(1, &pingPongRtvHandles_[outputRtvIndex], false, nullptr);
-        // バリア遷移
         dxCommon->BarrierTransition(pingPongResources_[outputRtvIndex].Get(),
                                     D3D12_RESOURCE_STATE_GENERIC_READ, D3D12_RESOURCE_STATE_RENDER_TARGET);
 
-        // レンダーターゲットをクリア
-        const float clearColor[4] = {0.0f, 0.0f, 0.0f, 1.0f};
         dxCommon->GetCommandList()->ClearRenderTargetView(pingPongRtvHandles_[outputRtvIndex], clearColor, 0, nullptr);
     } else {
-        // バックバッファに描画（最終出力）
+        // バックバッファに描画（この分岐は使われなくなる）
         UINT backBufferIndex = dxCommon->GetSwapChain()->GetCurrentBackBufferIndex();
         D3D12_CPU_DESCRIPTOR_HANDLE rtvHandle = dxCommon->GetRTVCPUDescriptorHandle(backBufferIndex);
         dxCommon->GetCommandList()->OMSetRenderTargets(1, &rtvHandle, false, nullptr);
     }
 
-    // パイプライン設定
+    // パイプライン設定とシェーダーパラメータ設定（既存のコードと同じ）
     psoManager_->DrawCommonSetting(PipelineType::kRender, BlendMode::kNormal, mode);
 
-    // 入力テクスチャを設定（メインテクスチャ - スロット0）
-    if (isFirstInput) {
-        // 最初の入力はオフスクリーンバッファ
-        dxCommon->GetCommandList()->SetGraphicsRootDescriptorTable(0, dxCommon->GetOffScreenGPUHandle());
-    } else {
-        // 2回目以降はピンポンバッファ
-        if (inputPingPongIndex >= 0 && inputPingPongIndex < kPingPongBufferCount) {
-            dxCommon->GetCommandList()->SetGraphicsRootDescriptorTable(0, pingPongSrvHandlesGPU_[inputPingPongIndex]);
-        } else {
-            // エラーハンドリング - フォールバックとしてオフスクリーンバッファを使用
-            dxCommon->GetCommandList()->SetGraphicsRootDescriptorTable(0, dxCommon->GetOffScreenGPUHandle());
-        }
-    }
-
-    // シェーダーモードに応じた定数バッファとテクスチャ設定
+    // シェーダーモードに応じた定数バッファ設定（既存のコードと同じ）
     switch (mode) {
     case ShaderMode::kVigneet:
         dxCommon->GetCommandList()->SetGraphicsRootConstantBufferView(1, vignetteResource->GetGPUVirtualAddress());
@@ -165,15 +238,37 @@ void OffScreen::DrawSingleEffect(ShaderMode mode, bool isFirstInput, int inputPi
         break;
     case ShaderMode::kDissolve:
         dxCommon->GetCommandList()->SetGraphicsRootConstantBufferView(1, dissolveResource->GetGPUVirtualAddress());
-        srvManager_->SetGraphicsRootDescriptorTable(2, TextureManager::GetInstance()->GetTextureIndexByFilePath(folderPath_));
+        srvManager_->SetGraphicsRootDescriptorTable(2, TextureManager::GetInstance()->GetTextureIndexByFilePath(texPath_));
         break;
+    case ShaderMode::kRandom:
+        randomData->time += Frame::DeltaTime();
+        dxCommon->GetCommandList()->SetGraphicsRootConstantBufferView(1, randomResource->GetGPUVirtualAddress());
+    }
+
+    // 入力テクスチャを設定
+    if (isFirstInput) {
+        // 最初の入力はオフスクリーンバッファ
+        dxCommon->GetCommandList()->SetGraphicsRootDescriptorTable(0, dxCommon->GetOffScreenGPUHandle());
+    } else {
+        // 2回目以降はピンポンバッファ
+        if (inputPingPongIndex >= 0 && inputPingPongIndex < kPingPongBufferCount) {
+            dxCommon->GetCommandList()->SetGraphicsRootDescriptorTable(0, pingPongSrvHandlesGPU_[inputPingPongIndex]);
+        } else {
+            // エラーハンドリング - フォールバックとしてオフスクリーンバッファを使用
+            dxCommon->GetCommandList()->SetGraphicsRootDescriptorTable(0, dxCommon->GetOffScreenGPUHandle());
+        }
     }
 
     // 描画
     dxCommon->GetCommandList()->DrawInstanced(3, 1, 0, 0);
 
-    // バリア遷移（ピンポンバッファの場合）
-    if (outputRtvIndex != -1) {
+    // バリア遷移
+    if (outputRtvIndex == -2) {
+        // 最終結果テクスチャの場合
+        dxCommon->BarrierTransition(finalResultResource_.Get(),
+                                    D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_GENERIC_READ);
+    } else if (outputRtvIndex != -1) {
+        // ピンポンバッファの場合
         dxCommon->BarrierTransition(pingPongResources_[outputRtvIndex].Get(),
                                     D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_GENERIC_READ);
     }
@@ -184,7 +279,7 @@ void OffScreen::Setting() {
     ImGui::Text("ポストエフェクト");
 
     // エフェクト追加ボタン
-    const char *shaderModeItems[] = {"なし", "グレイ", "ビネット", "スムース", "ガウス", "アウトライン(エッジ検出)", "アウトライン(深度ベース)", "ブラー", "シネマティック", "ディゾルブ"};
+    const char *shaderModeItems[] = {"なし", "グレイ", "ビネット", "スムース", "ガウス", "アウトライン(エッジ検出)", "アウトライン(深度ベース)", "ブラー", "シネマティック", "ディゾルブ", "ランダム"};
     static int selectedEffect = 0;
 
     ImGui::Combo("追加するエフェクト", &selectedEffect, shaderModeItems, IM_ARRAYSIZE(shaderModeItems));
@@ -253,7 +348,8 @@ void OffScreen::Setting() {
                 ImGui::DragFloat("輝度", &cinematicData->brightness, 0.01f);
                 break;
             case ShaderMode::kDissolve:
-                ImGui::DragFloat("ディゾルブ値", &dissolveData->value, 0.01f, 0.0f, 1.0f);
+                ImGui::DragFloat("値", &dissolveData->value, 0.01f, 0.0f, 1.0f);
+                break;
             }
         }
 
@@ -269,6 +365,7 @@ void OffScreen::Setting() {
 #endif // _DEBUG
 }
 
+// エフェクト管理メソッド
 void OffScreen::AddEffect(ShaderMode mode) {
     PostEffectSettings settings;
     settings.shaderMode = mode;
@@ -348,17 +445,62 @@ void OffScreen::CreateCinematic() {
 void OffScreen::CreateDissolve() {
     dissolveResource = dxCommon->CreateBufferResource(sizeof(Dissolve));
     dissolveResource->Map(0, nullptr, reinterpret_cast<void **>(&dissolveData));
-    dissolveData->value = 0.0f; // 初期値
+    dissolveData->value = 0.0f;
+}
+
+void OffScreen::CreateRandom() {
+    randomResource = dxCommon->CreateBufferResource(sizeof(Random));
+    randomResource->Map(0, nullptr, reinterpret_cast<void **>(&randomData));
+    randomData->time = 0.0f; // 初期値は適宜設定
 }
 
 // メインのセーブ関数
 void OffScreen::SaveData() {
+    SaveEffectChain();
     SaveEffectParameters();
 }
 
 // メインのロード関数
 void OffScreen::LoadData() {
+    LoadEffectChain();
     LoadEffectParameters();
+}
+
+// エフェクトチェーンの保存
+void OffScreen::SaveEffectChain() {
+    // エフェクト数を保存
+    int effectCount = static_cast<int>(effectChain_.size());
+    dataHandler_->Save<int>("effectCount", effectCount);
+
+    // 各エフェクトの情報を保存
+    for (int i = 0; i < effectCount; ++i) {
+        std::string shaderModeKey = "effect" + std::to_string(i) + "_shaderMode";
+        std::string enabledKey = "effect" + std::to_string(i) + "_enabled";
+
+        dataHandler_->Save<int>(shaderModeKey, static_cast<int>(effectChain_[i].shaderMode));
+        dataHandler_->Save<bool>(enabledKey, effectChain_[i].enabled);
+    }
+}
+
+// エフェクトチェーンの読み込み
+void OffScreen::LoadEffectChain() {
+    // エフェクト数を読み込み
+    int effectCount = dataHandler_->Load<int>("effectCount", 0);
+
+    // エフェクトチェーンをクリア
+    effectChain_.clear();
+
+    // 各エフェクトを読み込み
+    for (int i = 0; i < effectCount; ++i) {
+        std::string shaderModeKey = "effect" + std::to_string(i) + "_shaderMode";
+        std::string enabledKey = "effect" + std::to_string(i) + "_enabled";
+
+        PostEffectSettings settings;
+        settings.shaderMode = static_cast<ShaderMode>(dataHandler_->Load<int>(shaderModeKey, 0));
+        settings.enabled = dataHandler_->Load<bool>(enabledKey, false);
+
+        effectChain_.push_back(settings);
+    }
 }
 
 // エフェクトパラメータの保存
@@ -447,6 +589,6 @@ void OffScreen::LoadEffectParameters() {
     }
 
     if (dissolveData) {
-        dissolveData->value = dataHandler_->Load<float>("dissolve_value", 0.0f); // 初期値
+        dissolveData->value = dataHandler_->Load<float>("dissolve_value", 0.0f);
     }
 }

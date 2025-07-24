@@ -616,9 +616,16 @@ void ImGuiManager::ShowSceneWindow(OffScreen *offScreen) {
     // テクスチャ描画位置を調整
     ImGui::SetCursorPos(ImVec2(ImGui::GetCursorPosX() + sceneOffset.x, ImGui::GetCursorPosY() + sceneOffset.y));
 
+    // ポストエフェクトが適用された最終結果のテクスチャを取得
     uint32_t srvIndex;
-    
-    srvIndex = dxCommon_->GetOffScreenSrvIndex();
+    if (offScreen != nullptr) {
+        // ポストエフェクトが適用された最終結果を使用
+        srvIndex = offScreen->GetFinalResultSrvIndex();
+    } else {
+        // フォールバック：通常のオフスクリーンバッファを使用
+        srvIndex = dxCommon_->GetOffScreenSrvIndex();
+    }
+
 
     // レンダーテクスチャをImGuiウィンドウに描画
     ImGui::ImageWithBg(

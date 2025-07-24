@@ -1070,5 +1070,6 @@
       <Filter>リソース ファイル\Sprite</Filter>
     </FxCompile>
     <FxCompile Include="Resources\shaders\OffScreen\Dissolve.PS.hlsl" />
+    <FxCompile Include="Resources\shaders\OffScreen\Random.PS.hlsl" />
   </ItemGroup>
 </Project>

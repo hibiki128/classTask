@@ -50,6 +50,7 @@ class OffScreen {
     void CreateCinematic();
     void CreateDissolve();
     void CreateRandom();
+    void CreateFocusLine();
 
     void CreatePingPongBuffers();
     void DrawSingleEffect(ShaderMode mode, bool isFirstInput, int inputPingPongIndex, int outputRtvIndex);
@@ -128,6 +129,18 @@ class OffScreen {
         float time;
     };
 
+struct FocusLine {
+        float time;
+        float lines;
+        float width;
+        float speed;
+        float intensity;
+        float centerRadius;
+        float maxDistance;
+        float padding1;   
+        Vector4 lineColor;
+    };
+
     // バッファリソース（既存のまま）
     Microsoft::WRL::ComPtr<ID3D12Resource> vignetteResource;
     VignetteParameter *vignetteData = nullptr;
@@ -154,6 +167,9 @@ class OffScreen {
 
     Microsoft::WRL::ComPtr<ID3D12Resource> randomResource;
     Random *randomData = nullptr;
+
+    Microsoft::WRL::ComPtr<ID3D12Resource> focusLineResource;
+    FocusLine *focusLineData = nullptr;
 
     std::string texPath_ = "debug/noise0.png";
 

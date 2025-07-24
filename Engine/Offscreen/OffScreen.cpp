@@ -3,11 +3,11 @@
 #ifdef _DEBUG
 #include "imgui.h"
 #endif // _DEBUG
+#include <Frame.h>
+#include <Graphics/Texture/TextureManager.h>
 #include <filesystem>
 #include <fstream>
 #include <iostream>
-#include <Graphics/Texture/TextureManager.h>
-#include <Frame.h>
 
 void OffScreen::Initialize() {
     dxCommon = DirectXCommon::GetInstance();
@@ -22,6 +22,7 @@ void OffScreen::Initialize() {
     CreateCinematic();
     CreateDissolve();
     CreateRandom();
+    CreateFocusLine();
     CreatePingPongBuffers();
     CreateFinalResultTexture();
     InitializeDataHandler();
@@ -148,7 +149,13 @@ void OffScreen::DrawToFinalResult() {
                                 D3D12_RESOURCE_STATE_GENERIC_READ, D3D12_RESOURCE_STATE_RENDER_TARGET);
 
     // レンダーターゲットをクリア
-    const float clearColor[4] = {0.0f, 0.0f, 0.0f, 1.0f};
+    D3D12_CLEAR_VALUE clearValue = dxCommon->GetClearColorValue();
+    const float clearColor[4] = {
+        clearValue.Color[0],
+        clearValue.Color[1],
+        clearValue.Color[2],
+        clearValue.Color[3]};
+
     dxCommon->GetCommandList()->ClearRenderTargetView(finalResultRtvHandle_, clearColor, 0, nullptr);
 
     // パイプライン設定
@@ -243,6 +250,11 @@ void OffScreen::DrawSingleEffect(ShaderMode mode, bool isFirstInput, int inputPi
     case ShaderMode::kRandom:
         randomData->time += Frame::DeltaTime();
         dxCommon->GetCommandList()->SetGraphicsRootConstantBufferView(1, randomResource->GetGPUVirtualAddress());
+        break;
+    case ShaderMode::kFocusLine:
+        focusLineData->time += Frame::DeltaTime();
+        dxCommon->GetCommandList()->SetGraphicsRootConstantBufferView(1, focusLineResource->GetGPUVirtualAddress());
+        break;
     }
 
     // 入力テクスチャを設定
@@ -279,7 +291,7 @@ void OffScreen::Setting() {
     ImGui::Text("ポストエフェクト");
 
     // エフェクト追加ボタン
-    const char *shaderModeItems[] = {"なし", "グレイ", "ビネット", "スムース", "ガウス", "アウトライン(エッジ検出)", "アウトライン(深度ベース)", "ブラー", "シネマティック", "ディゾルブ", "ランダム"};
+    const char *shaderModeItems[] = {"なし", "グレイ", "ビネット", "スムース", "ガウス", "アウトライン(エッジ検出)", "アウトライン(深度ベース)", "ブラー", "シネマティック", "ディゾルブ", "ランダム", "集中線"};
     static int selectedEffect = 0;
 
     ImGui::Combo("追加するエフェクト", &selectedEffect, shaderModeItems, IM_ARRAYSIZE(shaderModeItems));
@@ -349,6 +361,22 @@ void OffScreen::Setting() {
                 break;
             case ShaderMode::kDissolve:
                 ImGui::DragFloat("値", &dissolveData->value, 0.01f, 0.0f, 1.0f);
+                break;
+            case ShaderMode::kFocusLine:
+                    ImGui::SliderFloat("Time", &focusLineData->time, 0.0f, 10.0f);
+                    ImGui::SliderFloat("Lines", &focusLineData->lines, 8.0f, 64.0f);
+                    ImGui::SliderFloat("Width", &focusLineData->width, 0.01f, 0.05f);
+                    ImGui::SliderFloat("Speed", &focusLineData->speed, 1.0f, 8.0f);
+                    ImGui::SliderFloat("Intensity", &focusLineData->intensity, 0.2f, 1.5f);
+
+                    ImGui::Separator();
+                    ImGui::Text("Area Settings");
+                    ImGui::SliderFloat("Center Radius", &focusLineData->centerRadius, 0.1f, 0.5f);
+                    ImGui::SliderFloat("Max Distance", &focusLineData->maxDistance, 0.5f, 1.0f);
+
+                    ImGui::Separator();
+                    ImGui::Text("Line Color");
+                    ImGui::ColorEdit3("Color", &focusLineData->lineColor.x);
                 break;
             }
         }
@@ -452,6 +480,15 @@ void OffScreen::CreateRandom() {
     randomResource = dxCommon->CreateBufferResource(sizeof(Random));
     randomResource->Map(0, nullptr, reinterpret_cast<void **>(&randomData));
     randomData->time = 0.0f; // 初期値は適宜設定
+}
+
+void OffScreen::CreateFocusLine() {
+    focusLineResource = dxCommon->CreateBufferResource(sizeof(FocusLine));
+    focusLineResource->Map(0, nullptr, reinterpret_cast<void **>(&focusLineData));
+    focusLineData->lines = 16.0f;
+    focusLineData->width = 0.01f;
+    focusLineData->speed = 1.0f;
+    focusLineData->intensity = 0.3f;
 }
 
 // メインのセーブ関数

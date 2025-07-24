@@ -1071,5 +1071,6 @@
     </FxCompile>
     <FxCompile Include="Resources\shaders\OffScreen\Dissolve.PS.hlsl" />
     <FxCompile Include="Resources\shaders\OffScreen\Random.PS.hlsl" />
+    <FxCompile Include="Resources\shaders\OffScreen\FocusLine.PS.hlsl" />
   </ItemGroup>
 </Project>

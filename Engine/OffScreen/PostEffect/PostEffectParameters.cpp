@@ -1,6 +1,8 @@
 #include "PostEffectParameters.h"
 #include <Graphics/Srv/SrvManager.h>
 #include <Graphics/Texture/TextureManager.h>
+#include <Graphics/PipeLine/PipeLineManager.h>
+#include <d3d12.h>
 
 void PostEffectParameters::Initialize(DirectXCommon *dxCommon) {
     dxCommon_ = dxCommon;
@@ -21,6 +23,7 @@ void PostEffectParameters::SetShaderParameters(ShaderMode mode, ID3D12GraphicsCo
         commandList->SetGraphicsRootConstantBufferView(1, gaussianResouce->GetGPUVirtualAddress());
         break;
     case ShaderMode::kDepth:
+        depthData->projectionInverse = Inverse(projectionInverse_);
         commandList->SetGraphicsRootConstantBufferView(1, depthResouce->GetGPUVirtualAddress());
         commandList->SetGraphicsRootDescriptorTable(2, dxCommon->GetDepthGPUHandle());
         break;
@@ -46,11 +49,9 @@ void PostEffectParameters::SetShaderParameters(ShaderMode mode, ID3D12GraphicsCo
 void PostEffectParameters::UpdateTimeParameters(float deltaTime) {
     if (randomData) {
         randomData->time += deltaTime;
-        randomResource->Unmap(0, nullptr);
     }
     if (focusLineData) {
         focusLineData->time += deltaTime;
-        focusLineResource->Unmap(0, nullptr);
     }
 }
 

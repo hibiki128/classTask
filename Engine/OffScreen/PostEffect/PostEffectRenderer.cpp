@@ -1,13 +1,14 @@
 #include "PostEffectRenderer.h"
 
-void PostEffectRenderer::Initialize(DirectXCommon *dxCommon_, SrvManager *srvManager, PipeLineManager *psoManager) {
-    dxCommon_ = dxCommon_;
+void PostEffectRenderer::Initialize(DirectXCommon *dxCommon, SrvManager *srvManager, PipeLineManager *psoManager) {
+    dxCommon_ = dxCommon;
     srvManager_ = srvManager;
     psoManager_ = psoManager;
     // レンダーバッファの初期化
     renderBuffer_.Initialize(dxCommon_, srvManager_);
     // DSVハンドルの取得
     dsvHandle_ = dxCommon_->GetDSVCPUDescriptorHandle(0);
+    finalResultRtvHandle_ = renderBuffer_.GetFinalResultRtvHandle();
 }
 
 void PostEffectRenderer::Draw(const PostEffectChain &effectChain, PostEffectParameters &parameters) {
@@ -55,7 +56,7 @@ void PostEffectRenderer::Draw(const PostEffectChain &effectChain, PostEffectPara
 
 void PostEffectRenderer::DrawToFinalResult() {
     // 最終結果テクスチャに直接描画（エフェクトなし）
-    dxCommon_->GetCommandList()->OMSetRenderTargets(1, &renderBuffer_.GetFinalResultRtvHandle(), false, &dsvHandle_);
+    dxCommon_->GetCommandList()->OMSetRenderTargets(1, &finalResultRtvHandle_, false, &dsvHandle_);
 
     // バリア遷移
     dxCommon_->BarrierTransition(renderBuffer_.GetFinalResultResource().Get(),
@@ -111,21 +112,22 @@ void PostEffectRenderer::DrawSingleEffect(ShaderMode mode, bool isFirstInput, in
         clearValue.Color[2],
         clearValue.Color[3]};
 
-    // 出力先を設定
+   // 出力先を設定
     if (outputRtvIndex == -2) {
         // 最終結果テクスチャに描画
-        dxCommon_->GetCommandList()->OMSetRenderTargets(1, &renderBuffer_.GetFinalResultRtvHandle(), false, &dsvHandle_);
+        dxCommon_->GetCommandList()->OMSetRenderTargets(1, &finalResultRtvHandle_, false, &dsvHandle_);
         dxCommon_->BarrierTransition(renderBuffer_.GetFinalResultResource().Get(),
                                      D3D12_RESOURCE_STATE_GENERIC_READ, D3D12_RESOURCE_STATE_RENDER_TARGET);
-
         dxCommon_->GetCommandList()->ClearRenderTargetView(renderBuffer_.GetFinalResultRtvHandle(), clearColor, 0, nullptr);
     } else if (outputRtvIndex != -1) {
         // ピンポンバッファに描画
-        dxCommon_->GetCommandList()->OMSetRenderTargets(1, &renderBuffer_.GetPingPongRtvHandle(outputRtvIndex), false, &dsvHandle_);
+        D3D12_CPU_DESCRIPTOR_HANDLE pingPongRtvHandle = renderBuffer_.GetPingPongRtvHandle(outputRtvIndex);
+        dxCommon_->GetCommandList()->OMSetRenderTargets(1, &pingPongRtvHandle, false, &dsvHandle_);
         dxCommon_->BarrierTransition(renderBuffer_.GetPingPongResource(outputRtvIndex).Get(),
                                      D3D12_RESOURCE_STATE_GENERIC_READ, D3D12_RESOURCE_STATE_RENDER_TARGET);
 
-        dxCommon_->GetCommandList()->ClearRenderTargetView(renderBuffer_.GetPingPongRtvHandle(outputRtvIndex), clearColor, 0, nullptr);
+        D3D12_CPU_DESCRIPTOR_HANDLE pingPongRtvHandleForClear = renderBuffer_.GetPingPongRtvHandle(outputRtvIndex);
+        dxCommon_->GetCommandList()->ClearRenderTargetView(pingPongRtvHandleForClear, clearColor, 0, nullptr);
     } else {
         // バックバッファに描画（この分岐は使われなくなる）
         UINT backBufferIndex = dxCommon_->GetSwapChain()->GetCurrentBackBufferIndex();

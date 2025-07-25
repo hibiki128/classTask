@@ -12,10 +12,10 @@ class RenderBuffer {
     Microsoft::WRL::ComPtr<ID3D12Resource> GetPingPongResource(int index) const { return pingPongResources_[index]; }
 
     // 最終結果バッファ関連
-    D3D12_CPU_DESCRIPTOR_HANDLE GetFinalResultRtvHandle() const { return finalResultSrvHandleCPU_; }
+    D3D12_CPU_DESCRIPTOR_HANDLE GetFinalResultRtvHandle() const { return finalResultRtvHandle_; }
     D3D12_GPU_DESCRIPTOR_HANDLE GetFinalResultSrvHandleGPU() const { return finalResultSrvHandleGPU_; }
     Microsoft::WRL::ComPtr<ID3D12Resource> GetFinalResultResource() const { return finalResultResource_; }
-    uint32_t GetFinalResultSrvIndex() const;
+    uint32_t GetFinalResultSrvIndex() const { return finalResultSrvIndex_; }
 
     const int GetPingPongBufferCount() const {
         return kPingPongBufferCount;

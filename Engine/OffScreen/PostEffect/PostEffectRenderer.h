@@ -21,4 +21,5 @@ class PostEffectRenderer {
     PipeLineManager *psoManager_;
     RenderBuffer renderBuffer_;
     D3D12_CPU_DESCRIPTOR_HANDLE dsvHandle_;
+    D3D12_CPU_DESCRIPTOR_HANDLE finalResultRtvHandle_;
 };

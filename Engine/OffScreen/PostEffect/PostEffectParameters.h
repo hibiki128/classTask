@@ -1,6 +1,7 @@
 #pragma once
 #include "Data/DataHandler.h"
 #include <memory>
+#include"Graphics/Srv/SrvManager.h"
 
 class PostEffectParameters {
   public:
@@ -13,7 +14,7 @@ class PostEffectParameters {
 
     // ImGui用のパラメータ設定UI
     void DrawParameterUI(ShaderMode mode);
-
+    void SetProjection(Matrix4x4 projectionMatrix) { projectionInverse_ = projectionMatrix; }
   private:
     void CreateAllBuffers();
 

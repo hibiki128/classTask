@@ -27,7 +27,7 @@ void OffScreen::Draw() {
 
 void OffScreen::SetProjection(Matrix4x4 projectionMatrix) {
     projectionMatrix_ = projectionMatrix;
-    parameters_.SetProjectionMatrix(projectionMatrix);
+    parameters_.SetProjection(projectionMatrix);
 }
 
 uint32_t OffScreen::GetFinalResultSrvIndex() const {

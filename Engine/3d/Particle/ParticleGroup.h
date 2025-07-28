@@ -7,12 +7,6 @@
 #include <list>
 class ParticleGroup {
   public:
-    struct ParticleMaterial {
-        Vector4 color;
-        Matrix4x4 uvTransform;
-        float padding[3];
-    };
-  public:
     void Initialize();
 
     void Update();

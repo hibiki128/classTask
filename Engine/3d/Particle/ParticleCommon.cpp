@@ -18,6 +18,7 @@ void ParticleCommon::Initialize(DirectXCommon *dxCommon) {
     assert(dxCommon);
     dxCommon_ = dxCommon;
     psoManager_ = PipeLineManager::GetInstance();
+    computePsoManager_ = ComputePipeLineManager::GetInstance();
 }
 
 void ParticleCommon::DrawCommonSetting(BlendMode blendMode) {

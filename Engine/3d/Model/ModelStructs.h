@@ -213,3 +213,9 @@ struct ParticleGroupData {
     // ブレンドモード
     BlendMode blendMode = BlendMode::kAdd;
 };
+
+struct ParticleMaterial {
+    Vector4 color;
+    Matrix4x4 uvTransform;
+    float padding[3];
+};

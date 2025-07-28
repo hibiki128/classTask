@@ -10,6 +10,7 @@
 #include <utility>
 #include <Camera/ViewProjection/ViewProjection.h>
 #include <Graphics/Texture/TextureManager.h>
+#include"Model/ModelStructs.h"
 
 struct CSParticle {
     Vector3 translate;
@@ -34,6 +35,7 @@ class ParticleCS {
     void Update();
     void CreateOutputParticleResource();
     void CreatePerViewResource();
+    void CreateMaterialResource();
 
   private:
     Microsoft::WRL::ComPtr<ID3D12Resource> outputParticleResource;
@@ -43,6 +45,9 @@ class ParticleCS {
 
     Microsoft::WRL::ComPtr<ID3D12Resource> perViewResource;
     PerView *perViewData = nullptr;
+
+    Microsoft::WRL::ComPtr<ID3D12Resource> materialResource = nullptr;
+    ParticleMaterial *materialData = nullptr;
 
     ParticleCommon *particleCommon_;
     DirectXCommon *dxCommon_;

@@ -8,6 +8,8 @@ void ParticleCS::Initialize() {
     texManager_ = TextureManager::GetInstance();
     texManager_->LoadTexture(texPath_);
     CreateOutputParticleResource();
+    CreatePerViewResource();
+    CreateMaterialResource();
 }
 
 void ParticleCS::Draw(const ViewProjection& vp) {
@@ -24,6 +26,7 @@ void ParticleCS::Draw(const ViewProjection& vp) {
     commandList->SetGraphicsRootConstantBufferView(0, perViewResource->GetGPUVirtualAddress());
     srvManager_->SetGraphicsRootDescriptorTable(1, outputParticleSrvIndex_);
     srvManager_->SetGraphicsRootDescriptorTable(2, TextureManager::GetInstance()->GetTextureIndexByFilePath(texPath_));
+    commandList->SetGraphicsRootConstantBufferView(3, materialResource->GetGPUVirtualAddress());
 
     commandList->DrawInstanced(6, 1024, 0, 0);
 }
@@ -67,4 +70,11 @@ void ParticleCS::CreatePerViewResource() {
     perViewResource->Map(0, nullptr, reinterpret_cast<void **>(&perViewData));
     perViewData->viewProjection = MakeIdentity4x4();
     perViewData->billboardMatrix = MakeIdentity4x4();
+}
+
+void ParticleCS::CreateMaterialResource() {
+    materialResource = ParticleCommon::GetInstance()->GetDxCommon()->CreateBufferResource(sizeof(ParticleMaterial));
+    materialResource->Map(0, nullptr, reinterpret_cast<void **>(&materialData));
+    materialData->color = Vector4(1.0f, 1.0f, 1.0f, 1.0f);
+    materialData->uvTransform = MakeIdentity4x4();
 }

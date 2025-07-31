@@ -293,11 +293,6 @@ void Framework::Update() {
 }
 
 void Framework::LoadResource() {
-    particleEditor_->AddParticleEmitter("fire");
-    particleEditor_->AddParticleEmitter("hitEmitter");
-    particleEditor_->AddParticleEmitter("chageEmitter");
-    particleEditor_->AddParticleEmitter("bulletEmitter");
-    particleEditor_->AddParticleEmitter("chageBullet");
 }
 
 void Framework::PlaySounds() {

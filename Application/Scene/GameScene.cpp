@@ -1,6 +1,5 @@
 #include "GameScene.h"
 
-#include <Application/Utility/MotionEditor/MotionEditor.h>
 
 void GameScene::Initialize() {
     audio_ = Audio::GetInstance();
@@ -12,7 +11,6 @@ void GameScene::Initialize() {
 
     debugCamera_ = std::make_unique<DebugCamera>();
     debugCamera_->Initialize(&vp_);
-
 }
 
 void GameScene::Finalize() {
@@ -20,6 +18,11 @@ void GameScene::Finalize() {
 }
 
 void GameScene::Update() {
+
+   /* if (!debugCamera_->GetActive()) {
+        BaseObjectManager::GetInstance()->Update();
+    }*/
+
     // カメラ更新
     CameraUpdate();
 
@@ -29,9 +32,7 @@ void GameScene::Update() {
 
 void GameScene::Draw() {
     /// -------描画処理開始-------
-
-    BaseObjectManager::GetInstance()->Draw(vp_);
-
+  
     /// Spriteの描画準備
     spCommon_->DrawCommonSetting();
     //-----Spriteの描画開始-----
@@ -39,11 +40,11 @@ void GameScene::Draw() {
     //-------------------------
 
     //-----3DObjectの開始-----
- 
+  
     //-----------------------
 
     //------Particleの描画開始-------
-
+   
     //-----------------------------
 
     /// Spriteの描画準備
@@ -77,13 +78,10 @@ void GameScene::DrawForOffScreen() {
 
 void GameScene::AddSceneSetting() {
     debugCamera_->imgui();
-
-    MotionEditor::GetInstance()->DrawImGui();
-
 }
 
 void GameScene::AddObjectSetting() {
-
+   
 }
 
 void GameScene::AddParticleSetting() {

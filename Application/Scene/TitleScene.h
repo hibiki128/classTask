@@ -1,6 +1,8 @@
 #pragma once
 
 #include "BaseScene.h"
+#include"Object/Base/BaseObject.h"
+#include"Easing.h"
 
 class TitleScene : public BaseScene {
   public:

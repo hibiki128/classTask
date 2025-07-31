@@ -290,7 +290,11 @@ Matrix4x4 MakeAffineMatrix(const Vector3 &scale, const Quaternion &rotate, const
     return MakeScaleMatrix(scale) * QuaternionToMatrix4x4(rotate) * MakeTranslateMatrix(translate);
 }
 
-Matrix4x4 QuaternionToMatrix4x4(const Quaternion &q) {
+Matrix4x4 MakeBoneMatrix(const Vector3 &scale, const Quaternion &rotate, const Vector3 &translate) {
+    return MakeScaleMatrix(scale) * QuaternionToBoneMatrix(rotate) * MakeTranslateMatrix(translate);
+}
+
+Matrix4x4 QuaternionToBoneMatrix(const Quaternion &q) {
     Matrix4x4 mat;
 
     // クォータニオンの各成分の積を計算
@@ -328,6 +332,46 @@ Matrix4x4 QuaternionToMatrix4x4(const Quaternion &q) {
     return mat;
 }
 
+Matrix4x4 QuaternionToMatrix4x4(const Quaternion &q) {
+      // 正規化されたクォータニオンを使用
+    Quaternion norm = q.Normalize();
+
+    float xx = norm.x * norm.x;
+    float yy = norm.y * norm.y;
+    float zz = norm.z * norm.z;
+    float xy = norm.x * norm.y;
+    float xz = norm.x * norm.z;
+    float yz = norm.y * norm.z;
+    float wx = norm.w * norm.x;
+    float wy = norm.w * norm.y;
+    float wz = norm.w * norm.z;
+
+    Matrix4x4 mat;
+
+    // 正しい回転行列の計算
+    mat.m[0][0] = 1.0f - 2.0f * (yy + zz);
+    mat.m[0][1] = 2.0f * (xy - wz);
+    mat.m[0][2] = 2.0f * (xz + wy);
+    mat.m[0][3] = 0.0f;
+
+    mat.m[1][0] = 2.0f * (xy + wz);
+    mat.m[1][1] = 1.0f - 2.0f * (xx + zz);
+    mat.m[1][2] = 2.0f * (yz - wx);
+    mat.m[1][3] = 0.0f;
+
+    mat.m[2][0] = 2.0f * (xz - wy);
+    mat.m[2][1] = 2.0f * (yz + wx);
+    mat.m[2][2] = 1.0f - 2.0f * (xx + yy);
+    mat.m[2][3] = 0.0f;
+
+    mat.m[3][0] = 0.0f;
+    mat.m[3][1] = 0.0f;
+    mat.m[3][2] = 0.0f;
+    mat.m[3][3] = 1.0f;
+
+    return mat;
+}
+
 Quaternion Slerp(const Quaternion &q0, const Quaternion &q1, float t) {
     return Quaternion::Slerp(q0, q1, t);
 }
@@ -335,4 +379,28 @@ Quaternion Slerp(const Quaternion &q0, const Quaternion &q1, float t) {
 Matrix4x4 MakeRotateXYZMatrix(const Quaternion &quat) {
     // QuaternionToMatrix4x4と同じ実装
     return QuaternionToMatrix4x4(quat);
+}
+
+Matrix4x4 MakeRotateMatrix(const Vector3 &right, const Vector3 &up, const Vector3 &forward) {
+    Matrix4x4 result;
+
+    // 回転行列の各成分を設定
+    result.m[0][0] = right.x;
+    result.m[0][1] = right.y;
+    result.m[0][2] = right.z;
+    result.m[0][3] = 0.0f;
+    result.m[1][0] = up.x;
+    result.m[1][1] = up.y;
+    result.m[1][2] = up.z;
+    result.m[1][3] = 0.0f;
+    result.m[2][0] = forward.x;
+    result.m[2][1] = forward.y;
+    result.m[2][2] = forward.z;
+    result.m[2][3] = 0.0f;
+    result.m[3][0] = 0.0f;
+    result.m[3][1] = 0.0f;
+    result.m[3][2] = 0.0f;
+    result.m[3][3] = 1.0f;
+
+    return result;
 }

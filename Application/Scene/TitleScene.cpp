@@ -1,5 +1,6 @@
 #include "TitleScene.h"
 #include <Frame.h>
+#include"SkyBox/SkyBox.h"
 
 void TitleScene::Initialize() {
     audio_ = Audio::GetInstance();
@@ -11,6 +12,17 @@ void TitleScene::Initialize() {
 
     debugCamera_ = std::make_unique<DebugCamera>();
     debugCamera_->Initialize(&vp_);
+
+    obj_ = std::make_unique<BaseObject>();
+    obj_->Init("walk");
+    obj_->CreateModel("animation/sneakWalk.gltf");
+    obj_->SetReflect(true);
+    BaseObjectManager::GetInstance()->AddObject(std::move(obj_));
+
+    SkyBox::GetInstance()->Initialize("game/skybox.dds");
+
+    ptEditor_ = ParticleEditor::GetInstance();
+
 }
 
 void TitleScene::Finalize() {
@@ -28,7 +40,11 @@ void TitleScene::Update() {
 void TitleScene::Draw() {
     /// -------描画処理開始-------
 
+    SkyBox::GetInstance()->Draw(vp_);
+
     BaseObjectManager::GetInstance()->Draw(vp_);
+
+     ptEditor_->DrawAll(vp_);
 
     /// Spriteの描画準備
     spCommon_->DrawCommonSetting();
@@ -59,6 +75,8 @@ void TitleScene::AddObjectSetting() {
 }
 
 void TitleScene::AddParticleSetting() {
+    ptEditor_->EditorWindow();
+    ptEditor_->DebugAll();
 }
 
 void TitleScene::CameraUpdate() {

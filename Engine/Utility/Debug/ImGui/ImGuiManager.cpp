@@ -636,7 +636,7 @@ void ImGuiManager::ShowSceneWindow(OffScreen *offScreen, const std::string& scen
     ImVec2 actualScenePos = ImVec2(
         contentPos.x + sceneOffset.x,
         contentPos.y + sceneOffset.y);
-    imGuizmoManager_->Update(actualScenePos, sceneTextureSize_);
+   // imGuizmoManager_->Update(actualScenePos, sceneTextureSize_);
 
     ImGui::End();
 }

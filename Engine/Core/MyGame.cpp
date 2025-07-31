@@ -13,7 +13,7 @@ void MyGame::Initialize() {
     sceneFactory_ = new SceneFactory();
     // シーンマネージャに最初のシーンをセット
     sceneManager_->SetSceneFactory(sceneFactory_);
-    sceneManager_->NextSceneReservation("GAME");
+    sceneManager_->NextSceneReservation("TITLE");
     // -----------------------
 }
 
@@ -42,7 +42,7 @@ void MyGame::Update() {
         imGuiManager_->ShowSceneWindow(offscreen_.get(), sceneManager_->GetCurrentSceneName());
     }
     imGuiManager_->ShowMainUI(offscreen_.get());
-    baseObjectManager_->DrawImGui();
+   // baseObjectManager_->DrawImGui();
     imGuiManager_->End();
 #endif // _DEBUG
 

@@ -1,8 +1,8 @@
 #pragma once
 
 #include "BaseScene.h"
-#include"Object/Base/BaseObject.h"
-#include"Easing.h"
+#include "Easing.h"
+#include "Object/Base/BaseObject.h"
 
 class TitleScene : public BaseScene {
   public:
@@ -46,7 +46,9 @@ class TitleScene : public BaseScene {
     Input *input_;
     SpriteCommon *spCommon_;
     ParticleCommon *ptCommon_;
+    ParticleEditor *ptEditor_;
 
     ViewProjection vp_;
     std::unique_ptr<DebugCamera> debugCamera_;
+    std::unique_ptr<BaseObject> obj_;
 };

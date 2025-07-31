@@ -42,8 +42,8 @@ void Object3d::CreateModel(const std::string &filePath) {
     }
 }
 
-void Object3d::CreatePrimitiveModel(const PrimitiveType &type) {
-    model = ModelManager::GetInstance()->FindModel(ModelManager::GetInstance()->CreatePrimitiveModel(type));
+void Object3d::CreatePrimitiveModel(const PrimitiveType &type,std::string texPath) {
+    model = ModelManager::GetInstance()->FindModel(ModelManager::GetInstance()->CreatePrimitiveModel(type,texPath));
     isPrimitive_ = true;
 }
 
@@ -51,7 +51,7 @@ void Object3d::Update(const WorldTransform &worldTransform, const ViewProjection
     if (lightGroup) {
         lightGroup->Update(viewProjection);
     }
-    Matrix4x4 worldMatrix = MakeAffineMatrix(worldTransform.scale_, worldTransform.rotation_, worldTransform.translation_);
+    Matrix4x4 worldMatrix = MakeAffineMatrix(worldTransform.scale_, worldTransform.quateRotation_, worldTransform.translation_);
 
     if (worldTransform.parent_) {
         worldMatrix *= worldTransform.parent_->matWorld_;
@@ -325,7 +325,7 @@ void Object3d::DrawSkeleton(const WorldTransform &worldTransform, const ViewProj
     // モデルに適用されているワールド変換を生成
     Matrix4x4 worldMatrix = MakeAffineMatrix(
         worldTransform.scale_,
-        worldTransform.rotation_,
+        worldTransform.quateRotation_,
         worldTransform.translation_);
 
     if (worldTransform.parent_) {

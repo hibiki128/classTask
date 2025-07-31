@@ -33,7 +33,6 @@ class GameScene : public BaseScene {
     void CameraUpdate();
 
     void ChangeScene();
-
   private:
     /// ====================================
     /// private variaus

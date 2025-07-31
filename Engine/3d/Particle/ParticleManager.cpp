@@ -107,13 +107,13 @@ void ParticleManager::Update(const ViewProjection &viewProjection) {
                     Vector3 rotationAxis = initialUp.Cross(forward).Normalize();
                     float dotProduct = initialUp.Dot(forward);
                     float angle = acosf(std::clamp(dotProduct, -1.0f, 1.0f));
-                    particle.transform.rotation_.x = rotationAxis.x * angle;
-                    particle.transform.rotation_.y = rotationAxis.y * angle;
-                    particle.transform.rotation_.z = rotationAxis.z * angle;
+                    particle.transform.eulerRotation_.x = rotationAxis.x * angle;
+                    particle.transform.eulerRotation_.y = rotationAxis.y * angle;
+                    particle.transform.eulerRotation_.z = rotationAxis.z * angle;
                 } else if (particleSetting.isRandomRotate) {
-                    particle.transform.rotation_ += particle.rotateVelocity;
+                    particle.transform.eulerRotation_ += particle.rotateVelocity;
                 } else {
-                    particle.transform.rotation_ =
+                    particle.transform.eulerRotation_ =
                         (1.0f - t) * particle.startRote + t * particle.endRote;
                 }
 
@@ -189,10 +189,10 @@ void ParticleManager::Update(const ViewProjection &viewProjection) {
                 // ビルボード後にZ軸回転を適用
                 Matrix4x4 zRotationMatrix = MakeIdentity4x4();
                 if (particleSetting.isRandomRotate ||
-                    (!particleSetting.isFaceDirection && (particle.transform.rotation_.z != 0.0f || particle.rotateVelocity.z != 0.0f))) {
+                    (!particleSetting.isFaceDirection && (particle.transform.eulerRotation_.z != 0.0f || particle.rotateVelocity.z != 0.0f))) {
                     // Z軸回転マトリックスを作成
-                    float cosZ = cosf(particle.transform.rotation_.z);
-                    float sinZ = sinf(particle.transform.rotation_.z);
+                    float cosZ = cosf(particle.transform.eulerRotation_.z);
+                    float sinZ = sinf(particle.transform.eulerRotation_.z);
                     zRotationMatrix.m[0][0] = cosZ;
                     zRotationMatrix.m[0][1] = -sinZ;
                     zRotationMatrix.m[1][0] = sinZ;
@@ -203,7 +203,7 @@ void ParticleManager::Update(const ViewProjection &viewProjection) {
                               MakeTranslateMatrix(particle.transform.translation_);
             } else {
                 worldMatrix = MakeAffineMatrix(particle.transform.scale_,
-                                               particle.transform.rotation_,
+                                               particle.transform.eulerRotation_,
                                                particle.transform.translation_);
             }
 
@@ -221,6 +221,7 @@ void ParticleManager::Update(const ViewProjection &viewProjection) {
         particleGroup->GetParticleGroupData().instanceCount = numInstance;
     }
 }
+
 // 軌跡パーティクル生成メソッド
 void ParticleManager::CreateTrailParticle(const Particle &parent, const ParticleSetting &setting) {
     // 軌跡パーティクルを作成
@@ -230,7 +231,7 @@ void ParticleManager::CreateTrailParticle(const Particle &parent, const Particle
 
     // 親の現在位置に配置
     trailParticle.transform.translation_ = parent.transform.translation_;
-    trailParticle.transform.rotation_ = parent.transform.rotation_;
+    trailParticle.transform.eulerRotation_ = parent.transform.eulerRotation_;
     trailParticle.transform.scale_ = parent.transform.scale_ * setting.trailScaleMultiplier;
 
     // 速度の設定
@@ -253,6 +254,7 @@ void ParticleManager::CreateTrailParticle(const Particle &parent, const Particle
     trailParticle.endScale = parent.endScale * setting.trailScaleMultiplier;
     trailParticle.startAcce = parent.startAcce;
     trailParticle.endAcce = parent.endAcce;
+    trailParticle.blendMode = parent.blendMode;
 
     // パーティクルグループに追加
     for (auto &[groupName, particleGroup] : particleGroups_) {
@@ -340,6 +342,7 @@ Particle ParticleManager::MakeNewParticle(std::mt19937 &randomEngine, const Part
     std::uniform_real_distribution<float> distAlpha(setting.alphaMin, setting.alphaMax);
 
     Particle particle;
+    particle.transform.isUseQuaternion_ = false;
     Vector3 randomTranslate;
     particle.emitterPosition = setting.translate;
     if (setting.isEmitOnEdge) {
@@ -412,9 +415,9 @@ Particle ParticleManager::MakeNewParticle(std::mt19937 &randomEngine, const Part
         std::uniform_real_distribution<float> distRotateX(setting.rotateStartMin.x, setting.rotateStartMax.x);
         std::uniform_real_distribution<float> distRotateY(setting.rotateStartMin.y, setting.rotateStartMax.y);
         std::uniform_real_distribution<float> distRotateZ(setting.rotateStartMin.z, setting.rotateStartMax.z);
-        particle.transform.rotation_.x = distRotateX(randomEngine);
-        particle.transform.rotation_.y = distRotateY(randomEngine);
-        particle.transform.rotation_.z = distRotateZ(randomEngine);
+        particle.transform.eulerRotation_.x = distRotateX(randomEngine);
+        particle.transform.eulerRotation_.y = distRotateY(randomEngine);
+        particle.transform.eulerRotation_.z = distRotateZ(randomEngine);
         if (setting.isRotateVelocity) {
             std::uniform_real_distribution<float> distRotateXVelocity(setting.rotateVelocityMin.x, setting.rotateVelocityMax.x);
             std::uniform_real_distribution<float> distRotateYVelocity(setting.rotateVelocityMin.y, setting.rotateVelocityMax.y);
@@ -427,11 +430,11 @@ Particle ParticleManager::MakeNewParticle(std::mt19937 &randomEngine, const Part
         particle.startRote = setting.startRote;
         particle.endRote = setting.endRote;
     }
+
     if (setting.isRandomColor) {
         std::uniform_real_distribution<float> distColor(0.0f, 1.0f);
         particle.color = {distColor(randomEngine), distColor(randomEngine), distColor(randomEngine), distAlpha(randomEngine)};
     } else {
-        // ここを修正: startColor を使う
         particle.color = setting.startColor;
         particle.color.w = distAlpha(randomEngine);
     }
@@ -442,9 +445,9 @@ Particle ParticleManager::MakeNewParticle(std::mt19937 &randomEngine, const Part
         Vector3 rotationAxis = initialUp.Cross(forward).Normalize();
         float dotProduct = initialUp.Dot(forward);
         float angle = acosf(std::clamp(dotProduct, -1.0f, 1.0f));
-        particle.transform.rotation_.x = rotationAxis.x * angle;
-        particle.transform.rotation_.y = rotationAxis.y * angle;
-        particle.transform.rotation_.z = rotationAxis.z * angle;
+        particle.transform.eulerRotation_.x = rotationAxis.x * angle;
+        particle.transform.eulerRotation_.y = rotationAxis.y * angle;
+        particle.transform.eulerRotation_.z = rotationAxis.z * angle;
     }
     particle.initialAlpha = distAlpha(randomEngine);
     particle.lifeTime = distLifeTime(randomEngine);

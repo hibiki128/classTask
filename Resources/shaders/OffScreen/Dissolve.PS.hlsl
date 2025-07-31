@@ -1,14 +1,16 @@
-#include"FullScreen.hlsli"
+#include "FullScreen.hlsli"
 
-struct DissolveValue
+cbuffer DissolveParams : register(b0)
 {
-    float value;
+    float gThreshold; // 閾値
+    float gEdgeWidth; // エッジ幅
+    float3 gEdgeColor; // エッジ色
+    bool gInvert; // true で反転
 };
 
 Texture2D<float4> gTexture : register(t0);
 Texture2D<float> gMaskTexture : register(t1);
 SamplerState gSampler : register(s0);
-ConstantBuffer<DissolveValue> gDissolveValue : register(b0);
 
 struct PixelShaderOutput
 {
@@ -18,12 +20,24 @@ struct PixelShaderOutput
 PixelShaderOutput main(VertexShaderOutput input)
 {
     PixelShaderOutput output;
+
     float mask = gMaskTexture.Sample(gSampler, input.texcoord);
-    if(mask < gDissolveValue.value)
+
+    // 反転対応
+    float dissolveFactor = gInvert ? (1.0f - gThreshold) : gThreshold;
+
+    // 輪郭判定
+    float edge = smoothstep(dissolveFactor, dissolveFactor + gEdgeWidth, mask);
+
+    // 描画／破棄
+    if (mask < dissolveFactor)
     {
         discard;
-    };
-    
-    output.color = gTexture.Sample(gSampler, input.texcoord);
+    }
+
+    float4 baseColor = gTexture.Sample(gSampler, input.texcoord);
+    float3 finalColor = lerp(gEdgeColor, baseColor.rgb, edge);
+
+    output.color = float4(finalColor, baseColor.a);
     return output;
 }

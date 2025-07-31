@@ -1,19 +1,19 @@
 #include "ImGuiManager.h"
 #ifdef _DEBUG
+#include "Engine/OffScreen/OffScreen.h"
 #include "ImGuizmo.h"
 #include "ImGuizmoManager.h"
+#include "Object/Base/BaseObject.h"
+#include "Scene/SceneManager.h"
 #include "imgui.h"
 #include "imgui_impl_win32.h"
 #include <Engine/Frame/Frame.h>
 #include <externals/icon/IconsFontAwesome5.h>
 #include <imgui_impl_dx12.h>
-#include"Object/Base/BaseObject.h"
-#include"Scene/SceneManager.h"
-#include"Engine/OffScreen/OffScreen.h"
 
 ImGuiManager *ImGuiManager::instance = nullptr;
 
-void ImGuiManager::Initialize(WinApp *winApp) {
+void ImGuiManager::Initialize(WinApp *winApp, ImGuizmoManager *imguizmoManager) {
 
     dxCommon_ = DirectXCommon::GetInstance();
     baseObjectManager_ = BaseObjectManager::GetInstance();
@@ -70,7 +70,7 @@ void ImGuiManager::Initialize(WinApp *winApp) {
         srvManager_->GetDescriptorHeap(),
         srvManager_->GetCPUDescriptorHandle(srvIndex),
         srvManager_->GetGPUDescriptorHandle(srvIndex));
-    imGuizmoManager_ = ImGuizmoManager::GetInstance();
+    imGuizmoManager_ = imguizmoManager;
 }
 
 void ImGuiManager::SetupTheme() {
@@ -235,26 +235,19 @@ void ImGuiManager::ShowMainMenu() {
     if (ImGui::BeginMainMenuBar()) {
         // ファイルメニュー
         if (ImGui::BeginMenu(ICON_FA_FILE " ファイル")) {
-            if (ImGui::MenuItem(ICON_FA_PLUS " 新規作成", "Ctrl+N")) {
-                // 新規プロジェクト作成処理
+            // シーン管理セクション
+            if (ImGui::MenuItem(ICON_FA_DOWNLOAD " シーン保存", "Ctrl+Shift+S")) {
+                // BaseObjectManagerのシーン保存モーダルを開く
+                baseObjectManager_->OpenSceneSaveModal();
             }
-            if (ImGui::MenuItem(ICON_FA_FOLDER_OPEN " 開く", "Ctrl+O")) {
-                // プロジェクトを開く処理
-            }
-            if (ImGui::MenuItem(ICON_FA_SAVE " 保存", "Ctrl+S")) {
-                // プロジェクト保存処理
-            }
-            if (ImGui::MenuItem(ICON_FA_SAVE " 名前を付けて保存", "Ctrl+Shift+S")) {
-                // 名前を付けて保存処理
-            }
-            ImGui::Separator();
-            if (ImGui::MenuItem(ICON_FA_FILE_EXPORT " エクスポート")) {
-                // エクスポート処理
+            if (ImGui::MenuItem(ICON_FA_UPLOAD " シーン読み込み", "Ctrl+Shift+L")) {
+                // BaseObjectManagerのシーン読み込みモーダルを開く
+                baseObjectManager_->OpenSceneLoadModal();
             }
             ImGui::Separator();
             if (ImGui::MenuItem(ICON_FA_DOOR_OPEN " 終了", "Alt+F4")) {
                 // アプリケーション終了処理
-                WinApp::GetInstance()->ProcessMessage(); // 終了メッセージ送信
+                WinApp::GetInstance()->ClosedWindow(); // 終了メッセージ送信
             }
             ImGui::EndMenu();
         }
@@ -276,7 +269,6 @@ void ImGuiManager::ShowMainMenu() {
             }
             ImGui::Separator();
             if (ImGui::MenuItem(ICON_FA_COG " 環境設定", "Ctrl+,")) {
-                // showSettingsWindow_ = true;
             }
             ImGui::EndMenu();
         }
@@ -285,14 +277,12 @@ void ImGuiManager::ShowMainMenu() {
         if (ImGui::BeginMenu(ICON_FA_EYE " 表示")) {
             // ウィンドウ表示設定
             if (ImGui::BeginMenu(ICON_FA_WINDOW_MAXIMIZE " ウィンドウ")) {
-                // ImGui::MenuItem(ICON_FA_GAMEPAD " ゲームビュー", nullptr, &showGameView_);
                 ImGui::MenuItem(ICON_FA_BOOK_OPEN " シーンビュー", nullptr, &showSceneView_);
                 ImGui::MenuItem(ICON_FA_CUBE " オブジェクトビュー", nullptr, &showObjectView_);
                 ImGui::MenuItem(ICON_FA_STAR " パーティクルビュー", nullptr, &showParticleView_);
                 ImGui::MenuItem(ICON_FA_DATABASE " FPSビュー", nullptr, &showFPSView_);
                 ImGui::MenuItem(ICON_FA_STAR_OF_DAVID " オフスクリーンビュー", nullptr, &showOfScreenView_);
                 ImGui::MenuItem(ICON_FA_LIGHTBULB " ライトビュー", nullptr, &showLightView_);
-                // ImGui::MenuItem(ICON_FA_FOLDER " プロジェクト", nullptr, &showProject_);
                 ImGui::EndMenu();
             }
 
@@ -320,6 +310,7 @@ void ImGuiManager::ShowMainMenu() {
         if (ImGui::BeginMenu(ICON_FA_CUBE " オブジェクト")) {
             if (ImGui::MenuItem(ICON_FA_PLUS " 新規オブジェクト", "Ctrl+Shift+N")) {
                 // 新規オブジェクト作成
+                baseObjectManager_->OpenObjectCreationModal();
             }
 
             // 3Dオブジェクト
@@ -421,53 +412,12 @@ void ImGuiManager::ShowMainMenu() {
             ImGui::EndMenu();
         }
 
-        // コンポーネントメニュー
-        if (ImGui::BeginMenu(ICON_FA_PUZZLE_PIECE " コンポーネント")) {
-            if (ImGui::BeginMenu(ICON_FA_COGS " 物理")) {
-                if (ImGui::MenuItem(ICON_FA_WEIGHT " リジッドボディ")) {
-                }
-                if (ImGui::MenuItem(ICON_FA_CUBE " コライダー")) {
-                }
-                ImGui::EndMenu();
-            }
-
-            if (ImGui::BeginMenu(ICON_FA_VOLUME_UP " オーディオ")) {
-                if (ImGui::MenuItem(ICON_FA_MUSIC " オーディオソース")) {
-                }
-                if (ImGui::MenuItem(ICON_FA_HEADPHONES " オーディオリスナー")) {
-                }
-                ImGui::EndMenu();
-            }
-
-            if (ImGui::BeginMenu(ICON_FA_CODE " スクリプト")) {
-                if (ImGui::MenuItem(ICON_FA_FILE_CODE " 新規スクリプト")) {
-                }
-                ImGui::EndMenu();
-            }
-
-            ImGui::EndMenu();
-        }
-
-        // ツールメニュー
-        if (ImGui::BeginMenu(ICON_FA_TOOLS " ツール")) {
-            if (ImGui::MenuItem(ICON_FA_PAINT_BRUSH " マテリアルエディタ")) {
-            }
-            if (ImGui::MenuItem(ICON_FA_FILTER " パーティクルエディタ")) {
-            }
-            if (ImGui::MenuItem(ICON_FA_WATER " シェーダーエディタ")) {
-            }
-            ImGui::Separator();
-            if (ImGui::MenuItem(ICON_FA_BUG " デバッグ情報表示", nullptr /*, &showDebugInfo_*/)) {
-            }
-            ImGui::EndMenu();
-        }
-
         // ヘルプメニュー
         if (ImGui::BeginMenu(ICON_FA_QUESTION_CIRCLE " ヘルプ")) {
-            if (ImGui::MenuItem(ICON_FA_BOOK " ドキュメント", "F1")) {
+            if (ImGui::MenuItem(ICON_FA_KEYBOARD " ショートカット一覧", "F1")) {
+                showShortcutWindow = !showShortcutWindow;
             }
             if (ImGui::MenuItem(ICON_FA_INFO_CIRCLE " バージョン情報")) {
-                // showAboutWindow_ = true;
             }
             ImGui::EndMenu();
         }
@@ -475,19 +425,19 @@ void ImGuiManager::ShowMainMenu() {
         // シーンメニュー
         if (ImGui::BeginMenu(ICON_FA_GLOBE " シーン選択")) { // 地球アイコン（意味：全体メニュー）
 
-            if (ImGui::MenuItem(ICON_FA_HOME " タイトルシーン")) { // home アイコン
+            if (ImGui::MenuItem(ICON_FA_HOME " タイトルシーン", "Ctrl+1")) { // home アイコン
                 SceneManager::GetInstance()->SceneSelection("TITLE");
             }
-            if (ImGui::MenuItem(ICON_FA_BARS " セレクトシーン")) { // bars アイコン（メニュー選択感）
+            if (ImGui::MenuItem(ICON_FA_BARS " セレクトシーン", "Ctrl+2")) { // bars アイコン（メニュー選択感）
                 SceneManager::GetInstance()->SceneSelection("SELECT");
             }
-            if (ImGui::MenuItem(ICON_FA_GAMEPAD " ゲームシーン")) { // gamepad アイコン
+            if (ImGui::MenuItem(ICON_FA_GAMEPAD " ゲームシーン", "Ctrl+3")) { // gamepad アイコン
                 SceneManager::GetInstance()->SceneSelection("GAME");
             }
-            if (ImGui::MenuItem(ICON_FA_TROPHY " クリアシーン")) { // trophy アイコン
+            if (ImGui::MenuItem(ICON_FA_TROPHY " クリアシーン", "Ctrl+4")) { // trophy アイコン
                 SceneManager::GetInstance()->SceneSelection("CLEAR");
             }
-            if (ImGui::MenuItem(ICON_FA_FILM " デモシーン")) { // film アイコン
+            if (ImGui::MenuItem(ICON_FA_FILM " デモシーン", "Ctrl+5")) { // film アイコン
                 SceneManager::GetInstance()->SceneSelection("DEMO");
             }
 
@@ -599,15 +549,14 @@ void ImGuiManager::FixAspectRatio() {
     }
 }
 
-void ImGuiManager::ShowSceneWindow() {
+void ImGuiManager::ShowSceneWindow(OffScreen *offScreen, const std::string& sceneName) {
     // ImGuiウィンドウ開始前にNextWindowSizeは設定しない（手動サイズ変更を許可）
     ImGuiWindowFlags flags = ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoScrollbar;
     // フォーカスされていない場合は描画を最適化
     if (!isShowMainUI_) {
         flags |= ImGuiWindowFlags_NoBringToFrontOnFocus;
     }
-
-    ImGui::Begin("Scene", nullptr, flags);
+    ImGui::Begin(sceneName.c_str(), nullptr, flags);
 
     // ウィンドウ内の位置を取得（ImGuizmoのためにシーンウィンドウの絶対位置を計算）
     ImVec2 sceneWindowPos = ImGui::GetWindowPos();
@@ -644,7 +593,6 @@ void ImGuiManager::ShowSceneWindow() {
     }
 
     // 背景カラー設定
-    uint32_t srvIndex = dxCommon_->GetOffScreenSrvIndex();
     static ImVec4 lastBgColor = ImVec4(0, 0, 0, 0);
     ImVec4 backgroundColor;
 
@@ -668,6 +616,16 @@ void ImGuiManager::ShowSceneWindow() {
     // テクスチャ描画位置を調整
     ImGui::SetCursorPos(ImVec2(ImGui::GetCursorPosX() + sceneOffset.x, ImGui::GetCursorPosY() + sceneOffset.y));
 
+    // ポストエフェクトが適用された最終結果のテクスチャを取得
+    uint32_t srvIndex;
+    if (offScreen != nullptr) {
+        // ポストエフェクトが適用された最終結果を使用
+        srvIndex = offScreen->GetFinalResultSrvIndex();
+    } else {
+        // フォールバック：通常のオフスクリーンバッファを使用
+        srvIndex = dxCommon_->GetOffScreenSrvIndex();
+    }
+
     // レンダーテクスチャをImGuiウィンドウに描画
     ImGui::ImageWithBg(
         static_cast<ImTextureID>(SrvManager::GetInstance()->GetGPUDescriptorHandle(srvIndex).ptr),
@@ -678,7 +636,6 @@ void ImGuiManager::ShowSceneWindow() {
     ImVec2 actualScenePos = ImVec2(
         contentPos.x + sceneOffset.x,
         contentPos.y + sceneOffset.y);
-
     imGuizmoManager_->Update(actualScenePos, sceneTextureSize_);
 
     ImGui::End();
@@ -698,6 +655,9 @@ void ImGuiManager::ShowMainUI(OffScreen *offscreen) {
     ShowOffScreenSettingWindow(offscreen);
     // ライトウィンドウを描画
     ShowLightSettingWindow();
+
+    ShowHelpWindow();
+    baseObjectManager_->UpdateImGui();
 }
 
 bool &ImGuiManager::GetIsShowMainUI() {
@@ -734,25 +694,25 @@ void ImGuiManager::ShowDockSpace() {
 void ImGuiManager::DisplayFPS() {
 #ifdef _DEBUG
     if (ImGui::CollapsingHeader("FPS")) {
-    
-    ImGuiIO &io = ImGui::GetIO();
-    // FPSを取得
-    float fps = Frame::GetFPS();
-    float deltaTime = Frame::DeltaTime() * 1000.0f; // ミリ秒単位に変換
 
-    // FPSを色付きで表示
-    ImVec4 color;
-    if (fps >= 59.0f) {
-        color = ImVec4(0.0f, 1.0f, 0.0f, 1.0f); // 60FPS付近なら緑色
-    } else if (fps >= 30.0f) {
-        color = ImVec4(1.0f, 1.0f, 0.0f, 1.0f); // 30-59FPSなら黄色
-    } else {
-        color = ImVec4(1.0f, 0.0f, 0.0f, 1.0f); // 30FPS未満なら赤色
-    }
+        ImGuiIO &io = ImGui::GetIO();
+        // FPSを取得
+        float fps = Frame::GetFPS();
+        float deltaTime = Frame::DeltaTime() * 1000.0f; // ミリ秒単位に変換
 
-    ImGui::TextColored(color, "FPS: %.1f", fps);
-    ImGui::TextColored(color, "Frame: %.2f ms", deltaTime);
-    //ImGui::TreePop();
+        // FPSを色付きで表示
+        ImVec4 color;
+        if (fps >= 59.0f) {
+            color = ImVec4(0.0f, 1.0f, 0.0f, 1.0f); // 60FPS付近なら緑色
+        } else if (fps >= 30.0f) {
+            color = ImVec4(1.0f, 1.0f, 0.0f, 1.0f); // 30-59FPSなら黄色
+        } else {
+            color = ImVec4(1.0f, 0.0f, 0.0f, 1.0f); // 30FPS未満なら赤色
+        }
+
+        ImGui::TextColored(color, "FPS: %.1f", fps);
+        ImGui::TextColored(color, "Frame: %.2f ms", deltaTime);
+        // ImGui::TreePop();
     }
 #endif // _DEBUG
 }
@@ -834,4 +794,123 @@ void ImGuiManager::LoadLayoutForCurrentMode() {
         fclose(f);
     }
     // ファイルが存在しない場合は新規に作成される
+}
+
+void ImGuiManager::ShowHelpWindow() {
+#ifdef _DEBUG
+
+    // ショートカット一覧ウィンドウの表示
+    if (showShortcutWindow) {
+        ImGui::SetNextWindowSize(ImVec2(500, 400), ImGuiCond_FirstUseEver);
+        if (ImGui::Begin(ICON_FA_KEYBOARD " ショートカット一覧", &showShortcutWindow, ImGuiWindowFlags_NoCollapse)) {
+
+            // テーブルでショートカットを整理して表示
+            if (ImGui::BeginTable("ShortcutTable", 2, ImGuiTableFlags_Borders | ImGuiTableFlags_RowBg | ImGuiTableFlags_Resizable)) {
+                ImGui::TableSetupColumn("機能", ImGuiTableColumnFlags_WidthStretch, 0.6f);
+                ImGui::TableSetupColumn("ショートカットキー", ImGuiTableColumnFlags_WidthStretch, 0.4f);
+                ImGui::TableHeadersRow();
+
+                // システム操作
+                ImGui::TableNextRow();
+                ImGui::TableSetColumnIndex(0);
+                ImGui::TextColored(ImVec4(0.8f, 0.9f, 1.0f, 1.0f), ICON_FA_COG " システム操作");
+                ImGui::TableSetColumnIndex(1);
+                ImGui::Text("");
+
+                ImGui::TableNextRow();
+                ImGui::TableSetColumnIndex(0);
+                ImGui::Text("  フルスクリーン切り替え");
+                ImGui::TableSetColumnIndex(1);
+                ImGui::Text("F11");
+
+                ImGui::TableNextRow();
+                ImGui::TableSetColumnIndex(0);
+                ImGui::Text("  アプリケーション終了");
+                ImGui::TableSetColumnIndex(1);
+                ImGui::Text("Alt + F4");
+
+                ImGui::TableNextRow();
+                ImGui::TableSetColumnIndex(0);
+                ImGui::Text("  デバッグUI切り替え");
+                ImGui::TableSetColumnIndex(1);
+                ImGui::Text("F5");
+
+                // シーン操作
+                ImGui::TableNextRow();
+                ImGui::TableSetColumnIndex(0);
+                ImGui::TextColored(ImVec4(0.8f, 0.9f, 1.0f, 1.0f), ICON_FA_FOLDER " シーン操作");
+                ImGui::TableSetColumnIndex(1);
+                ImGui::Text("");
+
+                ImGui::TableNextRow();
+                ImGui::TableSetColumnIndex(0);
+                ImGui::Text("  シーン保存");
+                ImGui::TableSetColumnIndex(1);
+                ImGui::Text("Ctrl + Shift + S");
+
+                ImGui::TableNextRow();
+                ImGui::TableSetColumnIndex(0);
+                ImGui::Text("  シーン読み込み");
+                ImGui::TableSetColumnIndex(1);
+                ImGui::Text("Ctrl + Shift + L");
+
+                ImGui::TableNextRow();
+                ImGui::TableSetColumnIndex(0);
+                ImGui::Text("  モデル作成");
+                ImGui::TableSetColumnIndex(1);
+                ImGui::Text("Ctrl + Shift + N");
+
+                // シーン切り替え
+                ImGui::TableNextRow();
+                ImGui::TableSetColumnIndex(0);
+                ImGui::TextColored(ImVec4(0.8f, 0.9f, 1.0f, 1.0f), ICON_FA_EXCHANGE_ALT " シーン切り替え");
+                ImGui::TableSetColumnIndex(1);
+                ImGui::Text("");
+
+                ImGui::TableNextRow();
+                ImGui::TableSetColumnIndex(0);
+                ImGui::Text("  タイトルシーン");
+                ImGui::TableSetColumnIndex(1);
+                ImGui::Text("Ctrl + 1");
+
+                ImGui::TableNextRow();
+                ImGui::TableSetColumnIndex(0);
+                ImGui::Text("  セレクトシーン");
+                ImGui::TableSetColumnIndex(1);
+                ImGui::Text("Ctrl + 2");
+
+                ImGui::TableNextRow();
+                ImGui::TableSetColumnIndex(0);
+                ImGui::Text("  ゲームシーン");
+                ImGui::TableSetColumnIndex(1);
+                ImGui::Text("Ctrl + 3");
+
+                ImGui::TableNextRow();
+                ImGui::TableSetColumnIndex(0);
+                ImGui::Text("  クリアシーン");
+                ImGui::TableSetColumnIndex(1);
+                ImGui::Text("Ctrl + 4");
+
+                ImGui::TableNextRow();
+                ImGui::TableSetColumnIndex(0);
+                ImGui::Text("  デモシーン");
+                ImGui::TableSetColumnIndex(1);
+                ImGui::Text("Ctrl + 5");
+
+                ImGui::EndTable();
+            }
+
+            // 注記
+            ImGui::Separator();
+            ImGui::TextWrapped("注意: これらのショートカットはデバッグビルドでのみ有効です。");
+
+            // 閉じるボタン
+            ImGui::SetCursorPosY(ImGui::GetWindowHeight() - 35);
+            if (ImGui::Button("閉じる", ImVec2(100, 25))) {
+                showShortcutWindow = false;
+            }
+        }
+        ImGui::End();
+    }
+#endif // _DEBUG
 }

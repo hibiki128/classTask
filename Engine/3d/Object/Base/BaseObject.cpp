@@ -44,8 +44,8 @@ void BaseObject::Draw(const ViewProjection &viewProjection, Vector3 offSet) {
         obj3d_->DrawSkeleton(*transform_, viewProjection);
     }
     if (!isWireframe_) {
-            // オブジェクトの描画
-            obj3d_->Draw(*transform_, viewProjection, reflect_, &objColor_, isLighting_,isModelDraw_);
+        // オブジェクトの描画
+        obj3d_->Draw(*transform_, viewProjection, reflect_, &objColor_, isLighting_, isModelDraw_);
     } else {
         obj3d_->DrawWireframe(*transform_, viewProjection, isRainbow_);
     }
@@ -91,18 +91,8 @@ void BaseObject::UpdateHierarchy() {
     }
 }
 
-Vector3 BaseObject::GetWorldPosition() const {
-    Vector3 worldPos;
-    // ワールド行列の平行移動成分を取得
-    worldPos.x = transform_->matWorld_.m[3][0];
-    worldPos.y = transform_->matWorld_.m[3][1];
-    worldPos.z = transform_->matWorld_.m[3][2];
-
-    return worldPos;
-}
-
 void BaseObject::SetParent(BaseObject *parent) {
-    if (parent_ == parent) {
+    if (parent_ == parent || parent == nullptr) {
         return; // 同じ親を持ってる場合何もしない
     }
     if (parent_) {
@@ -174,9 +164,8 @@ void BaseObject::CreateModel(const std::string modelname) {
 }
 
 void BaseObject::CreatePrimitiveModel(const PrimitiveType &type) {
-    obj3d_->CreatePrimitiveModel(type);
+    obj3d_->CreatePrimitiveModel(type, texturePath_);
     type_ = type;
-    isPrimitive_ = true;
 }
 
 void BaseObject::AddCollider() {
@@ -231,9 +220,8 @@ std::vector<std::string> BaseObject::GetChildrenNames() const {
     return names;
 }
 
-// ワールド座標を取得（親の位置は加算不要）
-Vector3 &BaseObject::GetWorldPosition() {
-    static Vector3 worldPos; // 参照を返すため static に保持
+Vector3 BaseObject::GetWorldPosition() {
+
     // ワールド行列の平行移動成分を取得
     worldPos.x = transform_->matWorld_.m[3][0];
     worldPos.y = transform_->matWorld_.m[3][1];
@@ -241,27 +229,48 @@ Vector3 &BaseObject::GetWorldPosition() {
     return worldPos;
 }
 
-// ワールド回転を取得（簡易的にオイラー角変換）
-Vector3 &BaseObject::GetWorldRotation() {
-    static Vector3 worldRot;
-    // ワールド行列から回転角（オイラー角）を抽出
+// ワールド行列からクォータニオンを取得
+Quaternion BaseObject::GetWorldRotation(){
     const Matrix4x4 &m = transform_->matWorld_;
-    worldRot.y = std::asin(-m.m[2][0]); // Pitch
 
-    if (std::cos(worldRot.y) > 0.0001f) {
-        worldRot.x = std::atan2(m.m[2][1], m.m[2][2]); // Yaw
-        worldRot.z = std::atan2(m.m[1][0], m.m[0][0]); // Roll
+    // 回転行列の要素からクォータニオンを生成
+    float trace = m.m[0][0] + m.m[1][1] + m.m[2][2];
+  
+
+    if (trace > 0.0f) {
+        float s = 0.5f / sqrtf(trace + 1.0f);
+        q.w = 0.25f / s;
+        q.x = (m.m[2][1] - m.m[1][2]) * s;
+        q.y = (m.m[0][2] - m.m[2][0]) * s;
+        q.z = (m.m[1][0] - m.m[0][1]) * s;
     } else {
-        worldRot.x = std::atan2(-m.m[1][2], m.m[1][1]);
-        worldRot.z = 0.0f;
+        if (m.m[0][0] > m.m[1][1] && m.m[0][0] > m.m[2][2]) {
+            float s = 2.0f * sqrtf(1.0f + m.m[0][0] - m.m[1][1] - m.m[2][2]);
+            q.w = (m.m[2][1] - m.m[1][2]) / s;
+            q.x = 0.25f * s;
+            q.y = (m.m[0][1] + m.m[1][0]) / s;
+            q.z = (m.m[0][2] + m.m[2][0]) / s;
+        } else if (m.m[1][1] > m.m[2][2]) {
+            float s = 2.0f * sqrtf(1.0f + m.m[1][1] - m.m[0][0] - m.m[2][2]);
+            q.w = (m.m[0][2] - m.m[2][0]) / s;
+            q.x = (m.m[0][1] + m.m[1][0]) / s;
+            q.y = 0.25f * s;
+            q.z = (m.m[1][2] + m.m[2][1]) / s;
+        } else {
+            float s = 2.0f * sqrtf(1.0f + m.m[2][2] - m.m[0][0] - m.m[1][1]);
+            q.w = (m.m[1][0] - m.m[0][1]) / s;
+            q.x = (m.m[0][2] + m.m[2][0]) / s;
+            q.y = (m.m[1][2] + m.m[2][1]) / s;
+            q.z = 0.25f * s;
+        }
     }
 
-    return worldRot;
+    return q.Normalize(); // 正規化して返す
 }
 
 // ワールドスケールを取得（回転を考慮）
-Vector3 &BaseObject::GetWorldScale() {
-    static Vector3 worldScale;
+Vector3 BaseObject::GetWorldScale() {
+  
     const Matrix4x4 &m = transform_->matWorld_;
 
     // 各軸のベクトルの長さをスケールとして取得
@@ -281,7 +290,7 @@ void BaseObject::SaveToJson() {
     ObjectDatas_->Save<std::string>("textureName", texturePath_);
     ObjectDatas_->Save<std::string>("objectName", objectName_);
     ObjectDatas_->Save<Vector3>("translation", transform_->translation_);
-    ObjectDatas_->Save<Vector3>("rotation", transform_->rotation_);
+    ObjectDatas_->Save<Quaternion>("rotation", transform_->quateRotation_);
     ObjectDatas_->Save<Vector3>("scale", transform_->scale_);
     ObjectDatas_->Save<bool>("Lighting", isLighting_);
     ObjectDatas_->Save<PrimitiveType>("PrimitiveType", type_);
@@ -304,7 +313,7 @@ void BaseObject::LoadFromJson() {
 
     // 基本トランスフォームを読み込み
     transform_->translation_ = ObjectDatas_->Load<Vector3>("translation", {0.0f, 0.0f, 0.0f});
-    transform_->rotation_ = ObjectDatas_->Load<Vector3>("rotation", {0.0f, 0.0f, 0.0f});
+    transform_->quateRotation_ = ObjectDatas_->Load<Quaternion>("rotation", Quaternion::IdentityQuaternion());
     transform_->scale_ = ObjectDatas_->Load<Vector3>("scale", {1.0f, 1.0f, 1.0f});
     isLighting_ = ObjectDatas_->Load<bool>("Lighting", true);
     type_ = ObjectDatas_->Load<PrimitiveType>("PrimitiveType", PrimitiveType::kCount);
@@ -348,6 +357,22 @@ void BaseObject::AnimaLoadFromJson() {
     AnimaDatas_ = std::make_unique<DataHandler>("Animation", objectName_);
     isLoop_ = AnimaDatas_->Load<bool>("Loop", false);
 }
+
+
+void BaseObject::DebugCollider() {
+    for (auto &collider : colliders_) {
+        collider->OffsetImgui();
+    }
+}
+
+Vector3 BaseObject::GetCenterPosition() {
+    return GetWorldPosition();
+}
+
+Quaternion BaseObject::GetCenterRotation() {
+    return GetWorldRotation();
+}
+
 
 void BaseObject::ImGui() {
 #ifdef _DEBUG
@@ -399,7 +424,6 @@ void BaseObject::ImGui() {
     }
 
 #endif // _DEBUG
-
 }
 
 void BaseObject::DebugObject() {
@@ -442,25 +466,37 @@ void BaseObject::DebugObject() {
         ImGui::Text("回転:");
         ImGui::SameLine(80);
         ImGui::PushItemWidth(200);
-
-        float rotationDegrees[3] = {
-            radiansToDegrees(transform_->rotation_.x),
-            radiansToDegrees(transform_->rotation_.y),
-            radiansToDegrees(transform_->rotation_.z)};
-
-        if (ImGui::DragFloat3("##Rotation", rotationDegrees, 1.0f, -360.0f, 360.0f, "%.1f°")) {
-            transform_->rotation_.x = degreesToRadians(rotationDegrees[0]);
-            transform_->rotation_.y = degreesToRadians(rotationDegrees[1]);
-            transform_->rotation_.z = degreesToRadians(rotationDegrees[2]);
+        static Vector3 deltaRotation = {0.0f, 0.0f, 0.0f};
+        if (ImGui::DragFloat3("##Rotation", &deltaRotation.x, 0.1f, -10.0f, 10.0f, "%.1f°")) {
+            // --- 修正版: 各軸ごとにクォータニオンを生成し合成 ---
+            Quaternion currentRotation = transform_->GetRotationQuaternion();
+            Quaternion deltaQuatX = Quaternion::FromAxisAngle(Vector3(1, 0, 0), deltaRotation.x * std::numbers::pi_v<float> / 180.0f);
+            Quaternion deltaQuatY = Quaternion::FromAxisAngle(Vector3(0, 1, 0), deltaRotation.y * std::numbers::pi_v<float> / 180.0f);
+            Quaternion deltaQuatZ = Quaternion::FromAxisAngle(Vector3(0, 0, 1), deltaRotation.z * std::numbers::pi_v<float> / 180.0f);
+            // ローカル軸回転として合成（Y→X→Zの順。用途に応じて順序は調整可）
+            Quaternion deltaQuat = deltaQuatY * deltaQuatX * deltaQuatZ;
+            Quaternion newRotation = currentRotation * deltaQuat;
+            transform_->SetRotationQuaternion(newRotation.Normalize());
+            transform_->UpdateMatrix();
+            deltaRotation = {0.0f, 0.0f, 0.0f};
         }
         ImGui::PopItemWidth();
-
         ImGui::SameLine();
         if (ImGui::Button("リセット##ResetRot")) {
-            transform_->rotation_ = {0.0f, 0.0f, 0.0f};
+            transform_->SetRotationQuaternion(Quaternion::IdentityQuaternion());
+            transform_->UpdateMatrix();
+            deltaRotation = {0.0f, 0.0f, 0.0f};
         }
         if (ImGui::IsItemHovered())
             ImGui::SetTooltip("回転をリセット");
+
+        // 現在の回転を表示（参考用）
+        ImGui::Text("現在の回転:");
+        Vector3 currentEuler = transform_->GetRotationEuler();
+        ImGui::Text("X: %.1f°, Y: %.1f°, Z: %.1f°",
+                    currentEuler.x * 180.0f / std::numbers::pi_v<float>,
+                    currentEuler.y * 180.0f / std::numbers::pi_v<float>,
+                    currentEuler.z * 180.0f / std::numbers::pi_v<float>);
 
         // スケール設定
         ImGui::AlignTextToFramePadding();
@@ -487,7 +523,7 @@ void BaseObject::DebugObject() {
 
         // ワールド座標の取得
         Vector3 worldPos = GetWorldPosition();
-        Vector3 worldRot = GetWorldRotation();
+        Quaternion worldRot = GetWorldRotation();
         Vector3 worldScale = GetWorldScale();
 
         // ワールド位置（読み取り専用）
@@ -509,10 +545,13 @@ void BaseObject::DebugObject() {
         ImGui::PushItemWidth(200);
         ImGui::PushStyleColor(ImGuiCol_FrameBg, ImVec4(0.15f, 0.15f, 0.15f, 0.8f));
         ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.9f, 0.9f, 0.9f, 1.0f));
+
+        // クォータニオンからワールド回転を取得
         float worldRotDegrees[3] = {
             radiansToDegrees(worldRot.x),
             radiansToDegrees(worldRot.y),
             radiansToDegrees(worldRot.z)};
+
         ImGui::InputFloat3("##WorldRotation", worldRotDegrees, "%.1f°", ImGuiInputTextFlags_ReadOnly);
         ImGui::PopStyleColor(2);
         ImGui::PopItemWidth();
@@ -764,18 +803,4 @@ std::vector<std::string> BaseObject::GetGltfFiles() {
         }
     }
     return gltfFiles;
-}
-
-void BaseObject::DebugCollider() {
-    for (auto &collider : colliders_) {
-        collider->OffsetImgui();
-    }
-}
-
-Vector3 BaseObject::GetCenterPosition() const {
-    return transform_->translation_;
-}
-
-Vector3 BaseObject::GetCenterRotation() const {
-    return transform_->rotation_;
 }

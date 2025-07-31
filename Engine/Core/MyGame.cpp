@@ -1,17 +1,19 @@
 #include "MyGame.h"
 #include "Scene/SceneFactory.h"
+#include <Frame.h>
 
 void MyGame::Initialize() {
     Framework::Initialize();
     Framework::LoadResource();
     Framework::PlaySounds();
+    Framework::RegisterShortcutKey();
     // -----ゲーム固有の処理-----
 
     // 最初のシーンの生成
     sceneFactory_ = new SceneFactory();
     // シーンマネージャに最初のシーンをセット
     sceneManager_->SetSceneFactory(sceneFactory_);
-    sceneManager_->NextSceneReservation("TITLE");
+    sceneManager_->NextSceneReservation("GAME");
     // -----------------------
 }
 
@@ -25,15 +27,10 @@ void MyGame::Finalize() {
 
 void MyGame::Update() {
     Framework::Update();
-    // -----ゲーム固有の処理-----
-    if (input_->TriggerKey(DIK_F11)) {
-        winApp_->ToggleFullScreen();
-    }
 
+    // -----ゲーム固有の処理-----
 #ifdef _DEBUG
-    if (input_->TriggerKey(DIK_F5)) {
-        imGuiManager_->GetIsShowMainUI() = !imGuiManager_->GetIsShowMainUI();
-    }
+
     imGuiManager_->Begin();
     imGuizmoManager_->BeginFrame();
     imGuizmoManager_->SetViewProjection(sceneManager_->GetBaseScene()->GetViewProjection());
@@ -42,13 +39,14 @@ void MyGame::Update() {
     imGuiManager_->ShowMainMenu();
     if (imGuiManager_->GetIsShowMainUI()) {
         imGuiManager_->ShowDockSpace();
-        imGuiManager_->ShowSceneWindow();
+        imGuiManager_->ShowSceneWindow(offscreen_.get(), sceneManager_->GetCurrentSceneName());
     }
     imGuiManager_->ShowMainUI(offscreen_.get());
     baseObjectManager_->DrawImGui();
     imGuiManager_->End();
-
 #endif // _DEBUG
+
+    motionEditor_->Update(Frame::DeltaTime());
 
     // -----------------------
 }
@@ -64,7 +62,6 @@ void MyGame::Draw() {
         collisionManager_->Draw(*sceneManager_->GetBaseScene()->GetViewProjection());
     }
     sceneManager_->Draw();
-    sceneManager_->DrawTransition();
 #ifdef _DEBUG
     //-----線描画-----
     DrawLine3D::GetInstance()->Draw(*sceneManager_->GetBaseScene()->GetViewProjection());
@@ -76,10 +73,9 @@ void MyGame::Draw() {
     offscreen_->SetProjection(sceneManager_->GetBaseScene()->GetViewProjection()->matProjection_);
 
     offscreen_->Draw();
-
     dxCommon_->TransitionDepthBarrier();
-    sceneManager_->DrawForOffScreen();
     sceneManager_->DrawTransition();
+    sceneManager_->DrawForOffScreen();
 
     // フレーム統計を更新（ImGui描画前）
     ParticleEditor::GetInstance()->UpdateFrameStats();

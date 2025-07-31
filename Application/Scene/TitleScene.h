@@ -3,8 +3,6 @@
 #include "BaseScene.h"
 #include"Object/Base/BaseObject.h"
 #include"Easing.h"
-#include"Application/Object/Player/Player.h"
-#include"Camera/FollowCamera/FollowCamera.h"
 
 class TitleScene : public BaseScene {
   public:
@@ -51,6 +49,4 @@ class TitleScene : public BaseScene {
 
     ViewProjection vp_;
     std::unique_ptr<DebugCamera> debugCamera_;
-    std::unique_ptr<Player> player_;
-    std::unique_ptr<FollowCamera> followCamera_;
 };

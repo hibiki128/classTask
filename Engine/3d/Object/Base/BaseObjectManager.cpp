@@ -335,22 +335,19 @@ void BaseObjectManager::RemoveObject(const std::string &name) {
     if (it != baseObjects_.end()) {
         BaseObject *targetObject = it->second.get();
 
-        // 親子関係の処理
         if (targetObject) {
-            // 削除するオブジェクトの子オブジェクトの親を解除
+            // 子供の親解除
             for (auto &pair : baseObjects_) {
                 BaseObject *obj = pair.second.get();
                 if (obj && obj->GetParent() == targetObject) {
-                    obj->SetParent(nullptr);
+                    obj->DetachParent(); // ← SetParent(nullptr)ではなくこれ
                 }
             }
 
-            // 削除するオブジェクトの親からも解除
-            if (targetObject->GetParent()) {
-                targetObject->SetParent(nullptr);
-            }
+            // 親からの解除
+            targetObject->DetachParent(); // ← これで親のchildren_からも消える
         }
-        // オブジェクトを削除
+
         baseObjects_.erase(it);
     }
 }
@@ -641,7 +638,7 @@ void BaseObjectManager::RestoreParentChildRelationshipForObject(BaseObject *obje
     }
 }
 
-void BaseObjectManager::DrawImGui() {
+void BaseObjectManager::DrawHierarchyEditor() {
 #ifdef _DEBUG
     ImGui::Begin("階層エディター");
 

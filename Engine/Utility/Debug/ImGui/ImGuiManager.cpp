@@ -283,6 +283,8 @@ void ImGuiManager::ShowMainMenu() {
                 ImGui::MenuItem(ICON_FA_DATABASE " FPSビュー", nullptr, &showFPSView_);
                 ImGui::MenuItem(ICON_FA_STAR_OF_DAVID " オフスクリーンビュー", nullptr, &showOfScreenView_);
                 ImGui::MenuItem(ICON_FA_LIGHTBULB " ライトビュー", nullptr, &showLightView_);
+                ImGui::MenuItem(ICON_FA_ARROWS_ALT " ギズモビュー", nullptr, &showGizmoView_);
+                ImGui::MenuItem(ICON_FA_PROJECT_DIAGRAM " ヒエラルキービュー", nullptr, &showHierarchyView_);
                 ImGui::EndMenu();
             }
 
@@ -535,6 +537,32 @@ void ImGuiManager::ShowLightSettingWindow() {
     ImGui::End();
 }
 
+void ImGuiManager::ShowGizmoWindow() {
+    if (!showGizmoView_)
+        return; // 表示しない場合は早期リターン
+
+    ImGuiWindowFlags flags = ImGuiWindowFlags_None;
+
+    ImGui::Begin("トランスフォームマネージャ", &showGizmoView_, flags);
+
+    imGuizmoManager_->imgui();
+
+    ImGui::End();
+}
+
+void ImGuiManager::ShowHierarchyWindow() {
+    if (!showHierarchyView_)
+        return; // 表示しない場合は早期リターン
+
+    ImGuiWindowFlags flags = ImGuiWindowFlags_None;
+
+    ImGui::Begin("階層エディター", &showHierarchyView_, flags);
+
+    baseObjectManager_->DrawHierarchyEditor();
+
+    ImGui::End();
+}
+
 void ImGuiManager::FixAspectRatio() {
 
     // 横幅ベースで16:9に合わせた高さ
@@ -554,7 +582,7 @@ void ImGuiManager::FixAspectRatio() {
     }
 }
 
-void ImGuiManager::ShowSceneWindow(OffScreen *offScreen, const std::string& sceneName) {
+void ImGuiManager::ShowSceneWindow(OffScreen *offScreen, const std::string &sceneName) {
     // ImGuiウィンドウ開始前にNextWindowSizeは設定しない（手動サイズ変更を許可）
     ImGuiWindowFlags flags = ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoScrollbar;
     // フォーカスされていない場合は描画を最適化
@@ -638,10 +666,10 @@ void ImGuiManager::ShowSceneWindow(OffScreen *offScreen, const std::string& scen
         backgroundColor);
 
     // ImGuizmoのために正確なシーン位置を計算
-    ImVec2 actualScenePos = ImVec2(
+    actualScenePos_ = ImVec2(
         contentPos.x + sceneOffset.x,
         contentPos.y + sceneOffset.y);
-    imGuizmoManager_->Update(actualScenePos, sceneTextureSize_);
+    imGuizmoManager_->Update(actualScenePos_, sceneTextureSize_);
 
     ImGui::End();
 }
@@ -660,6 +688,10 @@ void ImGuiManager::ShowMainUI(OffScreen *offscreen) {
     ShowOffScreenSettingWindow(offscreen);
     // ライトウィンドウを描画
     ShowLightSettingWindow();
+    // ギズモウィンドウを描画
+    ShowGizmoWindow();
+    // 階層エディターウィンドウを描画
+    ShowHierarchyWindow();
 
     ShowHelpWindow();
     baseObjectManager_->UpdateImGui();

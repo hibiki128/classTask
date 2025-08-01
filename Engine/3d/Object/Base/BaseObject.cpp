@@ -118,12 +118,14 @@ void BaseObject::AddChild(BaseObject *child) {
 
 void BaseObject::DetachParent() {
     if (parent_) {
+        parent_->children_.remove(this);
         parent_ = nullptr;
         if (transform_) {
             transform_->parent_ = nullptr;
         }
     }
 }
+
 
 void BaseObject::DetachChild(BaseObject *child) {
     if (!child) {
@@ -229,42 +231,27 @@ Vector3 BaseObject::GetWorldPosition() {
 }
 
 // ワールド行列からクォータニオンを取得
-Quaternion BaseObject::GetWorldRotation(){
+Quaternion BaseObject::GetWorldRotation() {
     const Matrix4x4 &m = transform_->matWorld_;
 
-    // 回転行列の要素からクォータニオンを生成
-    float trace = m.m[0][0] + m.m[1][1] + m.m[2][2];
-  
+    // スケールを除去した回転行列を作成
+    Vector3 scale = GetWorldScale();
+    Matrix4x4 rotationMatrix = m;
 
-    if (trace > 0.0f) {
-        float s = 0.5f / sqrtf(trace + 1.0f);
-        q.w = 0.25f / s;
-        q.x = (m.m[2][1] - m.m[1][2]) * s;
-        q.y = (m.m[0][2] - m.m[2][0]) * s;
-        q.z = (m.m[1][0] - m.m[0][1]) * s;
-    } else {
-        if (m.m[0][0] > m.m[1][1] && m.m[0][0] > m.m[2][2]) {
-            float s = 2.0f * sqrtf(1.0f + m.m[0][0] - m.m[1][1] - m.m[2][2]);
-            q.w = (m.m[2][1] - m.m[1][2]) / s;
-            q.x = 0.25f * s;
-            q.y = (m.m[0][1] + m.m[1][0]) / s;
-            q.z = (m.m[0][2] + m.m[2][0]) / s;
-        } else if (m.m[1][1] > m.m[2][2]) {
-            float s = 2.0f * sqrtf(1.0f + m.m[1][1] - m.m[0][0] - m.m[2][2]);
-            q.w = (m.m[0][2] - m.m[2][0]) / s;
-            q.x = (m.m[0][1] + m.m[1][0]) / s;
-            q.y = 0.25f * s;
-            q.z = (m.m[1][2] + m.m[2][1]) / s;
-        } else {
-            float s = 2.0f * sqrtf(1.0f + m.m[2][2] - m.m[0][0] - m.m[1][1]);
-            q.w = (m.m[1][0] - m.m[0][1]) / s;
-            q.x = (m.m[0][2] + m.m[2][0]) / s;
-            q.y = (m.m[1][2] + m.m[2][1]) / s;
-            q.z = 0.25f * s;
+    // スケールを正規化
+    for (int i = 0; i < 3; i++) {
+        for (int j = 0; j < 3; j++) {
+            if (i == 0)
+                rotationMatrix.m[j][i] /= scale.x;
+            else if (i == 1)
+                rotationMatrix.m[j][i] /= scale.y;
+            else if (i == 2)
+                rotationMatrix.m[j][i] /= scale.z;
         }
     }
 
-    return q.Normalize(); // 正規化して返す
+    // 回転行列からクォータニオンを生成
+    return Quaternion::FromMatrix(rotationMatrix);
 }
 
 // ワールドスケールを取得（回転を考慮）

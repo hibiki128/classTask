@@ -126,6 +126,10 @@ class ImGuiManager {
     void ShowOffScreenSettingWindow(OffScreen *offscreen);
 
     void ShowLightSettingWindow();
+    
+    void ShowGizmoWindow();
+
+    void ShowHierarchyWindow();
 
     void FixAspectRatio();
 
@@ -158,6 +162,7 @@ class ImGuiManager {
 
     // シーンウィンドウ
     ImVec2 sceneTextureSize_ = {800.0f, 450.0f};
+    ImVec2 actualScenePos_ = {};
 
     int cubeCount = 0;
     int sphereCount = 0;
@@ -180,6 +185,8 @@ class ImGuiManager {
     bool showLightView_ = true;
     bool isEditorMode_ = true; // エディターモードフラグ
     bool showShortcutWindow = false;
+    bool showGizmoView_ = true;
+    bool showHierarchyView_ = true;
 
     BaseObjectManager *baseObjectManager_ = nullptr;
 

@@ -759,7 +759,7 @@ void MotionEditor::DrawCatmullRomCurve() {
 }
 
 void MotionEditor::DrawImGui() {
-    ImGui::Begin("アタックマネージャ");
+    ImGui::Begin("モーションエディター");
 
     if (!motions_.empty()) {
         std::vector<const char *> names;

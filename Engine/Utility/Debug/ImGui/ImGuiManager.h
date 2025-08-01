@@ -131,6 +131,8 @@ class ImGuiManager {
 
     void ShowHierarchyWindow();
 
+    void ShowMotionEditorWindow();
+
     void FixAspectRatio();
 
     void BackupDockLayout();
@@ -187,6 +189,14 @@ class ImGuiManager {
     bool showShortcutWindow = false;
     bool showGizmoView_ = true;
     bool showHierarchyView_ = true;
+    bool showMotionEditorView_ = true;
+
+    // グリッド設定用メンバ変数
+    bool showGrid_ = false;
+    float gridY_ = 0.0f;
+    int gridDivision_ = 10;
+    float gridSize_ = 1.0f;
+    Vector4 gridColor_ = {0.5f, 0.5f, 0.5f, 1.0f}; // グレー
 
     BaseObjectManager *baseObjectManager_ = nullptr;
 

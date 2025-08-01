@@ -4,6 +4,7 @@
 #endif // _DEBUG
 #include <ShowFolder/ShowFolder.h>
 #include <Debug/Log/Logger.h>
+#include"Application/Utility/MotionEditor/MotionEditor.h"
 
 BaseObjectManager *BaseObjectManager::instance = nullptr;
 
@@ -42,6 +43,7 @@ void BaseObjectManager::AddObject(std::unique_ptr<BaseObject> baseObject) {
 #ifdef _DEBUG
     ImGuizmoManager::GetInstance()->AddTarget(baseObject->GetName(), baseObject.get());
 #endif // _DEBUG
+    MotionEditor::GetInstance()->Register(baseObject.get());
     baseObjects_.emplace(name, std::move(baseObject));
 }
 

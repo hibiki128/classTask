@@ -126,7 +126,6 @@ void BaseObject::DetachParent() {
     }
 }
 
-
 void BaseObject::DetachChild(BaseObject *child) {
     if (!child) {
         return;
@@ -222,49 +221,17 @@ std::vector<std::string> BaseObject::GetChildrenNames() const {
 }
 
 Vector3 BaseObject::GetWorldPosition() {
-
-    // ワールド行列の平行移動成分を取得
-    worldPos.x = transform_->matWorld_.m[3][0];
-    worldPos.y = transform_->matWorld_.m[3][1];
-    worldPos.z = transform_->matWorld_.m[3][2];
-    return worldPos;
+    return transform_->GetWorldPosition();
 }
 
 // ワールド行列からクォータニオンを取得
 Quaternion BaseObject::GetWorldRotation() {
-    const Matrix4x4 &m = transform_->matWorld_;
-
-    // スケールを除去した回転行列を作成
-    Vector3 scale = GetWorldScale();
-    Matrix4x4 rotationMatrix = m;
-
-    // スケールを正規化
-    for (int i = 0; i < 3; i++) {
-        for (int j = 0; j < 3; j++) {
-            if (i == 0)
-                rotationMatrix.m[j][i] /= scale.x;
-            else if (i == 1)
-                rotationMatrix.m[j][i] /= scale.y;
-            else if (i == 2)
-                rotationMatrix.m[j][i] /= scale.z;
-        }
-    }
-
-    // 回転行列からクォータニオンを生成
-    return Quaternion::FromMatrix(rotationMatrix);
+    return transform_->GetWorldRotation();
 }
 
 // ワールドスケールを取得（回転を考慮）
 Vector3 BaseObject::GetWorldScale() {
-  
-    const Matrix4x4 &m = transform_->matWorld_;
-
-    // 各軸のベクトルの長さをスケールとして取得
-    worldScale.x = std::sqrt(m.m[0][0] * m.m[0][0] + m.m[0][1] * m.m[0][1] + m.m[0][2] * m.m[0][2]);
-    worldScale.y = std::sqrt(m.m[1][0] * m.m[1][0] + m.m[1][1] * m.m[1][1] + m.m[1][2] * m.m[1][2]);
-    worldScale.z = std::sqrt(m.m[2][0] * m.m[2][0] + m.m[2][1] * m.m[2][1] + m.m[2][2] * m.m[2][2]);
-
-    return worldScale;
+    return transform_->GetWorldScale();
 }
 
 void BaseObject::SaveToJson() {
@@ -293,7 +260,6 @@ void BaseObject::SaveToJson() {
 
     SaveParentChildRelationship();
 }
-
 
 void BaseObject::SceneSaveToJson() {
     // JSONデータを扱うハンドラを作成
@@ -362,7 +328,7 @@ void BaseObject::LoadFromJson() {
     LoadParentChildRelationship();
 }
 
-void BaseObject::LoadFromJson(std::string folderPath,std::string jsonName) {
+void BaseObject::LoadFromJson(std::string folderPath, std::string jsonName) {
     // JSONデータを扱うハンドラを作成
     ObjectDatas_ = std::make_unique<DataHandler>(folderPath, jsonName);
 
@@ -414,7 +380,6 @@ void BaseObject::AnimaLoadFromJson() {
     isLoop_ = AnimaDatas_->Load<bool>("Loop", false);
 }
 
-
 void BaseObject::DebugCollider() {
     for (auto &collider : colliders_) {
         collider->OffsetImgui();
@@ -428,7 +393,6 @@ Vector3 BaseObject::GetCenterPosition() {
 Quaternion BaseObject::GetCenterRotation() {
     return GetWorldRotation();
 }
-
 
 void BaseObject::ImGui() {
 #ifdef _DEBUG

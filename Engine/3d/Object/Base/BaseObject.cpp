@@ -276,7 +276,9 @@ void BaseObject::SceneSaveToJson() {
     ObjectDatas_->Save<PrimitiveType>("PrimitiveType", type_);
     ObjectDatas_->Save<bool>("skeletonDraw", skeletonDraw_);
     ObjectDatas_->Save<bool>("isModelDraw", isModelDraw_);
-    ObjectDatas_->Save<std::string>("parentName", parent_->GetName());
+    if (parent_) {
+        ObjectDatas_->Save<std::string>("parentName", parent_->GetName());
+    }
 
     // カラーとライティング設定も保存
     Vector4 color = objColor_.GetColor();

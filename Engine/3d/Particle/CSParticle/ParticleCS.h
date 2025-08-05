@@ -5,7 +5,6 @@
 #include "type/Vector4.h"
 #include "wrl.h"
 #include <Camera/ViewProjection/ViewProjection.h>
-#include <DirectXCommon.h>
 #include <Graphics/Srv/SrvManager.h>
 #include <Graphics/Texture/TextureManager.h>
 #include <d3d12.h>
@@ -26,6 +25,16 @@ struct PerView {
     Matrix4x4 billboardMatrix;
 };
 
+struct EmitterSphere {
+    Vector3 translate;
+    float radius;
+    uint32_t count;
+    float frequency;
+    float frequencyTime;
+    uint32_t emit;
+};
+
+class DirectXCommon;
 class ParticleCS {
 
   public:
@@ -33,12 +42,13 @@ class ParticleCS {
     void Draw(const ViewProjection &vp);
 
   private:
+    void EmitterUpdate();
     void Update();
     void CreateOutputParticleResource();
     void CreatePerViewResource();
     void CreateMaterialResource();
     void CreateIndexResource();
-
+    void CreateEmitterSphereResource();
     void CreateVertexResource();
 
   private:
@@ -61,6 +71,9 @@ class ParticleCS {
     Microsoft::WRL::ComPtr<ID3D12Resource> vertexResource_ = nullptr;
     D3D12_VERTEX_BUFFER_VIEW vertexBufferView_;
     VertexData *vertexData_ = nullptr;
+
+    Microsoft::WRL::ComPtr<ID3D12Resource> emitterSphereResource_ = nullptr;
+    EmitterSphere *emitterSphereData_ = nullptr;
 
     ParticleCommon *particleCommon_;
     DirectXCommon *dxCommon_;

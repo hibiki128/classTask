@@ -1,8 +1,9 @@
 #include "ParticleCS.h"
 #include "myMath.h"
+#include <Frame.h>
 
 void ParticleCS::Initialize() {
-    dxCommon_ = DirectXCommon::GetInstance();
+    dxCommon_ = ParticleCommon::GetInstance()->GetDxCommon();
     srvManager_ = SrvManager::GetInstance();
     particleCommon_ = ParticleCommon::GetInstance();
     texManager_ = TextureManager::GetInstance();
@@ -12,9 +13,10 @@ void ParticleCS::Initialize() {
     CreateMaterialResource();
     CreateIndexResource();
     CreateVertexResource();
+    CreateEmitterSphereResource();
 }
 
-void ParticleCS::Draw(const ViewProjection& vp) {
+void ParticleCS::Draw(const ViewProjection &vp) {
     Update();
 
     perViewData->viewProjection = vp.matView_ * vp.matProjection_;
@@ -30,7 +32,17 @@ void ParticleCS::Draw(const ViewProjection& vp) {
     srvManager_->SetGraphicsRootDescriptorTable(2, TextureManager::GetInstance()->GetTextureIndexByFilePath(texPath_));
     commandList->SetGraphicsRootConstantBufferView(3, materialResource->GetGPUVirtualAddress());
 
-    commandList->DrawIndexedInstanced(6, 1024, 0, 0,0);
+    commandList->DrawIndexedInstanced(6, 1024, 0, 0, 0);
+}
+
+void ParticleCS::EmitterUpdate() {
+    emitterSphereData_->frequencyTime += Frame::DeltaTime();
+    if (emitterSphereData_->frequency <= emitterSphereData_->frequencyTime) {
+        emitterSphereData_->frequencyTime -= emitterSphereData_->frequency;
+        emitterSphereData_->emit = 1;
+    } else {
+        emitterSphereData_->emit = 0;
+    }
 }
 
 void ParticleCS::Update() {
@@ -75,7 +87,7 @@ void ParticleCS::CreatePerViewResource() {
 }
 
 void ParticleCS::CreateMaterialResource() {
-    materialResource = ParticleCommon::GetInstance()->GetDxCommon()->CreateBufferResource(sizeof(ParticleMaterial));
+    materialResource = dxCommon_->CreateBufferResource(sizeof(ParticleMaterial));
     materialResource->Map(0, nullptr, reinterpret_cast<void **>(&materialData));
     materialData->color = Vector4(1.0f, 1.0f, 1.0f, 1.0f);
     materialData->uvTransform = MakeIdentity4x4();
@@ -94,6 +106,17 @@ void ParticleCS::CreateIndexResource() {
     indexBufferView.Format = DXGI_FORMAT_R32_UINT;
     indexResource->Map(0, nullptr, reinterpret_cast<void **>(&indexData));
     std::memcpy(indexData, indices.data(), sizeof(uint32_t) * indices.size());
+}
+
+void ParticleCS::CreateEmitterSphereResource() {
+    emitterSphereResource_ = dxCommon_->CreateBufferResource(sizeof(EmitterSphere));
+    emitterSphereResource_->Map(0, nullptr, reinterpret_cast<void **>(&emitterSphereData_));
+    emitterSphereData_->count = 10;
+    emitterSphereData_->frequency = 0.5f;
+    emitterSphereData_->frequencyTime = 0.0f;
+    emitterSphereData_->translate = Vector3(0.0f, 0.0f, 0.0f);
+    emitterSphereData_->radius = 1.0f;
+    emitterSphereData_->emit = 0;
 }
 
 void ParticleCS::CreateVertexResource() {

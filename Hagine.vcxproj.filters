@@ -759,6 +759,7 @@
     <ClInclude Include="Engine\OffScreen\PostEffect\PostEffectParameters.h" />
     <ClInclude Include="Engine\OffScreen\PostEffect\PostEffectDataManager.h" />
     <ClInclude Include="Engine\3d\Camera\FollowCamera\FollowCamera.h" />
+    <ClInclude Include="Engine\2d\SpriteStruct.h" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="Hagine.rc" />

@@ -241,6 +241,7 @@ copy "$(WindowsSdkDIr)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     <ClInclude Include="Application\Utility\MotionEditor\MotionEditor.h" />
     <ClInclude Include="Application\Utility\Shake\Shake.h" />
     <ClInclude Include="application\Utility\ComboSystem\ComboSystem.h" />
+    <ClInclude Include="Engine\2d\SpriteStruct.h" />
     <ClInclude Include="Engine\3d\Camera\BaseFollowCamera\BaseFollowCamera.h" />
     <ClInclude Include="Engine\3d\Camera\FollowCamera\FollowCamera.h" />
     <ClInclude Include="Engine\3d\Object\Base\BaseObject.h" />

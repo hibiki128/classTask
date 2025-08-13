@@ -13,7 +13,7 @@ void MyGame::Initialize() {
     sceneFactory_ = new SceneFactory();
     // シーンマネージャに最初のシーンをセット
     sceneManager_->SetSceneFactory(sceneFactory_);
-    sceneManager_->NextSceneReservation("GAME");
+    sceneManager_->NextSceneReservation("TITLE");
     // -----------------------
 }
 
@@ -52,7 +52,7 @@ void MyGame::Update() {
 
 void MyGame::Draw() {
     dxCommon_->PreRenderTexture();
-    srvManager_->PreDraw();
+    srvManager_->SetDescriptorHeap();
     // -----描画開始-----
 
     // -----シーンごとの処理------

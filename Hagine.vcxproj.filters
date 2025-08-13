@@ -447,6 +447,9 @@
     <ClCompile Include="Engine\3d\Camera\FollowCamera\FollowCamera.cpp">
       <Filter>ソースファイル</Filter>
     </ClCompile>
+    <ClCompile Include="Engine\3d\Particle\CSParticle\ParticleCS.cpp">
+      <Filter>ソースファイル</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="resources\shaders\Particle\Particle.hlsli">
@@ -491,6 +494,7 @@
     <None Include="Resources\shaders\Skinning\Skinning.hlsli">
       <Filter>リソース ファイル\Skinning</Filter>
     </None>
+    <None Include="Resources\shaders\Random\Random.hlsli" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="resource.h" />
@@ -760,6 +764,7 @@
     <ClInclude Include="Engine\OffScreen\PostEffect\PostEffectDataManager.h" />
     <ClInclude Include="Engine\3d\Camera\FollowCamera\FollowCamera.h" />
     <ClInclude Include="Engine\2d\SpriteStruct.h" />
+    <ClInclude Include="Engine\3d\Particle\CSParticle\ParticleCS.h" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="Hagine.rc" />
@@ -1097,5 +1102,8 @@
     <FxCompile Include="Resources\shaders\OffScreen\Dissolve.PS.hlsl" />
     <FxCompile Include="Resources\shaders\OffScreen\Random.PS.hlsl" />
     <FxCompile Include="Resources\shaders\OffScreen\FocusLine.PS.hlsl" />
+    <FxCompile Include="Resources\shaders\Particle\InitParticle.CS.hlsl" />
+    <FxCompile Include="Resources\shaders\Particle\EmitParticle.CS.hlsl" />
+    <FxCompile Include="Resources\shaders\Particle\UpdateParticle.CS.hlsl" />
   </ItemGroup>
 </Project>

@@ -127,7 +127,7 @@ struct SkinCluster {
     std::pair<D3D12_CPU_DESCRIPTOR_HANDLE, D3D12_GPU_DESCRIPTOR_HANDLE> inputVertexSrvHandle;
     //
     Microsoft::WRL::ComPtr<ID3D12Resource> outputVertexResource;
-    D3D12_VERTEX_BUFFER_VIEW outputVertexBufferView; // ← これを追加
+    D3D12_VERTEX_BUFFER_VIEW outputVertexBufferView;
     std::pair<D3D12_CPU_DESCRIPTOR_HANDLE, D3D12_GPU_DESCRIPTOR_HANDLE> outputVertexSrvHandle;
     //
     Microsoft::WRL::ComPtr<ID3D12Resource> skinningInformationResource;
@@ -212,4 +212,10 @@ struct ParticleGroupData {
     std::string groupName;
     // ブレンドモード
     BlendMode blendMode = BlendMode::kAdd;
+};
+
+struct ParticleMaterial {
+    Vector4 color;
+    Matrix4x4 uvTransform;
+    float padding[3];
 };

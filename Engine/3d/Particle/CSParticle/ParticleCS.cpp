@@ -47,6 +47,7 @@ void ParticleCS::InitParticle() {
 
     dxCommon_->TransitionUAVBarrier(outputParticleResource_.Get());
 
+    // InitParticle.CSの処理
     particleCommon_->ComputeInitDrawCommonSetting();
     commandList->SetComputeRootDescriptorTable(0, outputParticleSrvHandle_.second);
     commandList->SetComputeRootDescriptorTable(1, freeCounterSrvHandle_.second);
@@ -72,12 +73,20 @@ void ParticleCS::Update() {
 
     dxCommon_->TransitionUAVBarrier(outputParticleResource_.Get());
 
+    // EmitParticle.CSの処理
     particleCommon_->ComputeEmitterDrawCommonSetting();
 
     commandList->SetComputeRootDescriptorTable(0, outputParticleSrvHandle_.second);                   // UAV (u0)
     commandList->SetComputeRootConstantBufferView(1, emitterSphereResource_->GetGPUVirtualAddress()); // CBV (b0)
     commandList->SetComputeRootConstantBufferView(2, perFrameResource_->GetGPUVirtualAddress());      // CBV (b0)
     commandList->SetComputeRootDescriptorTable(3, freeCounterSrvHandle_.second);
+
+    commandList->Dispatch(1, 1, 1);
+
+    // UpdateParticle.CSの処理
+    particleCommon_->ComputeUpdateEmitterDrawCommonSetting();
+    commandList->SetComputeRootDescriptorTable(0, outputParticleSrvHandle_.second);
+    commandList->SetComputeRootConstantBufferView(1, perFrameResource_->GetGPUVirtualAddress());
 
     commandList->Dispatch(1, 1, 1);
 

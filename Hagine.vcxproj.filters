@@ -1079,5 +1079,6 @@
     <FxCompile Include="Resources\shaders\OffScreen\FocusLine.PS.hlsl" />
     <FxCompile Include="Resources\shaders\Particle\InitParticle.CS.hlsl" />
     <FxCompile Include="Resources\shaders\Particle\EmitParticle.CS.hlsl" />
+    <FxCompile Include="Resources\shaders\Particle\UpdateParticle.CS.hlsl" />
   </ItemGroup>
 </Project>

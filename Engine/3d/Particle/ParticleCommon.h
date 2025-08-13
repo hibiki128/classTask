@@ -41,6 +41,8 @@ class ParticleCommon {
 
     void ComputeEmitterDrawCommonSetting();
 
+    void ComputeUpdateEmitterDrawCommonSetting();
+
     DirectXCommon *GetDxCommon() const { return dxCommon_; }
 
   private:

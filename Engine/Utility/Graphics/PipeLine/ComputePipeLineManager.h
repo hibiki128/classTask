@@ -1,17 +1,17 @@
 #pragma once
-#include"d3d12.h"
-#include"wrl.h"
-#include"DirectXCommon.h"
-#include"string"
-#include"unordered_map"
+#include "DirectXCommon.h"
 #include "PipeLineManager.h"
+#include "d3d12.h"
+#include "string"
+#include "unordered_map"
+#include "wrl.h"
 
 enum class ComputePipelineType {
-   kSkinning,
-   kInitParticle,
-   kEmitter,
+    kSkinning,
+    kInitParticle,
+    kEmitter,
+    kUpdateEmitter,
 };
-
 
 class ComputePipeLineManager {
   private:
@@ -30,7 +30,7 @@ class ComputePipeLineManager {
     static ComputePipeLineManager *GetInstance();
 
     void Finalize();
-    
+
     /// <summary>
     /// 初期化
     /// </summary>
@@ -61,16 +61,21 @@ class ComputePipeLineManager {
     Microsoft::WRL::ComPtr<ID3D12PipelineState> CreateSkinningGraphicsPipeLine(Microsoft::WRL::ComPtr<ID3D12RootSignature> rootSignature);
 
     // パーティクル関連
-    void CreateParticlePipelines();
-    Microsoft::WRL::ComPtr<ID3D12RootSignature> CreateParticleRootSignature();
-    Microsoft::WRL::ComPtr<ID3D12PipelineState> CreateParticleGraphicsPipeLine(Microsoft::WRL::ComPtr<ID3D12RootSignature> rootSignature);
+    void CreateInitParticlePipelines();
+    Microsoft::WRL::ComPtr<ID3D12RootSignature> CreateInitParticleRootSignature();
+    Microsoft::WRL::ComPtr<ID3D12PipelineState> CreateInitParticleGraphicsPipeLine(Microsoft::WRL::ComPtr<ID3D12RootSignature> rootSignature);
 
-      // エミッター関連
+    // エミッター関連
     void CreateEmitterPipelines();
     Microsoft::WRL::ComPtr<ID3D12RootSignature> CreateEmitterRootSignature();
     Microsoft::WRL::ComPtr<ID3D12PipelineState> CreateEmitterGraphicsPipeLine(Microsoft::WRL::ComPtr<ID3D12RootSignature> rootSignature);
 
-    private:
+    // エミッター関連
+    void CreateUpdateEmitterPipelines();
+    Microsoft::WRL::ComPtr<ID3D12RootSignature> CreateUpdateEmitterRootSignature();
+    Microsoft::WRL::ComPtr<ID3D12PipelineState> CreateUpdateEmitterGraphicsPipeLine(Microsoft::WRL::ComPtr<ID3D12RootSignature> rootSignature);
+
+  private:
     DirectXCommon *dxCommon_;
 
     // パイプラインとルートシグネチャの格納用マップ

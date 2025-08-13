@@ -32,3 +32,7 @@ void ParticleCommon::ComputeInitDrawCommonSetting() {
 void ParticleCommon::ComputeEmitterDrawCommonSetting() {
     computePsoManager_->DrawCommonSetting(ComputePipelineType::kEmitter);
 }
+
+void ParticleCommon::ComputeUpdateEmitterDrawCommonSetting() {
+    computePsoManager_->DrawCommonSetting(ComputePipelineType::kUpdateEmitter);
+}

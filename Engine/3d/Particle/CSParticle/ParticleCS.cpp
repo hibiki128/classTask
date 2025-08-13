@@ -28,6 +28,11 @@ void ParticleCS::Draw(const ViewProjection &vp) {
 
     perViewData_->viewProjection = vp.matView_ * vp.matProjection_;
     perViewData_->billboardMatrix = vp.matView_;
+    perViewData_->billboardMatrix.m[3][0] = 0.0f;
+    perViewData_->billboardMatrix.m[3][1] = 0.0f;
+    perViewData_->billboardMatrix.m[3][2] = 0.0f;
+    perViewData_->billboardMatrix.m[3][3] = 1.0f;
+    perViewData_->billboardMatrix = Inverse(perViewData_->billboardMatrix);
 
     ID3D12GraphicsCommandList *commandList = dxCommon_->GetCommandList().Get();
     particleCommon_->DrawCommonSetting(BlendMode::kAdd);

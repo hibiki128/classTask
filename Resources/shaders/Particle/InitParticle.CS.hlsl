@@ -1,7 +1,8 @@
 #include"Particle.hlsli"
 
 RWStructuredBuffer<Particle> gParticles : register(u0);
-RWStructuredBuffer<int> gFreeCounter : register(u1);
+RWStructuredBuffer<int> gFreeListIndex : register(u1);
+RWStructuredBuffer<uint> gFreeList : register(u2);
 
 [numthreads(1024, 1, 1)]
 void main(uint3 DTid : SV_DispatchThreadID)
@@ -11,9 +12,10 @@ void main(uint3 DTid : SV_DispatchThreadID)
     {
         // Particle構造体の全要素を0で埋めるという書き方
         gParticles[particleIndex] = (Particle) 0;
+        gFreeList[particleIndex] = particleIndex;
         if (particleIndex == 0)
         {
-            gFreeCounter[0] = 0;
+            gFreeListIndex[0] = kMaxParticles - 1;
         }
     }
 

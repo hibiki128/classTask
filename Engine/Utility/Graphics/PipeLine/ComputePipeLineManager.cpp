@@ -101,7 +101,6 @@ void ComputePipeLineManager::CreateUpdateEmitterPipelines() {
     pipelines_[MakePipelineKey(ComputePipelineType::kUpdateEmitter, BlendMode::kNormal, ShaderMode::kNone)] = pipeline;
 }
 
-
 void ComputePipeLineManager::CreateAllPipelines() {
     CreateSkinningPipelines();
     CreateInitParticlePipelines();
@@ -249,16 +248,27 @@ Microsoft::WRL::ComPtr<ID3D12RootSignature> ComputePipeLineManager::CreateInitPa
     uavRange1[0].BaseShaderRegister = 1;
     uavRange1[0].OffsetInDescriptorsFromTableStart = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND;
 
-    D3D12_ROOT_PARAMETER rootParameters[2] = {};
+    D3D12_DESCRIPTOR_RANGE uavRange2[1] = {};
+    uavRange2[0].RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_UAV;
+    uavRange2[0].NumDescriptors = 1;
+    uavRange2[0].BaseShaderRegister = 2;
+    uavRange2[0].OffsetInDescriptorsFromTableStart = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND;
+
+    D3D12_ROOT_PARAMETER rootParameters[3] = {};
     rootParameters[0].ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE; // CBVからDESCRIPTOR_TABLEに変更
-    rootParameters[0].DescriptorTable.pDescriptorRanges = uavRange0;               // UAVレンジを設定
-    rootParameters[0].DescriptorTable.NumDescriptorRanges = _countof(uavRange0);   // レンジ数を設定
+    rootParameters[0].DescriptorTable.pDescriptorRanges = uavRange0;              // UAVレンジを設定
+    rootParameters[0].DescriptorTable.NumDescriptorRanges = _countof(uavRange0);  // レンジ数を設定
     rootParameters[0].ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
 
     rootParameters[1].ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
     rootParameters[1].DescriptorTable.pDescriptorRanges = uavRange1;
     rootParameters[1].DescriptorTable.NumDescriptorRanges = _countof(uavRange1);
     rootParameters[1].ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
+
+    rootParameters[2].ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
+    rootParameters[2].DescriptorTable.pDescriptorRanges = uavRange2;
+    rootParameters[2].DescriptorTable.NumDescriptorRanges = _countof(uavRange2);
+    rootParameters[2].ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
 
     D3D12_ROOT_SIGNATURE_DESC descriptionRootSignature = {};
     descriptionRootSignature.NumParameters = _countof(rootParameters);
@@ -316,29 +326,38 @@ Microsoft::WRL::ComPtr<ID3D12RootSignature> ComputePipeLineManager::CreateEmitte
     uavRange1[0].BaseShaderRegister = 1;
     uavRange1[0].OffsetInDescriptorsFromTableStart = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND;
 
-    D3D12_ROOT_PARAMETER rootParameters[4] = {};
-    // パラメータ0: UAV Descriptor Table (u0)
+    D3D12_DESCRIPTOR_RANGE uavRange2[1] = {};
+    uavRange2[0].RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_UAV;
+    uavRange2[0].NumDescriptors = 1;
+    uavRange2[0].BaseShaderRegister = 2;
+    uavRange2[0].OffsetInDescriptorsFromTableStart = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND;
+
+    D3D12_ROOT_PARAMETER rootParameters[5] = {};
+
     rootParameters[0].ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
     rootParameters[0].DescriptorTable.pDescriptorRanges = uavRange0;
     rootParameters[0].DescriptorTable.NumDescriptorRanges = _countof(uavRange0);
     rootParameters[0].ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
 
-    // パラメータ1: CBV (b0) - 直接バインド
-    rootParameters[1].ParameterType = D3D12_ROOT_PARAMETER_TYPE_CBV;
+    rootParameters[1].ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
+    rootParameters[1].DescriptorTable.pDescriptorRanges = uavRange1;
+    rootParameters[1].DescriptorTable.NumDescriptorRanges = _countof(uavRange1);
     rootParameters[1].ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
-    rootParameters[1].Descriptor.ShaderRegister = 0;
-    rootParameters[1].Descriptor.RegisterSpace = 0;
 
-    rootParameters[2].ParameterType = D3D12_ROOT_PARAMETER_TYPE_CBV;
+    rootParameters[2].ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
+    rootParameters[2].DescriptorTable.pDescriptorRanges = uavRange2;
+    rootParameters[2].DescriptorTable.NumDescriptorRanges = _countof(uavRange2);
     rootParameters[2].ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
-    rootParameters[2].Descriptor.ShaderRegister = 1;
-    rootParameters[2].Descriptor.RegisterSpace = 0;
 
-    // パラメータ0: UAV Descriptor Table (u0)
-    rootParameters[3].ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
-    rootParameters[3].DescriptorTable.pDescriptorRanges = uavRange1;
-    rootParameters[3].DescriptorTable.NumDescriptorRanges = _countof(uavRange1);
+    rootParameters[3].ParameterType = D3D12_ROOT_PARAMETER_TYPE_CBV;
     rootParameters[3].ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
+    rootParameters[3].Descriptor.ShaderRegister = 0;
+    rootParameters[3].Descriptor.RegisterSpace = 0;
+
+    rootParameters[4].ParameterType = D3D12_ROOT_PARAMETER_TYPE_CBV;
+    rootParameters[4].ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
+    rootParameters[4].Descriptor.ShaderRegister = 1;
+    rootParameters[4].Descriptor.RegisterSpace = 0;
 
     D3D12_ROOT_SIGNATURE_DESC descriptionRootSignature = {};
     descriptionRootSignature.NumParameters = _countof(rootParameters);
@@ -380,7 +399,6 @@ Microsoft::WRL::ComPtr<ID3D12PipelineState> ComputePipeLineManager::CreateEmitte
     return graphicsPipelineState;
 }
 
-
 Microsoft::WRL::ComPtr<ID3D12RootSignature> ComputePipeLineManager::CreateUpdateEmitterRootSignature() {
     Microsoft::WRL::ComPtr<ID3D12RootSignature> rootSignature;
     HRESULT hr;
@@ -391,18 +409,39 @@ Microsoft::WRL::ComPtr<ID3D12RootSignature> ComputePipeLineManager::CreateUpdate
     uavRange0[0].BaseShaderRegister = 0;
     uavRange0[0].OffsetInDescriptorsFromTableStart = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND;
 
-    D3D12_ROOT_PARAMETER rootParameters[2] = {};
-    // パラメータ0: UAV Descriptor Table (u0)
+    D3D12_DESCRIPTOR_RANGE uavRange1[1] = {};
+    uavRange1[0].RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_UAV;
+    uavRange1[0].NumDescriptors = 1;
+    uavRange1[0].BaseShaderRegister = 1;
+    uavRange1[0].OffsetInDescriptorsFromTableStart = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND;
+
+    D3D12_DESCRIPTOR_RANGE uavRange2[1] = {};
+    uavRange2[0].RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_UAV;
+    uavRange2[0].NumDescriptors = 1;
+    uavRange2[0].BaseShaderRegister = 2;
+    uavRange2[0].OffsetInDescriptorsFromTableStart = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND;
+
+    D3D12_ROOT_PARAMETER rootParameters[4] = {};
+
     rootParameters[0].ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
     rootParameters[0].DescriptorTable.pDescriptorRanges = uavRange0;
     rootParameters[0].DescriptorTable.NumDescriptorRanges = _countof(uavRange0);
     rootParameters[0].ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
 
-    // パラメータ1: CBV (b0) - 直接バインド
-    rootParameters[1].ParameterType = D3D12_ROOT_PARAMETER_TYPE_CBV;
+    rootParameters[1].ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
+    rootParameters[1].DescriptorTable.pDescriptorRanges = uavRange1;
+    rootParameters[1].DescriptorTable.NumDescriptorRanges = _countof(uavRange1);
     rootParameters[1].ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
-    rootParameters[1].Descriptor.ShaderRegister = 0;
-    rootParameters[1].Descriptor.RegisterSpace = 0;
+
+    rootParameters[2].ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
+    rootParameters[2].DescriptorTable.pDescriptorRanges = uavRange2;
+    rootParameters[2].DescriptorTable.NumDescriptorRanges = _countof(uavRange2);
+    rootParameters[2].ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
+
+    rootParameters[3].ParameterType = D3D12_ROOT_PARAMETER_TYPE_CBV;
+    rootParameters[3].ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
+    rootParameters[3].Descriptor.ShaderRegister = 0;
+    rootParameters[3].Descriptor.RegisterSpace = 0;
 
     D3D12_ROOT_SIGNATURE_DESC descriptionRootSignature = {};
     descriptionRootSignature.NumParameters = _countof(rootParameters);

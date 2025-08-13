@@ -57,7 +57,8 @@ class ParticleCS {
     void CreateEmitterSphereResource();
     void CreateVertexResource();
     void CreatePerFrameResource();
-    void CreateFreeCounterResource();
+    void CreateFreeListIndexResource();
+    void CreateFreeListResource();
 
   private:
     Microsoft::WRL::ComPtr<ID3D12Resource> outputParticleResource_;
@@ -86,10 +87,15 @@ class ParticleCS {
     Microsoft::WRL::ComPtr<ID3D12Resource> perFrameResource_ = nullptr;
     PerFrame *perFrameData_ = nullptr;
 
-    Microsoft::WRL::ComPtr<ID3D12Resource> freeCounterResource_;
-    std::pair<D3D12_CPU_DESCRIPTOR_HANDLE, D3D12_GPU_DESCRIPTOR_HANDLE> freeCounterSrvHandle_;
-    uint32_t freeCounterSrvIndex_ = 0;
-    uint32_t freeCounterSrvForVSIndex_ = 0;
+    Microsoft::WRL::ComPtr<ID3D12Resource> freeListIndexResource_;
+    std::pair<D3D12_CPU_DESCRIPTOR_HANDLE, D3D12_GPU_DESCRIPTOR_HANDLE> freeListIndexSrvHandle_;
+    uint32_t freeListIndexSrvIndex_ = 0;
+    uint32_t freeListIndexSrvForVSIndex_ = 0;
+
+    Microsoft::WRL::ComPtr<ID3D12Resource> freeListResource_;
+    std::pair<D3D12_CPU_DESCRIPTOR_HANDLE, D3D12_GPU_DESCRIPTOR_HANDLE> freeListSrvHandle_;
+    uint32_t freeListSrvIndex_ = 0;
+    uint32_t freeListSrvForVSIndex_ = 0;
 
     ID3D12GraphicsCommandList *commandList;
 

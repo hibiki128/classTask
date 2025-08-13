@@ -17,7 +17,8 @@ void ParticleCS::Initialize() {
     CreateVertexResource();
     CreateEmitterSphereResource();
     CreatePerFrameResource();
-    CreateFreeCounterResource();
+    CreateFreeListIndexResource();
+    CreateFreeListResource();
     InitParticle();
 }
 
@@ -50,7 +51,8 @@ void ParticleCS::InitParticle() {
     // InitParticle.CSの処理
     particleCommon_->ComputeInitDrawCommonSetting();
     commandList->SetComputeRootDescriptorTable(0, outputParticleSrvHandle_.second);
-    commandList->SetComputeRootDescriptorTable(1, freeCounterSrvHandle_.second);
+    commandList->SetComputeRootDescriptorTable(1, freeListIndexSrvHandle_.second);
+    commandList->SetComputeRootDescriptorTable(2, freeListSrvHandle_.second);
     commandList->Dispatch(1024, 1, 1);
 
     dxCommon_->TransitionSRVBarrier();
@@ -77,16 +79,19 @@ void ParticleCS::Update() {
     particleCommon_->ComputeEmitterDrawCommonSetting();
 
     commandList->SetComputeRootDescriptorTable(0, outputParticleSrvHandle_.second);                   // UAV (u0)
-    commandList->SetComputeRootConstantBufferView(1, emitterSphereResource_->GetGPUVirtualAddress()); // CBV (b0)
-    commandList->SetComputeRootConstantBufferView(2, perFrameResource_->GetGPUVirtualAddress());      // CBV (b0)
-    commandList->SetComputeRootDescriptorTable(3, freeCounterSrvHandle_.second);
+    commandList->SetComputeRootDescriptorTable(1, freeListIndexSrvHandle_.second);
+    commandList->SetComputeRootDescriptorTable(2, freeListSrvHandle_.second);
+    commandList->SetComputeRootConstantBufferView(3, emitterSphereResource_->GetGPUVirtualAddress()); // CBV (b0)
+    commandList->SetComputeRootConstantBufferView(4, perFrameResource_->GetGPUVirtualAddress());      // CBV (b0)
 
     commandList->Dispatch(1, 1, 1);
 
     // UpdateParticle.CSの処理
     particleCommon_->ComputeUpdateEmitterDrawCommonSetting();
     commandList->SetComputeRootDescriptorTable(0, outputParticleSrvHandle_.second);
-    commandList->SetComputeRootConstantBufferView(1, perFrameResource_->GetGPUVirtualAddress());
+    commandList->SetComputeRootDescriptorTable(1, freeListIndexSrvHandle_.second);
+    commandList->SetComputeRootDescriptorTable(2, freeListSrvHandle_.second);
+    commandList->SetComputeRootConstantBufferView(3, perFrameResource_->GetGPUVirtualAddress());
 
     commandList->Dispatch(1, 1, 1);
 
@@ -170,16 +175,30 @@ void ParticleCS::CreatePerFrameResource() {
     perFrameData_->deltaTime = 0.0f;
 }
 
-void ParticleCS::CreateFreeCounterResource() {
-    freeCounterResource_ = dxCommon_->CreateBufferResource(sizeof(int) * 1024, true);
+void ParticleCS::CreateFreeListIndexResource() {
+    freeListIndexResource_ = dxCommon_->CreateBufferResource(sizeof(int) * 1024, true);
 
     // UAV用のインデックス（Compute Shader用）
-    freeCounterSrvIndex_ = srvManager_->Allocate() + 1;
-    freeCounterSrvHandle_.first = srvManager_->GetCPUDescriptorHandle(freeCounterSrvIndex_);
-    freeCounterSrvHandle_.second = srvManager_->GetGPUDescriptorHandle(freeCounterSrvIndex_);
-    srvManager_->CreateUAVStructuredBuffer(freeCounterSrvIndex_, freeCounterResource_.Get(), 1024, sizeof(int));
+    freeListIndexSrvIndex_ = srvManager_->Allocate() + 1;
+    freeListIndexSrvHandle_.first = srvManager_->GetCPUDescriptorHandle(freeListIndexSrvIndex_);
+    freeListIndexSrvHandle_.second = srvManager_->GetGPUDescriptorHandle(freeListIndexSrvIndex_);
+    srvManager_->CreateUAVStructuredBuffer(freeListIndexSrvIndex_, freeListIndexResource_.Get(), 1024, sizeof(int));
 
     // SRV用のインデックス（Vertex Shader用）
-    freeCounterSrvForVSIndex_ = srvManager_->Allocate() + 1;
-    srvManager_->CreateSRVforStructuredBuffer(freeCounterSrvForVSIndex_, freeCounterResource_.Get(), 1024, sizeof(int));
+    freeListIndexSrvForVSIndex_ = srvManager_->Allocate() + 1;
+    srvManager_->CreateSRVforStructuredBuffer(freeListIndexSrvForVSIndex_, freeListIndexResource_.Get(), 1024, sizeof(int));
+}
+
+void ParticleCS::CreateFreeListResource() {
+    freeListResource_ = dxCommon_->CreateBufferResource(sizeof(uint32_t) * 1024, true);
+
+    // UAV用のインデックス（Compute Shader用）
+    freeListSrvIndex_ = srvManager_->Allocate() + 1;
+    freeListSrvHandle_.first = srvManager_->GetCPUDescriptorHandle(freeListSrvIndex_);
+    freeListSrvHandle_.second = srvManager_->GetGPUDescriptorHandle(freeListSrvIndex_);
+    srvManager_->CreateUAVStructuredBuffer(freeListSrvIndex_, freeListResource_.Get(), 1024, sizeof(uint32_t));
+
+    // SRV用のインデックス（Vertex Shader用）
+    freeListSrvForVSIndex_ = srvManager_->Allocate() + 1;
+    srvManager_->CreateSRVforStructuredBuffer(freeListSrvForVSIndex_, freeListResource_.Get(), 1024, sizeof(uint32_t));
 }

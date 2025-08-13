@@ -8,7 +8,8 @@
 
 enum class ComputePipelineType {
    kSkinning,
-   kParticle,
+   kInitParticle,
+   kEmitter,
 };
 
 
@@ -63,6 +64,11 @@ class ComputePipeLineManager {
     void CreateParticlePipelines();
     Microsoft::WRL::ComPtr<ID3D12RootSignature> CreateParticleRootSignature();
     Microsoft::WRL::ComPtr<ID3D12PipelineState> CreateParticleGraphicsPipeLine(Microsoft::WRL::ComPtr<ID3D12RootSignature> rootSignature);
+
+      // エミッター関連
+    void CreateEmitterPipelines();
+    Microsoft::WRL::ComPtr<ID3D12RootSignature> CreateEmitterRootSignature();
+    Microsoft::WRL::ComPtr<ID3D12PipelineState> CreateEmitterGraphicsPipeLine(Microsoft::WRL::ComPtr<ID3D12RootSignature> rootSignature);
 
     private:
     DirectXCommon *dxCommon_;

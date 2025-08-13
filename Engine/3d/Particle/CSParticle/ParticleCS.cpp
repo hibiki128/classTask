@@ -1,6 +1,7 @@
 #include "ParticleCS.h"
 #include "myMath.h"
 #include <Frame.h>
+#include <type/Vector3.h>
 
 void ParticleCS::Initialize() {
     dxCommon_ = ParticleCommon::GetInstance()->GetDxCommon();
@@ -8,31 +9,50 @@ void ParticleCS::Initialize() {
     particleCommon_ = ParticleCommon::GetInstance();
     texManager_ = TextureManager::GetInstance();
     texManager_->LoadTexture(texPath_);
+    commandList = dxCommon_->GetCommandList().Get();
     CreateOutputParticleResource();
     CreatePerViewResource();
     CreateMaterialResource();
     CreateIndexResource();
     CreateVertexResource();
     CreateEmitterSphereResource();
+    CreatePerFrameResource();
+    CreateFreeCounterResource();
+    InitParticle();
 }
 
 void ParticleCS::Draw(const ViewProjection &vp) {
+    EmitterUpdate();
     Update();
 
-    perViewData->viewProjection = vp.matView_ * vp.matProjection_;
-    perViewData->billboardMatrix = vp.matView_;
+    perViewData_->viewProjection = vp.matView_ * vp.matProjection_;
+    perViewData_->billboardMatrix = vp.matView_;
 
     ID3D12GraphicsCommandList *commandList = dxCommon_->GetCommandList().Get();
     particleCommon_->DrawCommonSetting(BlendMode::kAdd);
 
-    commandList->IASetIndexBuffer(&indexBufferView);
+    commandList->IASetIndexBuffer(&indexBufferView_);
     commandList->IASetVertexBuffers(0, 1, &vertexBufferView_);
-    commandList->SetGraphicsRootConstantBufferView(0, perViewResource->GetGPUVirtualAddress());
+    commandList->SetGraphicsRootConstantBufferView(0, perViewResource_->GetGPUVirtualAddress());
     srvManager_->SetGraphicsRootDescriptorTable(1, outputParticleSrvForVSIndex_);
     srvManager_->SetGraphicsRootDescriptorTable(2, TextureManager::GetInstance()->GetTextureIndexByFilePath(texPath_));
-    commandList->SetGraphicsRootConstantBufferView(3, materialResource->GetGPUVirtualAddress());
+    commandList->SetGraphicsRootConstantBufferView(3, materialResource_->GetGPUVirtualAddress());
 
     commandList->DrawIndexedInstanced(6, 1024, 0, 0, 0);
+}
+
+void ParticleCS::InitParticle() {
+
+    srvManager_->SetDescriptorHeap();
+
+    dxCommon_->TransitionUAVBarrier(outputParticleResource_.Get());
+
+    particleCommon_->ComputeInitDrawCommonSetting();
+    commandList->SetComputeRootDescriptorTable(0, outputParticleSrvHandle_.second);
+    commandList->SetComputeRootDescriptorTable(1, freeCounterSrvHandle_.second);
+    commandList->Dispatch(1024, 1, 1);
+
+    dxCommon_->TransitionSRVBarrier();
 }
 
 void ParticleCS::EmitterUpdate() {
@@ -46,51 +66,49 @@ void ParticleCS::EmitterUpdate() {
 }
 
 void ParticleCS::Update() {
-    particleCommon_->ComputeDrawCommonSetting();
-    ID3D12GraphicsCommandList *commandList = dxCommon_->GetCommandList().Get();
 
-    // UAVとして使用するためのバリア
-    D3D12_RESOURCE_BARRIER barrier = {};
-    barrier.Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
-    barrier.Transition.pResource = outputParticleResource.Get();
-    barrier.Transition.StateBefore = D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER;
-    barrier.Transition.StateAfter = D3D12_RESOURCE_STATE_UNORDERED_ACCESS;
-    commandList->ResourceBarrier(1, &barrier);
+    perFrameData_->time += Frame::DeltaTime();
+    perFrameData_->deltaTime = Frame::DeltaTime();
 
-    commandList->SetComputeRootDescriptorTable(0, outputParticleSrvHandle.second);
-    commandList->Dispatch(1024, 1, 1);
+    dxCommon_->TransitionUAVBarrier(outputParticleResource_.Get());
 
-    // SRVとして使用するためのバリア
-    barrier.Transition.StateBefore = D3D12_RESOURCE_STATE_UNORDERED_ACCESS;
-    barrier.Transition.StateAfter = D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER;
-    commandList->ResourceBarrier(1, &barrier);
+    particleCommon_->ComputeEmitterDrawCommonSetting();
+
+    commandList->SetComputeRootDescriptorTable(0, outputParticleSrvHandle_.second);                   // UAV (u0)
+    commandList->SetComputeRootConstantBufferView(1, emitterSphereResource_->GetGPUVirtualAddress()); // CBV (b0)
+    commandList->SetComputeRootConstantBufferView(2, perFrameResource_->GetGPUVirtualAddress());      // CBV (b0)
+    commandList->SetComputeRootDescriptorTable(3, freeCounterSrvHandle_.second);
+
+    commandList->Dispatch(1, 1, 1);
+
+    dxCommon_->TransitionSRVBarrier();
 }
 
 void ParticleCS::CreateOutputParticleResource() {
-    outputParticleResource = dxCommon_->CreateBufferResource(sizeof(CSParticle) * 1024, true);
+    outputParticleResource_ = dxCommon_->CreateBufferResource(sizeof(CSParticle) * 1024, true);
 
     // UAV用のインデックス（Compute Shader用）
     outputParticleSrvIndex_ = srvManager_->Allocate() + 1;
-    outputParticleSrvHandle.first = srvManager_->GetCPUDescriptorHandle(outputParticleSrvIndex_);
-    outputParticleSrvHandle.second = srvManager_->GetGPUDescriptorHandle(outputParticleSrvIndex_);
-    srvManager_->CreateUAVStructuredBuffer(outputParticleSrvIndex_, outputParticleResource.Get(), 1024, sizeof(CSParticle));
+    outputParticleSrvHandle_.first = srvManager_->GetCPUDescriptorHandle(outputParticleSrvIndex_);
+    outputParticleSrvHandle_.second = srvManager_->GetGPUDescriptorHandle(outputParticleSrvIndex_);
+    srvManager_->CreateUAVStructuredBuffer(outputParticleSrvIndex_, outputParticleResource_.Get(), 1024, sizeof(CSParticle));
 
     // SRV用のインデックス（Vertex Shader用）
     outputParticleSrvForVSIndex_ = srvManager_->Allocate() + 1;
-    srvManager_->CreateSRVforStructuredBuffer(outputParticleSrvForVSIndex_, outputParticleResource.Get(), 1024, sizeof(CSParticle));
+    srvManager_->CreateSRVforStructuredBuffer(outputParticleSrvForVSIndex_, outputParticleResource_.Get(), 1024, sizeof(CSParticle));
 }
 void ParticleCS::CreatePerViewResource() {
-    perViewResource = dxCommon_->CreateBufferResource(sizeof(PerView));
-    perViewResource->Map(0, nullptr, reinterpret_cast<void **>(&perViewData));
-    perViewData->viewProjection = MakeIdentity4x4();
-    perViewData->billboardMatrix = MakeIdentity4x4();
+    perViewResource_ = dxCommon_->CreateBufferResource(sizeof(PerView));
+    perViewResource_->Map(0, nullptr, reinterpret_cast<void **>(&perViewData_));
+    perViewData_->viewProjection = MakeIdentity4x4();
+    perViewData_->billboardMatrix = MakeIdentity4x4();
 }
 
 void ParticleCS::CreateMaterialResource() {
-    materialResource = dxCommon_->CreateBufferResource(sizeof(ParticleMaterial));
-    materialResource->Map(0, nullptr, reinterpret_cast<void **>(&materialData));
-    materialData->color = Vector4(1.0f, 1.0f, 1.0f, 1.0f);
-    materialData->uvTransform = MakeIdentity4x4();
+    materialResource_ = dxCommon_->CreateBufferResource(sizeof(ParticleMaterial));
+    materialResource_->Map(0, nullptr, reinterpret_cast<void **>(&materialData_));
+    materialData_->color = Vector4(1.0f, 1.0f, 1.0f, 1.0f);
+    materialData_->uvTransform = MakeIdentity4x4();
 }
 
 void ParticleCS::CreateIndexResource() {
@@ -100,12 +118,12 @@ void ParticleCS::CreateIndexResource() {
         2, 1, 3  // 二番目の三角形
     };
 
-    indexResource = dxCommon_->CreateBufferResource(sizeof(uint32_t) * indices.size());
-    indexBufferView.BufferLocation = indexResource->GetGPUVirtualAddress();
-    indexBufferView.SizeInBytes = UINT(sizeof(uint32_t) * indices.size());
-    indexBufferView.Format = DXGI_FORMAT_R32_UINT;
-    indexResource->Map(0, nullptr, reinterpret_cast<void **>(&indexData));
-    std::memcpy(indexData, indices.data(), sizeof(uint32_t) * indices.size());
+    indexResource_ = dxCommon_->CreateBufferResource(sizeof(uint32_t) * indices.size());
+    indexBufferView_.BufferLocation = indexResource_->GetGPUVirtualAddress();
+    indexBufferView_.SizeInBytes = UINT(sizeof(uint32_t) * indices.size());
+    indexBufferView_.Format = DXGI_FORMAT_R32_UINT;
+    indexResource_->Map(0, nullptr, reinterpret_cast<void **>(&indexData_));
+    std::memcpy(indexData_, indices.data(), sizeof(uint32_t) * indices.size());
 }
 
 void ParticleCS::CreateEmitterSphereResource() {
@@ -134,4 +152,25 @@ void ParticleCS::CreateVertexResource() {
     vertexBufferView_.StrideInBytes = sizeof(VertexData);
     vertexResource_->Map(0, nullptr, reinterpret_cast<void **>(&vertexData_));
     std::memcpy(vertexData_, vertices.data(), sizeof(VertexData) * vertices.size());
+}
+
+void ParticleCS::CreatePerFrameResource() {
+    perFrameResource_ = dxCommon_->CreateBufferResource(sizeof(PerFrame));
+    perFrameResource_->Map(0, nullptr, reinterpret_cast<void **>(&perFrameData_));
+    perFrameData_->time = 0.0f;
+    perFrameData_->deltaTime = 0.0f;
+}
+
+void ParticleCS::CreateFreeCounterResource() {
+    freeCounterResource_ = dxCommon_->CreateBufferResource(sizeof(int) * 1024, true);
+
+    // UAV用のインデックス（Compute Shader用）
+    freeCounterSrvIndex_ = srvManager_->Allocate() + 1;
+    freeCounterSrvHandle_.first = srvManager_->GetCPUDescriptorHandle(freeCounterSrvIndex_);
+    freeCounterSrvHandle_.second = srvManager_->GetGPUDescriptorHandle(freeCounterSrvIndex_);
+    srvManager_->CreateUAVStructuredBuffer(freeCounterSrvIndex_, freeCounterResource_.Get(), 1024, sizeof(int));
+
+    // SRV用のインデックス（Vertex Shader用）
+    freeCounterSrvForVSIndex_ = srvManager_->Allocate() + 1;
+    srvManager_->CreateSRVforStructuredBuffer(freeCounterSrvForVSIndex_, freeCounterResource_.Get(), 1024, sizeof(int));
 }

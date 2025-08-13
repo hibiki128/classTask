@@ -25,6 +25,10 @@ void ParticleCommon::DrawCommonSetting(BlendMode blendMode) {
     psoManager_->DrawCommonSetting(PipelineType::kParticle, blendMode);
 }
 
-void ParticleCommon::ComputeDrawCommonSetting() {
-    computePsoManager_->DrawCommonSetting(ComputePipelineType::kParticle);
+void ParticleCommon::ComputeInitDrawCommonSetting() {
+    computePsoManager_->DrawCommonSetting(ComputePipelineType::kInitParticle);
+}
+
+void ParticleCommon::ComputeEmitterDrawCommonSetting() {
+    computePsoManager_->DrawCommonSetting(ComputePipelineType::kEmitter);
 }

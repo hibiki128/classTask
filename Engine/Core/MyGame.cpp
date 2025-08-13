@@ -53,7 +53,7 @@ void MyGame::Update() {
 
 void MyGame::Draw() {
     dxCommon_->PreRenderTexture();
-    srvManager_->PreDraw();
+    srvManager_->SetDescriptorHeap();
     // -----描画開始-----
 
     // -----シーンごとの処理------

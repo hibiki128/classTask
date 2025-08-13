@@ -20,3 +20,21 @@ struct PerView
     float4x4 viewProjection;
     float4x4 billboardMatrix;
 };
+
+struct EmitterSphere
+{
+    float3 translate;
+    float radius;
+    int count;
+    float frequency;
+    float frequencyTime;
+    int emit;
+};
+
+struct PerFrame
+{
+    float time;
+    float deltaTime;
+};
+
+static const int kMaxParticles = 1024;

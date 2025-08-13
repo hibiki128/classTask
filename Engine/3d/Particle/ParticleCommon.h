@@ -37,7 +37,9 @@ class ParticleCommon {
     /// 共通描画処理
     /// </summary>
     /// <param name="blendMode"></param>
-    void ComputeDrawCommonSetting();
+    void ComputeInitDrawCommonSetting();
+
+    void ComputeEmitterDrawCommonSetting();
 
     DirectXCommon *GetDxCommon() const { return dxCommon_; }
 

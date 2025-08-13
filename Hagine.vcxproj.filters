@@ -476,6 +476,7 @@
     <None Include="Resources\shaders\Skinning\Skinning.hlsli">
       <Filter>リソース ファイル\Skinning</Filter>
     </None>
+    <None Include="Resources\shaders\Random\Random.hlsli" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="resource.h" />
@@ -1076,7 +1077,7 @@
     <FxCompile Include="Resources\shaders\OffScreen\Dissolve.PS.hlsl" />
     <FxCompile Include="Resources\shaders\OffScreen\Random.PS.hlsl" />
     <FxCompile Include="Resources\shaders\OffScreen\FocusLine.PS.hlsl" />
-    <FxCompile Include="Resources\shaders\Particle\Particle.CS.hlsl" />
+    <FxCompile Include="Resources\shaders\Particle\InitParticle.CS.hlsl" />
     <FxCompile Include="Resources\shaders\Particle\EmitParticle.CS.hlsl" />
   </ItemGroup>
 </Project>

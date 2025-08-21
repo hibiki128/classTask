@@ -19,6 +19,7 @@
 #include "Object/Base/BaseObjectManager.h"
 #include "Particle/ParticleCommon.h"
 #include "Particle/ParticleEditor.h"
+#include"Particle/CSParticle/ParticleCSEditor.h"
 #include "Particle/ParticleGroupManager.h"
 #include "Scene/AbstractSceneFactory.h"
 #include "Scene/SceneManager.h"
@@ -106,6 +107,7 @@ class Framework {
     LightGroup *lightGroup_ = nullptr;
 
     ParticleEditor *particleEditor_ = nullptr;
+    ParticleCSEditor *particleCSEditor_ = nullptr;
 
     PrimitiveModel *primitiveModel_ = nullptr;
 

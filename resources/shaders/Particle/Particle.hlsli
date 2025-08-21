@@ -21,20 +21,28 @@ struct PerView
     float4x4 billboardMatrix;
 };
 
-struct EmitterSphere
-{
-    float3 translate;
-    float radius;
-    int count;
-    float frequency;
-    float frequencyTime;
-    int emit;
-};
-
 struct PerFrame
 {
     float time;
     float deltaTime;
 };
 
-static const int kMaxParticles = 1024;
+static const int kMaxParticles = 100000;
+
+struct GPUEmitterData
+{
+    float3 position;
+    float3 velocityMin;
+    float3 velocityMax;
+    float3 scaleMin;
+    float3 scaleMax;
+    float lifeTimeMin;
+    float lifeTimeMax;
+    int colorMode;
+    float4 startColor;
+    float4 endColor;
+    int emitCount;
+    float emitInterval;
+    float currentTime;
+    int emit;
+};

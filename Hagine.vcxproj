@@ -194,6 +194,10 @@ copy "$(WindowsSdkDIr)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     <ClCompile Include="Engine\OffScreen\PostEffect\PostEffectParameters.cpp" />
     <ClCompile Include="Engine\OffScreen\PostEffect\PostEffectDataManager.cpp" />
     <ClCompile Include="Engine\3d\Particle\CSParticle\ParticleCS.cpp" />
+    <ClCompile Include="Engine\3d\Particle\CSParticle\ParticleCSEmitter.cpp" />
+    <ClCompile Include="Engine\3d\Particle\CSParticle\ParticleCSGroup.cpp" />
+    <ClCompile Include="Engine\3d\Particle\CSParticle\ParticleCSGroupManager.cpp" />
+    <ClCompile Include="Engine\3d\Particle\CSParticle\ParticleCSEditor.cpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include=".claudiaideconfig" />
@@ -250,6 +254,7 @@ copy "$(WindowsSdkDIr)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     <ClInclude Include="Engine\3d\Camera\BaseFollowCamera\BaseFollowCamera.h" />
     <ClInclude Include="Engine\3d\Camera\FollowCamera\FollowCamera.h" />
     <ClInclude Include="Engine\3d\Object\Base\BaseObject.h" />
+    <ClInclude Include="Engine\3d\Particle\ParticleStruct.h" />
     <ClInclude Include="Engine\3d\Transform\ObjColor.h" />
     <ClInclude Include="Engine\Math\Easing.h" />
     <ClInclude Include="Engine\Math\myMath.h" />
@@ -331,6 +336,10 @@ copy "$(WindowsSdkDIr)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     <ClInclude Include="Engine\OffScreen\PostEffect\PostEffectParameters.h" />
     <ClInclude Include="Engine\OffScreen\PostEffect\PostEffectDataManager.h" />
     <ClInclude Include="Engine\3d\Particle\CSParticle\ParticleCS.h" />
+    <ClInclude Include="Engine\3d\Particle\CSParticle\ParticleCSEmitter.h" />
+    <ClInclude Include="Engine\3d\Particle\CSParticle\ParticleCSGroup.h" />
+    <ClInclude Include="Engine\3d\Particle\CSParticle\ParticleCSGroupManager.h" />
+    <ClInclude Include="Engine\3d\Particle\CSParticle\ParticleCSEditor.h" />
     <ClInclude Include="resource.h" />
     <ClInclude Include="Engine\Utility\Edit\ShortcutManager\ShortcutManager.h" />
   </ItemGroup>

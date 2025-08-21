@@ -7,37 +7,11 @@
 #include <Camera/ViewProjection/ViewProjection.h>
 #include <Graphics/Srv/SrvManager.h>
 #include <Graphics/Texture/TextureManager.h>
+#include <Primitive/PrimitiveModel.h>
 #include <d3d12.h>
 #include <type/Matrix4x4.h>
 #include <utility>
-
-struct CSParticle {
-    Vector3 translate;
-    Vector3 scale;
-    float lifeTime;
-    Vector3 velocity;
-    float currentTime;
-    Vector4 color;
-};
-
-struct PerView {
-    Matrix4x4 viewProjection;
-    Matrix4x4 billboardMatrix;
-};
-
-struct EmitterSphere {
-    Vector3 translate;
-    float radius;
-    uint32_t count;
-    float frequency;
-    float frequencyTime;
-    uint32_t emit;
-};
-
-struct PerFrame {
-    float time;
-    float deltaTime;
-};
+#include"Particle/ParticleStruct.h"
 
 class DirectXCommon;
 class ParticleCS {
@@ -45,6 +19,14 @@ class ParticleCS {
   public:
     void Initialize();
     void Draw(const ViewProjection &vp);
+
+    uint32_t AddEmitter(const ParticleEmitterSettings &settings);
+    void RemoveEmitter(uint32_t emitterId);
+    void UpdateEmitterSettings(uint32_t emitterId, const ParticleEmitterSettings &settings);
+    void UpdateGPUEmitterData(uint32_t emitterId);
+    // ParticleEmitterSettings *GetEmitterSettings(uint32_t emitterId);
+    //  ImGui表示
+    void DrawImGui();
 
   private:
     void InitParticle();
@@ -54,7 +36,7 @@ class ParticleCS {
     void CreatePerViewResource();
     void CreateMaterialResource();
     void CreateIndexResource();
-    void CreateEmitterSphereResource();
+    // void CreateEmitterSphereResource();
     void CreateVertexResource();
     void CreatePerFrameResource();
     void CreateFreeListIndexResource();
@@ -81,8 +63,8 @@ class ParticleCS {
     D3D12_VERTEX_BUFFER_VIEW vertexBufferView_;
     VertexData *vertexData_ = nullptr;
 
-    Microsoft::WRL::ComPtr<ID3D12Resource> emitterSphereResource_ = nullptr;
-    EmitterSphere *emitterSphereData_ = nullptr;
+    /* Microsoft::WRL::ComPtr<ID3D12Resource> emitterSphereResource_ = nullptr;
+     EmitterSphere *emitterSphereData_ = nullptr;*/
 
     Microsoft::WRL::ComPtr<ID3D12Resource> perFrameResource_ = nullptr;
     PerFrame *perFrameData_ = nullptr;
@@ -105,4 +87,17 @@ class ParticleCS {
     TextureManager *texManager_;
 
     std::string texPath_ = "debug/circle2.png";
+
+    static const int kMaxParticleCount = 100000;
+    uint32_t activeParticleCount_ = 0;
+
+    // エミッター管理
+    std::vector<ParticleEmitterSettings> emitterSettings_;
+    std::vector<Microsoft::WRL::ComPtr<ID3D12Resource>> emitterResources_;
+    std::vector<GPUEmitterData *> emitterDataPtrs_;
+    std::vector<float> emitterTimers_;
+
+    // プリミティブモデル
+    PrimitiveModel *primitiveModel_ = nullptr;
+    std::unordered_map<PrimitiveType, uint32_t> primitiveVertexCounts_;
 };

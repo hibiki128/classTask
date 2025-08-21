@@ -12,8 +12,10 @@ void TitleScene::Initialize() {
     debugCamera_ = std::make_unique<DebugCamera>();
     debugCamera_->Initialize(&vp_);
 
-    particleCS_ = std::make_unique<ParticleCS>();
-    particleCS_->Initialize();
+    //particleCS_ = std::make_unique<ParticleCS>();
+    //particleCS_->Initialize();
+
+    ptEditor_ = ParticleCSEditor::GetInstance();
 
 }
 
@@ -27,6 +29,8 @@ void TitleScene::Update() {
 
     // シーン切り替え
     ChangeScene();
+
+
 }
 
 void TitleScene::Draw() {
@@ -40,7 +44,9 @@ void TitleScene::Draw() {
 
     //-------------------------
 
-    particleCS_->Draw(vp_);
+    ptEditor_->DrawAll(vp_);
+
+    //particleCS_->Draw(vp_);
 
     /// -------描画処理終了-------
 }
@@ -65,6 +71,9 @@ void TitleScene::AddObjectSetting() {
 }
 
 void TitleScene::AddParticleSetting() {
+    ptEditor_->EditorWindow();
+    ptEditor_->DebugAll();
+   // particleCS_->DrawImGui();
 }
 
 void TitleScene::CameraUpdate() {

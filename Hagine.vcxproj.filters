@@ -450,6 +450,18 @@
     <ClCompile Include="Engine\3d\Particle\CSParticle\ParticleCS.cpp">
       <Filter>ソースファイル</Filter>
     </ClCompile>
+    <ClCompile Include="Engine\3d\Particle\CSParticle\ParticleCSEmitter.cpp">
+      <Filter>ソースファイル</Filter>
+    </ClCompile>
+    <ClCompile Include="Engine\3d\Particle\CSParticle\ParticleCSGroupManager.cpp">
+      <Filter>ソースファイル</Filter>
+    </ClCompile>
+    <ClCompile Include="Engine\3d\Particle\CSParticle\ParticleCSGroup.cpp">
+      <Filter>ソースファイル</Filter>
+    </ClCompile>
+    <ClCompile Include="Engine\3d\Particle\CSParticle\ParticleCSEditor.cpp">
+      <Filter>ソースファイル</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="resources\shaders\Particle\Particle.hlsli">
@@ -765,6 +777,11 @@
     <ClInclude Include="Engine\3d\Camera\FollowCamera\FollowCamera.h" />
     <ClInclude Include="Engine\2d\SpriteStruct.h" />
     <ClInclude Include="Engine\3d\Particle\CSParticle\ParticleCS.h" />
+    <ClInclude Include="Engine\3d\Particle\CSParticle\ParticleCSEmitter.h" />
+    <ClInclude Include="Engine\3d\Particle\CSParticle\ParticleCSGroupManager.h" />
+    <ClInclude Include="Engine\3d\Particle\CSParticle\ParticleCSGroup.h" />
+    <ClInclude Include="Engine\3d\Particle\CSParticle\ParticleCSEditor.h" />
+    <ClInclude Include="Engine\3d\Particle\ParticleStruct.h" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="Hagine.rc" />

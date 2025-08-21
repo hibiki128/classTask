@@ -149,6 +149,11 @@ void Framework::Initialize() {
     particleEditor_->Initialize();
     ///----------------------------
 
+    ///-------ParticleCSEditor-------
+    particleCSEditor_ = ParticleCSEditor::GetInstance();
+    particleCSEditor_->Initialize();
+    ///----------------------------
+
     ///-------ParticleGroupManager-------
     particleGroupManager_ = ParticleGroupManager::GetInstance();
     particleGroupManager_->Initialize();
@@ -213,6 +218,7 @@ void Framework::Finalize() {
     motionEditor_->Finalize();
     LightGroup::GetInstance()->Finalize();
     particleEditor_->Finalize();
+    particleCSEditor_->Finalize();
     spriteCommon_->Finalize();
     particleCommon_->Finalize();
     modelCommon_->Finalize();

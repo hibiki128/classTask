@@ -4,6 +4,7 @@
 #include"Object/Base/BaseObject.h"
 #include"Easing.h"
 #include"Particle/CSParticle/ParticleCS.h"
+#include"Particle/CSParticle/ParticleCSEditor.h"
 
 class TitleScene : public BaseScene {
   public:
@@ -47,6 +48,7 @@ class TitleScene : public BaseScene {
     Input *input_;
     SpriteCommon *spCommon_;
     ParticleCommon *ptCommon_;
+    ParticleCSEditor *ptEditor_;
 
     ViewProjection vp_;
     std::unique_ptr<DebugCamera> debugCamera_;

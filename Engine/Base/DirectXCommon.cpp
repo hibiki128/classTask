@@ -619,37 +619,18 @@ IDxcBlob *DirectXCommon::CompileShader(
     return shaderBlob;
 }
 
-Microsoft::WRL::ComPtr<ID3D12Resource> DirectXCommon::CreateBufferResource(size_t sizeInBytes, bool isUAV) {
+// isUAV が true でも CPU からは Map できないので、必要なら readback 用バッファを別に作る
+Microsoft::WRL::ComPtr<ID3D12Resource> DirectXCommon::CreateBufferResource(
+    size_t sizeInBytes,
+    bool isUAV,
+    bool createReadback) {
+    Microsoft::WRL::ComPtr<ID3D12Resource> resource = nullptr;
+
     if (!isUAV) {
-        // リソース用のヒープの設定
+        // 通常のアップロード用リソース
         D3D12_HEAP_PROPERTIES uploadHeapProperties{};
-        uploadHeapProperties.Type = D3D12_HEAP_TYPE_UPLOAD; // UploadHeapを使う
-        // リソースの設定
-        D3D12_RESOURCE_DESC resourceDesc{};
-        // バッファリソース。テクスチャの場合はまた別の設定をする
-        resourceDesc.Dimension = D3D12_RESOURCE_DIMENSION_BUFFER;
-        resourceDesc.Width = sizeInBytes; // リソースのサイズ。
-        // バッファの場合はこれらを1にする決まり
-        resourceDesc.Height = 1;
-        resourceDesc.DepthOrArraySize = 1;
-        resourceDesc.MipLevels = 1;
-        resourceDesc.SampleDesc.Count = 1;
-        // バッファの場合はこれにする決まり
-        resourceDesc.Layout = D3D12_TEXTURE_LAYOUT_ROW_MAJOR;
-        // 実際にリソースを作る
-        Microsoft::WRL::ComPtr<ID3D12Resource> resource = nullptr;
-        HRESULT hr = device->CreateCommittedResource(&uploadHeapProperties, D3D12_HEAP_FLAG_NONE,
-                                                     &resourceDesc, D3D12_RESOURCE_STATE_GENERIC_READ, nullptr,
-                                                     IID_PPV_ARGS(&resource));
-        assert(SUCCEEDED(hr));
+        uploadHeapProperties.Type = D3D12_HEAP_TYPE_UPLOAD;
 
-        return resource;
-    } else {
-
-        // UAVを使う場合は、デフォルトヒープを使う
-        D3D12_HEAP_PROPERTIES defaultHeapProperties{};
-        defaultHeapProperties.Type = D3D12_HEAP_TYPE_DEFAULT;
-        // UAV用バッファリソースの設定
         D3D12_RESOURCE_DESC resourceDesc{};
         resourceDesc.Dimension = D3D12_RESOURCE_DIMENSION_BUFFER;
         resourceDesc.Width = sizeInBytes;
@@ -658,14 +639,73 @@ Microsoft::WRL::ComPtr<ID3D12Resource> DirectXCommon::CreateBufferResource(size_
         resourceDesc.MipLevels = 1;
         resourceDesc.SampleDesc.Count = 1;
         resourceDesc.Layout = D3D12_TEXTURE_LAYOUT_ROW_MAJOR;
-        // UAVを使うためのフラグ
-        resourceDesc.Flags = D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS;
-        Microsoft::WRL::ComPtr<ID3D12Resource> resource = nullptr;
-        HRESULT hr = device->CreateCommittedResource(&defaultHeapProperties, D3D12_HEAP_FLAG_NONE,
-                                                     &resourceDesc, D3D12_RESOURCE_STATE_COMMON, nullptr, IID_PPV_ARGS(&resource));
+
+        HRESULT hr = device->CreateCommittedResource(
+            &uploadHeapProperties,
+            D3D12_HEAP_FLAG_NONE,
+            &resourceDesc,
+            D3D12_RESOURCE_STATE_GENERIC_READ,
+            nullptr,
+            IID_PPV_ARGS(&resource));
+        assert(SUCCEEDED(hr));
+
         return resource;
+    } else {
+        // UAV 用リソース (GPU 用)
+        D3D12_HEAP_PROPERTIES defaultHeapProperties{};
+        defaultHeapProperties.Type = D3D12_HEAP_TYPE_DEFAULT;
+
+        D3D12_RESOURCE_DESC resourceDesc{};
+        resourceDesc.Dimension = D3D12_RESOURCE_DIMENSION_BUFFER;
+        resourceDesc.Width = sizeInBytes;
+        resourceDesc.Height = 1;
+        resourceDesc.DepthOrArraySize = 1;
+        resourceDesc.MipLevels = 1;
+        resourceDesc.SampleDesc.Count = 1;
+        resourceDesc.Layout = D3D12_TEXTURE_LAYOUT_ROW_MAJOR;
+        resourceDesc.Flags = D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS;
+
+        HRESULT hr = device->CreateCommittedResource(
+            &defaultHeapProperties,
+            D3D12_HEAP_FLAG_NONE,
+            &resourceDesc,
+            D3D12_RESOURCE_STATE_COMMON,
+            nullptr,
+            IID_PPV_ARGS(&resource));
+        assert(SUCCEEDED(hr));
+
+        // CPU で読み取りたい場合は readback バッファを返す代替用に作る
+        if (createReadback) {
+            Microsoft::WRL::ComPtr<ID3D12Resource> readbackBuffer = nullptr;
+
+            D3D12_HEAP_PROPERTIES readbackHeapProperties{};
+            readbackHeapProperties.Type = D3D12_HEAP_TYPE_READBACK;
+
+            D3D12_RESOURCE_DESC readbackDesc{};
+            readbackDesc.Dimension = D3D12_RESOURCE_DIMENSION_BUFFER;
+            readbackDesc.Width = sizeInBytes;
+            readbackDesc.Height = 1;
+            readbackDesc.DepthOrArraySize = 1;
+            readbackDesc.MipLevels = 1;
+            readbackDesc.SampleDesc.Count = 1;
+            readbackDesc.Layout = D3D12_TEXTURE_LAYOUT_ROW_MAJOR;
+
+            HRESULT hr2 = device->CreateCommittedResource(
+                &readbackHeapProperties,
+                D3D12_HEAP_FLAG_NONE,
+                &readbackDesc,
+                D3D12_RESOURCE_STATE_COPY_DEST,
+                nullptr,
+                IID_PPV_ARGS(&readbackBuffer));
+            assert(SUCCEEDED(hr2));
+
+            return readbackBuffer; // CPU から Map するのはこのバッファで
+        }
+
+        return resource; // 普通に GPU だけならこれ
     }
 }
+
 
 Microsoft::WRL::ComPtr<ID3D12Resource> DirectXCommon::CreateTextureResource(const DirectX::TexMetadata &metadata) {
     // metadataを基にResourceの設定

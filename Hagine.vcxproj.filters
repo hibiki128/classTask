@@ -740,6 +740,7 @@
     </ClInclude>
     <ClInclude Include="application\Utility\ComboSystem\ComboSystem.h" />
     <ClInclude Include="Engine\3d\Particle\CSParticle\ParticleCS.h" />
+    <ClInclude Include="Engine\3d\Particle\ParticleStruct.h" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="Hagine.rc" />

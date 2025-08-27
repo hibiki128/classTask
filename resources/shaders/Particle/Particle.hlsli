@@ -37,4 +37,4 @@ struct PerFrame
     float deltaTime;
 };
 
-static const int kMaxParticles = 1024;
+static const int kMaxParticles = 1048576;

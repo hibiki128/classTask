@@ -65,6 +65,7 @@ void TitleScene::AddObjectSetting() {
 }
 
 void TitleScene::AddParticleSetting() {
+    particleCS_->DrawImGui();
 }
 
 void TitleScene::CameraUpdate() {

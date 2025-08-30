@@ -57,22 +57,14 @@ struct GPUParticleEmitter {
 };
 
 struct ParticleCSGroupData {
-    //// マテリアルデータ
-    //std::vector<MaterialData> materials;
-    //// パーティクルのリスト (std::list<Particle> 型)
-    //std::list<Particle> particles;
-    //// インスタンシングデータ用SRVインデックス
-    //uint32_t instancingSRVIndex = 0;
-    //// インスタンシングリソース
-    //Microsoft::WRL::ComPtr<ID3D12Resource> instancingResource = nullptr;
-    //// インスタンス数
-    //uint32_t instanceCount = 0;
-    //// インスタンシングデータを書き込むためのポインタ
-    //ParticleForGPU *instancingData = nullptr;
-    //// グループ名
-    //std::string groupName;
-    //// ブレンドモード
-    //BlendMode blendMode = BlendMode::kAdd;
+    // マテリアルデータ
+    std::vector<ParticleMaterial> materials;
+    // パーティクルのリスト (std::list<Particle> 型)
+    std::list<CSParticle> particles;
+    // グループ名
+    std::string groupName;
+    // ブレンドモード
+    BlendMode blendMode = BlendMode::kAdd;
 };
 
 static const uint32_t kMaxParticleCount = 1048576; // パーティクルの最大数

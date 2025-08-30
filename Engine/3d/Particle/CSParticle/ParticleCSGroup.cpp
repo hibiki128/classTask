@@ -1,26 +1,91 @@
 #include "ParticleCSGroup.h"
 #include <Frame.h>
+#include <Graphics/Model/ModelManager.h>
 
 void ParticleCSGroup::Initialize() {
     dxCommon_ = ParticleCommon::GetInstance()->GetDxCommon();
     srvManager_ = SrvManager::GetInstance();
     particleCommon_ = ParticleCommon::GetInstance();
     texManager_ = TextureManager::GetInstance();
-    texManager_->LoadTexture(texPath_);
     commandList = dxCommon_->GetCommandList().Get();
     CreateOutputParticleResource();
     CreatePerViewResource();
-    CreateMaterialResource();
-    CreateIndexResource();
-    CreateVertexResource();
     CreatePerFrameResource();
     CreateFreeListIndexResource();
     CreateFreeListResource();
-    InitParticle();
 }
 
 void ParticleCSGroup::DrawImGui() {
+}
 
+ParticleCSGroupData ParticleCSGroup::CreateParticleGroup(const std::string &groupName, const std::string &filename, const std::string &texturePath) {
+    Initialize();
+    particleGroupData_.groupName = groupName;
+    modelFilePath_ = filename;
+    ModelManager::GetInstance()->LoadModel(filename);
+    model_ = ModelManager::GetInstance()->FindModel(filename);
+    modelData = model_->GetModelData();
+    CreateVertexResource();
+    CreateIndexResource();
+    // マテリアルが複数ある場合は最初のものを使う
+    particleGroupData_.materials.clear();
+    if (texturePath.empty()) {
+        if (!modelData.materials.empty()) {
+            particleGroupData_.materials = ForParticleMaterials(modelData.materials);
+        } else {
+            particleGroupData_.materials.push_back(ParticleMaterial{});
+        }
+    } else {
+        ParticleMaterial mat;
+        mat.textureFilePath = texturePath;
+        mat.textureIndex = texManager_->GetTextureIndexByFilePath(texturePath);
+        particleGroupData_.materials.push_back(mat);
+    }
+    // すべてのマテリアルのテクスチャをロード
+    for (auto &mat : particleGroupData_.materials) {
+        texManager_->LoadTexture(mat.textureFilePath);
+        mat.textureIndex = texManager_->GetTextureIndexByFilePath(mat.textureFilePath);
+    }
+
+    CreateMaterialResource();
+
+    InitParticle();
+    return particleGroupData_;
+}
+
+ParticleCSGroupData ParticleCSGroup::CreatePrimitiveParticleGroup(const std::string &groupName, PrimitiveType type, const std::string &texturePath) {
+    Initialize();
+    particleGroupData_.groupName = groupName;
+    type_ = type;
+    model_ = ModelManager::GetInstance()->FindModel(ModelManager::GetInstance()->CreatePrimitiveModel(type, texturePath));
+    texManager_->LoadTexture(texturePath);
+    modelData = model_->GetModelData();
+    CreateVertexResource();
+    CreateIndexResource();
+    // マテリアルが複数ある場合は最初のものを使う
+    particleGroupData_.materials.clear();
+    if (texturePath.empty()) {
+        if (!modelData.materials.empty()) {
+            particleGroupData_.materials = ForParticleMaterials(modelData.materials);
+        } else {
+            particleGroupData_.materials.push_back(ParticleMaterial{});
+        }
+    } else {
+        ParticleMaterial mat;
+        mat.textureFilePath = texturePath;
+        mat.textureIndex = texManager_->GetTextureIndexByFilePath(texturePath);
+        particleGroupData_.materials.push_back(mat);
+    }
+    // すべてのマテリアルのテクスチャをロード
+    for (auto &mat : particleGroupData_.materials) {
+        texManager_->LoadTexture(mat.textureFilePath);
+        mat.textureIndex = texManager_->GetTextureIndexByFilePath(mat.textureFilePath);
+    }
+
+    CreateMaterialResource();
+
+    InitParticle();
+    return particleGroupData_;
 }
 
 void ParticleCSGroup::InitParticle() {
@@ -116,7 +181,7 @@ void ParticleCSGroup::CreateIndexResource() {
 
 void ParticleCSGroup::CreateVertexResource() {
     // クアッド用の頂点データ
-     std::vector<VertexData> allVertices;
+    std::vector<VertexData> allVertices;
     for (const auto &mesh : modelData.meshes) {
         allVertices.insert(allVertices.end(), mesh.vertices.begin(), mesh.vertices.end());
     }

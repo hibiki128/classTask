@@ -9,9 +9,12 @@
 #include <wrl.h>
 #include <Camera/ViewProjection/ViewProjection.h>
 #include <Model/Model.h>
+#include <Primitive/PrimitiveModel.h>
 
 class ParticleCSGroup {
   public:
+    ParticleCSGroupData CreateParticleGroup(const std::string &groupName, const std::string &filename, const std::string &texturePath = {});
+    ParticleCSGroupData CreatePrimitiveParticleGroup(const std::string &groupName, PrimitiveType type, const std::string &texturePath = {});
     void Update(const ViewProjection &vp);
     void DrawImGui();
 
@@ -74,6 +77,10 @@ class ParticleCSGroup {
     TextureManager *texManager_;
     Model *model_;
     ModelData modelData;
+    std::string modelFilePath_;
+
+    PrimitiveType type_ = PrimitiveType::None;
+    ParticleCSGroupData particleGroupData_;
 
     std::string texPath_ = "debug/circle2.png";
 };

@@ -2,6 +2,22 @@
 #include "type/Matrix4x4.h"
 #include "type/Vector3.h"
 #include "type/Vector4.h"
+#include <vector>
+#include <list>
+#include"Graphics/PipeLine/PipeLineManager.h"
+#include <Transform/WorldTransform.h>
+#include <cstdint>
+#include <d3d12.h>
+#include <string>
+#include <Model/ModelStructs.h>
+
+struct ParticleMaterial {
+    Vector4 color;
+    Matrix4x4 uvTransform;
+    float padding[3];
+    std::string textureFilePath;
+    uint32_t textureIndex = 0;
+};
 
 /// ===== GPUParticle =====
 
@@ -39,6 +55,29 @@ struct GPUParticleEmitter {
     bool isEmit = false;
     int emitterIndex = 0;
 };
+
+struct ParticleCSGroupData {
+    //// マテリアルデータ
+    //std::vector<MaterialData> materials;
+    //// パーティクルのリスト (std::list<Particle> 型)
+    //std::list<Particle> particles;
+    //// インスタンシングデータ用SRVインデックス
+    //uint32_t instancingSRVIndex = 0;
+    //// インスタンシングリソース
+    //Microsoft::WRL::ComPtr<ID3D12Resource> instancingResource = nullptr;
+    //// インスタンス数
+    //uint32_t instanceCount = 0;
+    //// インスタンシングデータを書き込むためのポインタ
+    //ParticleForGPU *instancingData = nullptr;
+    //// グループ名
+    //std::string groupName;
+    //// ブレンドモード
+    //BlendMode blendMode = BlendMode::kAdd;
+};
+
+static const uint32_t kMaxParticleCount = 1048576; // パーティクルの最大数
+extern uint32_t threadsPerGroup_;                  // 1グループあたりのスレッド数
+extern int threadGroupSize_;                       // スレッドグループの数
 
 /// =======================
 
@@ -112,4 +151,68 @@ struct ParticleStats {
     size_t instanceCount = 0; // 同じ名前のエミッター数
 };
 
+
+struct ParticleForGPU {
+    Matrix4x4 WVP;
+    Matrix4x4 World;
+    Vector4 color;
+};
+
+struct Particle {
+    WorldTransform transform; // 位置
+    Vector3 emitterPosition;
+    Vector3 velocity; // 速度
+    Vector3 Acce;
+    Vector3 startScale;
+    Vector3 endScale;
+    Vector3 startAcce;
+    Vector3 endAcce;
+    Vector3 startRote;
+    Vector3 endRote;
+    Vector3 rotateVelocity;
+    Vector3 fixedDirection;
+    Vector4 color;     // 色
+    float lifeTime;    // ライフタイム
+    float currentTime; // 現在の時間
+    float initialAlpha;
+    // std::weak_ptr<Particle> parent;                  // 親パーティクルへの弱参照
+    // std::vector<std::shared_ptr<Particle>> children; // 子パーティクルのリスト
+    Vector3 relativePosition; // 親からの相対位置
+    Vector3 parentOffset;     // 親に対するオフセット
+    bool isChild;             // 子パーティクルかどうか
+    bool createTrail;         // 軌跡を作成するか
+    float trailSpawnTimer;    // 軌跡生成のタイマー
+    float trailSpawnInterval; // 軌跡生成間隔
+    int maxChildren;          // 最大子供数
+    float childLifeScale;     // 子の寿命スケール（親より短く）
+
+    BlendMode blendMode = BlendMode::kAdd;
+
+    Particle() : isChild(false), createTrail(false), trailSpawnTimer(0.0f),
+                 trailSpawnInterval(0.1f), maxChildren(10), childLifeScale(0.8f) {}
+};
+
+struct ParticleGroupData {
+    // マテリアルデータ
+    std::vector<ParticleMaterial> materials;
+    // パーティクルのリスト (std::list<Particle> 型)
+    std::list<Particle> particles;
+    // インスタンシングデータ用SRVインデックス
+    uint32_t instancingSRVIndex = 0;
+    // インスタンシングリソース
+    Microsoft::WRL::ComPtr<ID3D12Resource> instancingResource = nullptr;
+    // インスタンス数
+    uint32_t instanceCount = 0;
+    // インスタンシングデータを書き込むためのポインタ
+    ParticleForGPU *instancingData = nullptr;
+    // グループ名
+    std::string groupName;
+    // ブレンドモード
+    BlendMode blendMode = BlendMode::kAdd;
+};
+
 /// =========================
+
+ParticleMaterial ForParticleMaterial(MaterialData material);
+
+std::vector<ParticleMaterial> ForParticleMaterials(std::vector<MaterialData> materials);

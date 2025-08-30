@@ -432,6 +432,15 @@
     <ClCompile Include="Engine\3d\Particle\CSParticle\ParticleCS.cpp">
       <Filter>ソースファイル</Filter>
     </ClCompile>
+    <ClCompile Include="Engine\3d\Particle\CSParticle\ParticleCSEmitter.cpp">
+      <Filter>ソースファイル</Filter>
+    </ClCompile>
+    <ClCompile Include="Engine\3d\Particle\CSParticle\ParticleCSGroup.cpp">
+      <Filter>ソースファイル</Filter>
+    </ClCompile>
+    <ClCompile Include="Engine\3d\Particle\ParticleStruct.cpp">
+      <Filter>ソースファイル</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="resources\shaders\Particle\Particle.hlsli">
@@ -477,6 +486,7 @@
       <Filter>リソース ファイル\Skinning</Filter>
     </None>
     <None Include="Resources\shaders\Random\Random.hlsli" />
+    <None Include="Resources\shaders\Particle\Particle.VS.hlsl" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="resource.h" />
@@ -741,6 +751,8 @@
     <ClInclude Include="application\Utility\ComboSystem\ComboSystem.h" />
     <ClInclude Include="Engine\3d\Particle\CSParticle\ParticleCS.h" />
     <ClInclude Include="Engine\3d\Particle\ParticleStruct.h" />
+    <ClInclude Include="Engine\3d\Particle\CSParticle\ParticleCSEmitter.h" />
+    <ClInclude Include="Engine\3d\Particle\CSParticle\ParticleCSGroup.h" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="Hagine.rc" />
@@ -1051,10 +1063,10 @@
     <FxCompile Include="resources\shaders\Object\Object3d.VS.hlsl">
       <Filter>リソース ファイル\Object</Filter>
     </FxCompile>
-    <FxCompile Include="resources\shaders\Particle\Particle.PS.hlsl">
+    <FxCompile Include="resources\shaders\Particle\ParticleCS.PS.hlsl">
       <Filter>リソース ファイル\Particle</Filter>
     </FxCompile>
-    <FxCompile Include="resources\shaders\Particle\Particle.VS.hlsl">
+    <FxCompile Include="resources\shaders\Particle\ParticleCS.VS.hlsl">
       <Filter>リソース ファイル\Particle</Filter>
     </FxCompile>
     <FxCompile Include="Resources\shaders\Skinning\Skinning.CS.hlsl">
@@ -1081,5 +1093,6 @@
     <FxCompile Include="Resources\shaders\Particle\InitParticle.CS.hlsl" />
     <FxCompile Include="Resources\shaders\Particle\EmitParticle.CS.hlsl" />
     <FxCompile Include="Resources\shaders\Particle\UpdateParticle.CS.hlsl" />
+    <FxCompile Include="Resources\shaders\Particle\Particle.PS.hlsl" />
   </ItemGroup>
 </Project>

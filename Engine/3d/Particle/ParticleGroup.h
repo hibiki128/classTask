@@ -2,9 +2,11 @@
 #include "Model/Model.h"
 #include "Primitive/PrimitiveModel.h"
 #include <Model/ModelStructs.h>
+#include"ParticleStruct.h"
 #include"ParticleCommon.h"
 #include <Transform/WorldTransform.h>
 #include <list>
+
 class ParticleGroup {
   public:
     void Initialize();

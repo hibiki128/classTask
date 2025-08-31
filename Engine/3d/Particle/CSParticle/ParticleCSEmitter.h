@@ -1,11 +1,11 @@
 #pragma once
 #include "Particle/ParticleStruct.h"
 #include "ParticleCSGroup.h"
-#include <DirectXCommon.h>
-#include <Particle/ParticleCommon.h>
-#include <Graphics/Srv/SrvManager.h>
-#include <vector>
 #include <Camera/ViewProjection/ViewProjection.h>
+#include <DirectXCommon.h>
+#include <Graphics/Srv/SrvManager.h>
+#include <Particle/ParticleCommon.h>
+#include <vector>
 
 class ParticleCSEmitter {
 
@@ -27,6 +27,7 @@ class ParticleCSEmitter {
     void CreateEmitterSphereResource();
     void EmitterUpdate();
     void EmitterDisPatch();
+    void DrawEmitter();
 
   private:
     /// ==============================================
@@ -44,4 +45,5 @@ class ParticleCSEmitter {
     std::vector<ParticleCSGroup *> particleGroups_;
 
     bool isAuto_ = false;
+    bool isVisible_ = true;
 };

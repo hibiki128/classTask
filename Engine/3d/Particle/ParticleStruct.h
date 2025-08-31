@@ -47,6 +47,8 @@ struct EmitterSphere {
 struct PerFrame {
     float time;
     float deltaTime;
+    uint32_t groupId;
+    float padding;
 };
 
 struct GPUParticleEmitter {
@@ -67,7 +69,7 @@ struct ParticleCSGroupData {
     BlendMode blendMode = BlendMode::kAdd;
 };
 
-static const uint32_t kMaxParticleCount = 1048576; // パーティクルの最大数
+static const uint32_t kMaxParticleCount = 1024; // パーティクルの最大数
 extern uint32_t threadsPerGroup_;                  // 1グループあたりのスレッド数
 extern int threadGroupSize_;                       // スレッドグループの数
 

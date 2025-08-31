@@ -1,5 +1,6 @@
 #include "ParticleCSEmitter.h"
 #include <Frame.h>
+#include <Line/DrawLine3D.h>
 #include <Particle/ParticleCommon.h>
 
 void ParticleCSEmitter::Initialize() {
@@ -11,6 +12,8 @@ void ParticleCSEmitter::Initialize() {
 }
 
 void ParticleCSEmitter::Draw(const ViewProjection &vp) {
+    DrawEmitter();
+
     for (auto &group : particleGroups_) {
         group->Update(vp);
         dxCommon_->TransitionUAVBarrier(group->GetOutputParticleResource().Get());
@@ -39,6 +42,17 @@ void ParticleCSEmitter::Update() {
     }
 }
 
+void ParticleCSEmitter::DrawEmitter() {
+    if (!isVisible_)
+        return;
+
+    Vector3 center = emitterSphereData_->translate;
+    float radius = emitterSphereData_->radius;
+    Vector4 color = {1.0f, 1.0f, 0.0f, 1.0f}; // 黄色
+
+    DrawLine3D::GetInstance()->DrawSphere(center, color, radius, 16);
+}
+
 void ParticleCSEmitter::DrawImGui() {
     ImGui::Begin("ParticleCS");
     int dragCount = int(emitterSphereData_->count);
@@ -48,6 +62,7 @@ void ParticleCSEmitter::DrawImGui() {
     ImGui::DragFloat("エミッタの半径", &emitterSphereData_->radius, 0.1f, 0.0f, 100.0f);
     ImGui::DragFloat3("エミッタの座標", &emitterSphereData_->translate.x, 0.1f, -100.0f, 100.0f);
     ImGui::Checkbox("自動更新", &isAuto_);
+    ImGui::Checkbox("エミッター表示", &isVisible_);
     ImGui::End();
 }
 
@@ -77,15 +92,21 @@ void ParticleCSEmitter::CreateEmitterSphereResource() {
 }
 
 void ParticleCSEmitter::EmitterDisPatch() {
-    // EmitParticle.CSの処理
     particleCommon_->ComputeEmitterDrawCommonSetting();
+
+    uint32_t groupIndex = 0;
     for (auto &group : particleGroups_) {
+        // 各グループのPerFrameDataにgroupIdを設定
+        group->GetPerFrameData()->groupId = groupIndex;
+
         commandList->SetComputeRootDescriptorTable(0, group->GetOutputParticleSrvHandle().second);
         commandList->SetComputeRootDescriptorTable(1, group->GetFreeListIndexSrvHandle().second);
         commandList->SetComputeRootDescriptorTable(2, group->GetFreeListSrvHandle().second);
         commandList->SetComputeRootConstantBufferView(3, emitterSphereResource_->GetGPUVirtualAddress());
         commandList->SetComputeRootConstantBufferView(4, group->GetPerFrameResource()->GetGPUVirtualAddress());
-        int disPatchCount = (emitterSphereData_->count + threadsPerGroup_ - 1) / threadsPerGroup_;
+        int disPatchCount = (emitterSphereData_->count + threadGroupSize_ - 1) / threadGroupSize_;
         commandList->Dispatch(disPatchCount, 1, 1);
+
+        groupIndex++;
     }
 }

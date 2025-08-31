@@ -194,6 +194,7 @@ void ParticleCSGroup::CreatePerFrameResource() {
     perFrameResource_->Map(0, nullptr, reinterpret_cast<void **>(&perFrameData_));
     perFrameData_->time = 0.0f;
     perFrameData_->deltaTime = 0.0f;
+    perFrameData_->groupId = 0;
 }
 
 void ParticleCSGroup::CreateFreeListIndexResource() {

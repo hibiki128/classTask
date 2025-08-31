@@ -35,6 +35,7 @@ struct PerFrame
 {
     float time;
     float deltaTime;
+    int groupId;
 };
 
-static const int kMaxParticles = 1048576;
+static const int kMaxParticles = 1024;

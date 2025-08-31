@@ -76,6 +76,9 @@ class ParticleCSGroup {
         return modelData;
     }
 
+    PerFrame *GetPerFrameData() const {
+        return perFrameData_;
+    }
 
   private:
     /// ===================================

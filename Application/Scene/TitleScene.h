@@ -3,7 +3,9 @@
 #include "BaseScene.h"
 #include"Object/Base/BaseObject.h"
 #include"Easing.h"
-#include"Particle/CSParticle/ParticleCS.h"
+#include"Particle/CSParticle/ParticleCSEmitter.h"
+#include"Particle/CSParticle/ParticleCSGroup.h"
+
 
 class TitleScene : public BaseScene {
   public:
@@ -51,5 +53,7 @@ class TitleScene : public BaseScene {
     ViewProjection vp_;
     std::unique_ptr<DebugCamera> debugCamera_;
 
-    std::unique_ptr<ParticleCS> particleCS_;
+    std::unique_ptr<ParticleCSGroup> particleGroup_;
+    std::unique_ptr<ParticleCSEmitter> particleEmitter_;
+
 };

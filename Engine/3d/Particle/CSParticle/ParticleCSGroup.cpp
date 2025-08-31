@@ -119,10 +119,6 @@ void ParticleCSGroup::Update(const ViewProjection &vp) {
     perFrameData_->time += Frame::DeltaTime();
     perFrameData_->deltaTime = Frame::DeltaTime();
 
-    dxCommon_->TransitionUAVBarrier(outputParticleResource_.Get());
-    UpdateParticleCSDisPatch();
-    dxCommon_->TransitionSRVBarrier();
-
     perViewData_->viewProjection = vp.matView_ * vp.matProjection_;
     perViewData_->billboardMatrix = vp.matView_;
     perViewData_->billboardMatrix.m[3][0] = 0.0f;

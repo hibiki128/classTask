@@ -1,22 +1,81 @@
 #pragma once
 #include "Particle/ParticleStruct.h"
+#include <Camera/ViewProjection/ViewProjection.h>
 #include <Graphics/Srv/SrvManager.h>
 #include <Graphics/Texture/TextureManager.h>
+#include <Model/Model.h>
 #include <Model/ModelStructs.h>
 #include <Particle/ParticleCommon.h>
+#include <Primitive/PrimitiveModel.h>
 #include <d3d12.h>
 #include <utility>
 #include <wrl.h>
-#include <Camera/ViewProjection/ViewProjection.h>
-#include <Model/Model.h>
-#include <Primitive/PrimitiveModel.h>
 
 class ParticleCSGroup {
   public:
+    /// ===================================
+    /// public methods
+    /// ===================================
+
     ParticleCSGroupData CreateParticleGroup(const std::string &groupName, const std::string &filename, const std::string &texturePath = {});
     ParticleCSGroupData CreatePrimitiveParticleGroup(const std::string &groupName, PrimitiveType type, const std::string &texturePath = {});
     void Update(const ViewProjection &vp);
     void DrawImGui();
+    void UpdateParticleCSDisPatch();
+    ParticleCSGroupData GetParticleGroupData() { return particleGroupData_; }
+
+    /// ===================================
+    /// Getter
+    /// ===================================
+
+    std::pair<D3D12_CPU_DESCRIPTOR_HANDLE, D3D12_GPU_DESCRIPTOR_HANDLE> GetOutputParticleSrvHandle() const {
+        return outputParticleSrvHandle_;
+    }
+
+    std::pair<D3D12_CPU_DESCRIPTOR_HANDLE, D3D12_GPU_DESCRIPTOR_HANDLE> GetFreeListIndexSrvHandle() const {
+        return freeListIndexSrvHandle_;
+    }
+
+    std::pair<D3D12_CPU_DESCRIPTOR_HANDLE, D3D12_GPU_DESCRIPTOR_HANDLE> GetFreeListSrvHandle() const {
+        return freeListSrvHandle_;
+    }
+
+    Microsoft::WRL::ComPtr<ID3D12Resource> GetPerFrameResource() const {
+        return perFrameResource_;
+    }
+
+    Microsoft::WRL::ComPtr<ID3D12Resource> GetMaterialResource() const {
+        return materialResource_;
+    }
+
+    Microsoft::WRL::ComPtr<ID3D12Resource> GetOutputParticleResource() const {
+        return outputParticleResource_;
+    }
+
+    Microsoft::WRL::ComPtr<ID3D12Resource> GetPerViewResource() const {
+        return perViewResource_;
+    }
+
+    D3D12_INDEX_BUFFER_VIEW GetIndexBufferView() const {
+        return indexBufferView_;
+    }
+
+    D3D12_VERTEX_BUFFER_VIEW GetVertexBufferView() const {
+        return vertexBufferView_;
+    }
+
+    uint32_t GetOutputParticleSrvIndex() const {
+        return outputParticleSrvIndex_;
+    }
+
+    uint32_t GetOutputParticleSrvForVSIndex() const {
+        return outputParticleSrvForVSIndex_;
+    }
+
+    ModelData GetModelData() const {
+        return modelData;
+    }
+
 
   private:
     /// ===================================
@@ -24,7 +83,6 @@ class ParticleCSGroup {
     /// ===================================
     void Initialize();
     void InitParticle();
-    void UpdateParticleCSDisPatch();
     void CreateOutputParticleResource();
     void CreatePerViewResource();
     void CreateMaterialResource();

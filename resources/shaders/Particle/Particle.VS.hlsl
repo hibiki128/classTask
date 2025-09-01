@@ -1,5 +1,12 @@
 #include"Particle.hlsli"
 
+struct ParticleForGPU
+{
+    float4x4 WVP;
+    float4x4 World;
+    float4 color;
+};
+
 struct VertexShaderInput
 {
     float4 position : POSITION0;
@@ -7,20 +14,13 @@ struct VertexShaderInput
     float3 normal : NORMAL0;
 };
 
-StructuredBuffer<Particle> gParticles : register(t0);
-ConstantBuffer<PerView> gPerView : register(b0);
+StructuredBuffer<ParticleForGPU> gParticle : register(t0);
 
 VertexShaderOutput main(VertexShaderInput input, uint instanceId : SV_InstanceID)
 {
     VertexShaderOutput output;
-    Particle particle = gParticles[instanceId];
-    float4x4 worldMatrix = gPerView.billboardMatrix;
-    worldMatrix[0] *= particle.scale.x;
-    worldMatrix[1] *= particle.scale.y;
-    worldMatrix[2] *= particle.scale.z;
-    worldMatrix[3].xyz = particle.translate;
-    output.position = mul(input.position, mul(worldMatrix, gPerView.viewProjection));
+    output.position = mul(input.position, gParticle[instanceId].WVP);
     output.texcoord = input.texcoord;
-    output.color = particle.color;
+    output.color = gParticle[instanceId].color;
     return output;
 }

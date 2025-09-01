@@ -35,7 +35,7 @@ void ParticleCS::Draw(const ViewProjection &vp) {
     perViewData_->billboardMatrix = Inverse(perViewData_->billboardMatrix);
 
     ID3D12GraphicsCommandList *commandList = dxCommon_->GetCommandList().Get();
-    particleCommon_->DrawCommonSetting(BlendMode::kAdd);
+    particleCommon_->GPUDrawCommonSetting(BlendMode::kAdd);
 
     commandList->IASetIndexBuffer(&indexBufferView_);
     commandList->IASetVertexBuffers(0, 1, &vertexBufferView_);
@@ -44,7 +44,7 @@ void ParticleCS::Draw(const ViewProjection &vp) {
     srvManager_->SetGraphicsRootDescriptorTable(2, TextureManager::GetInstance()->GetTextureIndexByFilePath(texPath_));
     commandList->SetGraphicsRootConstantBufferView(3, materialResource_->GetGPUVirtualAddress());
 
-    commandList->DrawIndexedInstanced(6, 1024, 0, 0, 0);
+    commandList->DrawIndexedInstanced(6, kMaxParticleCount, 0, 0, 0);
 }
 
 void ParticleCS::InitParticle() {
@@ -58,9 +58,34 @@ void ParticleCS::InitParticle() {
     commandList->SetComputeRootDescriptorTable(0, outputParticleSrvHandle_.second);
     commandList->SetComputeRootDescriptorTable(1, freeListIndexSrvHandle_.second);
     commandList->SetComputeRootDescriptorTable(2, freeListSrvHandle_.second);
-    commandList->Dispatch(1024, 1, 1);
+    int disPatchCount = (kMaxParticleCount + threadsPerGroup_ - 1) / threadsPerGroup_;
+    commandList->Dispatch(disPatchCount, 1, 1);
 
     dxCommon_->TransitionSRVBarrier();
+}
+
+void ParticleCS::UpdateParticleCSDisPatch() {
+    // UpdateParticle.CSの処理
+    particleCommon_->ComputeUpdateEmitterDrawCommonSetting();
+    commandList->SetComputeRootDescriptorTable(0, outputParticleSrvHandle_.second);
+    commandList->SetComputeRootDescriptorTable(1, freeListIndexSrvHandle_.second);
+    commandList->SetComputeRootDescriptorTable(2, freeListSrvHandle_.second);
+    commandList->SetComputeRootConstantBufferView(3, perFrameResource_->GetGPUVirtualAddress());
+    int disPatchCount = (kMaxParticleCount + threadsPerGroup_ - 1) / threadsPerGroup_;
+    commandList->Dispatch(disPatchCount, 1, 1);
+}
+
+void ParticleCS::EmitterDisPatch() {
+    // EmitParticle.CSの処理
+    particleCommon_->ComputeEmitterDrawCommonSetting();
+
+    commandList->SetComputeRootDescriptorTable(0, outputParticleSrvHandle_.second);
+    commandList->SetComputeRootDescriptorTable(1, freeListIndexSrvHandle_.second);
+    commandList->SetComputeRootDescriptorTable(2, freeListSrvHandle_.second);
+    commandList->SetComputeRootConstantBufferView(3, emitterSphereResource_->GetGPUVirtualAddress()); // CBV (b0)
+    commandList->SetComputeRootConstantBufferView(4, perFrameResource_->GetGPUVirtualAddress());      // CBV (b0)
+    int disPatchCount = (emitterSphereData_->count + threadsPerGroup_ - 1) / threadsPerGroup_;
+    commandList->Dispatch(disPatchCount, 1, 1);
 }
 
 void ParticleCS::EmitterUpdate() {
@@ -79,42 +104,23 @@ void ParticleCS::Update() {
     perFrameData_->deltaTime = Frame::DeltaTime();
 
     dxCommon_->TransitionUAVBarrier(outputParticleResource_.Get());
-
-    // EmitParticle.CSの処理
-    particleCommon_->ComputeEmitterDrawCommonSetting();
-
-    commandList->SetComputeRootDescriptorTable(0, outputParticleSrvHandle_.second);                   // UAV (u0)
-    commandList->SetComputeRootDescriptorTable(1, freeListIndexSrvHandle_.second);
-    commandList->SetComputeRootDescriptorTable(2, freeListSrvHandle_.second);
-    commandList->SetComputeRootConstantBufferView(3, emitterSphereResource_->GetGPUVirtualAddress()); // CBV (b0)
-    commandList->SetComputeRootConstantBufferView(4, perFrameResource_->GetGPUVirtualAddress());      // CBV (b0)
-
-    commandList->Dispatch(1, 1, 1);
-
-    // UpdateParticle.CSの処理
-    particleCommon_->ComputeUpdateEmitterDrawCommonSetting();
-    commandList->SetComputeRootDescriptorTable(0, outputParticleSrvHandle_.second);
-    commandList->SetComputeRootDescriptorTable(1, freeListIndexSrvHandle_.second);
-    commandList->SetComputeRootDescriptorTable(2, freeListSrvHandle_.second);
-    commandList->SetComputeRootConstantBufferView(3, perFrameResource_->GetGPUVirtualAddress());
-
-    commandList->Dispatch(1, 1, 1);
-
+    EmitterDisPatch();
+    UpdateParticleCSDisPatch();
     dxCommon_->TransitionSRVBarrier();
 }
 
 void ParticleCS::CreateOutputParticleResource() {
-    outputParticleResource_ = dxCommon_->CreateBufferResource(sizeof(CSParticle) * 1024, true);
+    outputParticleResource_ = dxCommon_->CreateBufferResource(sizeof(CSParticle) * kMaxParticleCount, true);
 
     // UAV用のインデックス（Compute Shader用）
     outputParticleSrvIndex_ = srvManager_->Allocate() + 1;
     outputParticleSrvHandle_.first = srvManager_->GetCPUDescriptorHandle(outputParticleSrvIndex_);
     outputParticleSrvHandle_.second = srvManager_->GetGPUDescriptorHandle(outputParticleSrvIndex_);
-    srvManager_->CreateUAVStructuredBuffer(outputParticleSrvIndex_, outputParticleResource_.Get(), 1024, sizeof(CSParticle));
+    srvManager_->CreateUAVStructuredBuffer(outputParticleSrvIndex_, outputParticleResource_.Get(), kMaxParticleCount, sizeof(CSParticle));
 
     // SRV用のインデックス（Vertex Shader用）
     outputParticleSrvForVSIndex_ = srvManager_->Allocate() + 1;
-    srvManager_->CreateSRVforStructuredBuffer(outputParticleSrvForVSIndex_, outputParticleResource_.Get(), 1024, sizeof(CSParticle));
+    srvManager_->CreateSRVforStructuredBuffer(outputParticleSrvForVSIndex_, outputParticleResource_.Get(), kMaxParticleCount, sizeof(CSParticle));
 }
 void ParticleCS::CreatePerViewResource() {
     perViewResource_ = dxCommon_->CreateBufferResource(sizeof(PerView));
@@ -181,29 +187,32 @@ void ParticleCS::CreatePerFrameResource() {
 }
 
 void ParticleCS::CreateFreeListIndexResource() {
-    freeListIndexResource_ = dxCommon_->CreateBufferResource(sizeof(int) * 1024, true);
+    freeListIndexResource_ = dxCommon_->CreateBufferResource(sizeof(int), true);
 
     // UAV用のインデックス（Compute Shader用）
     freeListIndexSrvIndex_ = srvManager_->Allocate() + 1;
     freeListIndexSrvHandle_.first = srvManager_->GetCPUDescriptorHandle(freeListIndexSrvIndex_);
     freeListIndexSrvHandle_.second = srvManager_->GetGPUDescriptorHandle(freeListIndexSrvIndex_);
-    srvManager_->CreateUAVStructuredBuffer(freeListIndexSrvIndex_, freeListIndexResource_.Get(), 1024, sizeof(int));
-
-    // SRV用のインデックス（Vertex Shader用）
-    freeListIndexSrvForVSIndex_ = srvManager_->Allocate() + 1;
-    srvManager_->CreateSRVforStructuredBuffer(freeListIndexSrvForVSIndex_, freeListIndexResource_.Get(), 1024, sizeof(int));
+    srvManager_->CreateUAVStructuredBuffer(freeListIndexSrvIndex_, freeListIndexResource_.Get(), 1, sizeof(int));
 }
 
 void ParticleCS::CreateFreeListResource() {
-    freeListResource_ = dxCommon_->CreateBufferResource(sizeof(uint32_t) * 1024, true);
+    freeListResource_ = dxCommon_->CreateBufferResource(sizeof(uint32_t) * kMaxParticleCount, true);
 
     // UAV用のインデックス（Compute Shader用）
     freeListSrvIndex_ = srvManager_->Allocate() + 1;
     freeListSrvHandle_.first = srvManager_->GetCPUDescriptorHandle(freeListSrvIndex_);
     freeListSrvHandle_.second = srvManager_->GetGPUDescriptorHandle(freeListSrvIndex_);
-    srvManager_->CreateUAVStructuredBuffer(freeListSrvIndex_, freeListResource_.Get(), 1024, sizeof(uint32_t));
+    srvManager_->CreateUAVStructuredBuffer(freeListSrvIndex_, freeListResource_.Get(), kMaxParticleCount, sizeof(uint32_t));
+}
 
-    // SRV用のインデックス（Vertex Shader用）
-    freeListSrvForVSIndex_ = srvManager_->Allocate() + 1;
-    srvManager_->CreateSRVforStructuredBuffer(freeListSrvForVSIndex_, freeListResource_.Get(), 1024, sizeof(uint32_t));
+void ParticleCS::DrawImGui() {
+    ImGui::Begin("ParticleCS");
+    int dragCount = int(emitterSphereData_->count);
+    ImGui::DragInt("パーティクルの数", &dragCount, 1, 0, kMaxParticleCount);
+    emitterSphereData_->count = uint32_t(dragCount);
+    ImGui::DragFloat("発生間隔", &emitterSphereData_->frequency, 0.01f, 0.01f, 10.0f);
+    ImGui::DragFloat("エミッタの半径", &emitterSphereData_->radius, 0.1f, 0.0f, 100.0f);
+    ImGui::DragFloat3("エミッタの座標", &emitterSphereData_->translate.x, 0.1f, -100.0f, 100.0f);
+    ImGui::End();
 }

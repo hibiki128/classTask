@@ -33,6 +33,8 @@ class ParticleCommon {
     /// </summary>
     void DrawCommonSetting(BlendMode blendMode);
 
+    void GPUDrawCommonSetting(BlendMode blendMode);
+
     /// <summary>
     /// 共通描画処理
     /// </summary>

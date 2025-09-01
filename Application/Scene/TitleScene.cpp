@@ -12,9 +12,15 @@ void TitleScene::Initialize() {
     debugCamera_ = std::make_unique<DebugCamera>();
     debugCamera_->Initialize(&vp_);
 
-    particleCS_ = std::make_unique<ParticleCS>();
-    particleCS_->Initialize();
+    particleEmitter_ = std::make_unique<ParticleCSEmitter>();
+    particleEmitter_->Initialize();
+    particleGroup_ = std::make_unique<ParticleCSGroup>();
+    particleGroup_->CreatePrimitiveParticleGroup("TestParticle", PrimitiveType::Plane, "debug/circle2.png");
+    particleGroup2_ = std::make_unique<ParticleCSGroup>();
+    particleGroup2_->CreateParticleGroup("TestParticle2", "debug/suzannu.obj");
 
+    particleEmitter_->AddParticleGroup(particleGroup_.get());
+    particleEmitter_->AddParticleGroup(particleGroup2_.get());
 }
 
 void TitleScene::Finalize() {
@@ -27,6 +33,8 @@ void TitleScene::Update() {
 
     // シーン切り替え
     ChangeScene();
+
+    particleEmitter_->Update();
 }
 
 void TitleScene::Draw() {
@@ -40,7 +48,7 @@ void TitleScene::Draw() {
 
     //-------------------------
 
-    particleCS_->Draw(vp_);
+    particleEmitter_->Draw(vp_);
 
     /// -------描画処理終了-------
 }
@@ -65,6 +73,7 @@ void TitleScene::AddObjectSetting() {
 }
 
 void TitleScene::AddParticleSetting() {
+    particleEmitter_->DrawImGui();
 }
 
 void TitleScene::CameraUpdate() {

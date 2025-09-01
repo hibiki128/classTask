@@ -1,6 +1,7 @@
 #pragma once
 #include "Model/ModelStructs.h"
 #include "Particle/ParticleCommon.h"
+#include "Particle/ParticleStruct.h"
 #include "type/Vector3.h"
 #include "type/Vector4.h"
 #include "wrl.h"
@@ -11,34 +12,6 @@
 #include <type/Matrix4x4.h>
 #include <utility>
 
-struct CSParticle {
-    Vector3 translate;
-    Vector3 scale;
-    float lifeTime;
-    Vector3 velocity;
-    float currentTime;
-    Vector4 color;
-};
-
-struct PerView {
-    Matrix4x4 viewProjection;
-    Matrix4x4 billboardMatrix;
-};
-
-struct EmitterSphere {
-    Vector3 translate;
-    float radius;
-    uint32_t count;
-    float frequency;
-    float frequencyTime;
-    uint32_t emit;
-};
-
-struct PerFrame {
-    float time;
-    float deltaTime;
-};
-
 class DirectXCommon;
 class ParticleCS {
 
@@ -46,8 +19,12 @@ class ParticleCS {
     void Initialize();
     void Draw(const ViewProjection &vp);
 
+    void DrawImGui();
+
   private:
     void InitParticle();
+    void UpdateParticleCSDisPatch();
+    void EmitterDisPatch();
     void EmitterUpdate();
     void Update();
     void CreateOutputParticleResource();
@@ -90,12 +67,10 @@ class ParticleCS {
     Microsoft::WRL::ComPtr<ID3D12Resource> freeListIndexResource_;
     std::pair<D3D12_CPU_DESCRIPTOR_HANDLE, D3D12_GPU_DESCRIPTOR_HANDLE> freeListIndexSrvHandle_;
     uint32_t freeListIndexSrvIndex_ = 0;
-    uint32_t freeListIndexSrvForVSIndex_ = 0;
 
     Microsoft::WRL::ComPtr<ID3D12Resource> freeListResource_;
     std::pair<D3D12_CPU_DESCRIPTOR_HANDLE, D3D12_GPU_DESCRIPTOR_HANDLE> freeListSrvHandle_;
     uint32_t freeListSrvIndex_ = 0;
-    uint32_t freeListSrvForVSIndex_ = 0;
 
     ID3D12GraphicsCommandList *commandList;
 

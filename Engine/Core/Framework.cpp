@@ -43,6 +43,10 @@ void Framework::Initialize() {
     baseObjectManager_ = BaseObjectManager::GetInstance();
     ///---------------------------------
 
+    ///--------SpriteManager--------
+    spriteManager_ = SpriteManager::GetInstance();
+    ///---------------------------------
+
     /// ---------ImGuizmo---------
 #ifdef _DEBUG
     imGuizmoManager_ = ImGuizmoManager::GetInstance();
@@ -154,6 +158,16 @@ void Framework::Initialize() {
     particleGroupManager_->Initialize();
     ///---------------------------------
 
+    ///-------ParticleCSEditor-------
+    particleCSEditor_ = ParticleCSEditor::GetInstance();
+    particleCSEditor_->Initialize();
+    ///----------------------------
+
+    ///-------ParticleCSGroupManager-------
+    particleCSGroupManager_ = ParticleCSGroupManager::GetInstance();
+    particleCSGroupManager_->Initialize();
+    ///---------------------------------
+
     ///--------ShortcutManager------------
     shortcutManager_ = ShortcutManager::GetInstance();
     shortcutManager_->Initialize(input_);
@@ -163,14 +177,18 @@ void Framework::Initialize() {
     motionEditor_ = MotionEditor::GetInstance();
     ///---------------------------
 
+    ///-------SceneTransition-------
+    sceneTransition_ = SceneTransition::GetInstance();
+    ///-----------------------------
+
     /// 時間の初期化
     Frame::Init();
 }
 
 void Framework::Finalize() {
     baseObjectManager_->Finalize();
-
     sceneManager_->Finalize();
+    sceneTransition_->Finalize();
 
     // WindowsAPIの終了処理
     winApp_->Finalize();
@@ -199,11 +217,16 @@ void Framework::Finalize() {
     particleGroupManager_->Finalize();
     ///---------------------------------
 
+    ///-------ParticleCSGroupManager-------
+    particleCSGroupManager_->Finalize();
+    ///---------------------------------
+
 #ifdef _DEBUG
     imGuiManager_->Finalize();
     imGuizmoManager_->Finalize();
 #endif // _DEBUG
     shortcutManager_->Finalize();
+    spriteManager_->Finalize();
 
     line3d_->Finalize();
     skyBox_->Finalize();
@@ -213,6 +236,7 @@ void Framework::Finalize() {
     motionEditor_->Finalize();
     LightGroup::GetInstance()->Finalize();
     particleEditor_->Finalize();
+    particleCSEditor_->Finalize();
     spriteCommon_->Finalize();
     particleCommon_->Finalize();
     modelCommon_->Finalize();
@@ -221,16 +245,16 @@ void Framework::Finalize() {
 }
 
 void Framework::RegisterShortcutKey() {
-#ifdef _DEBUG
-    shortcutManager_->RegisterShortcut("ShowShortcuts", DIK_F1, [this]() {
-        imGuiManager_->SetShortcutWindow(true);
-    });
     // フルスクリーン
     shortcutManager_->RegisterShortcut("FullScreen", DIK_F11, [this]() {
         winApp_->ToggleFullScreen();
     });
+#ifdef _DEBUG
+    shortcutManager_->RegisterShortcut("ShowShortcuts", DIK_F1, [this]() {
+        imGuiManager_->SetShortcutWindow(true);
+    });
     // オブジェクトロード
-    shortcutManager_->RegisterShortcut("FullScreen", {DIK_LSHIFT, DIK_LCONTROL, DIK_M}, [this]() {
+    shortcutManager_->RegisterShortcut("ObjectLoad", {DIK_LSHIFT, DIK_LCONTROL, DIK_M}, [this]() {
         baseObjectManager_->OpenObjectLoadModal();
     });
     // 終了
@@ -273,6 +297,19 @@ void Framework::RegisterShortcutKey() {
     shortcutManager_->RegisterShortcut("SwichMode", DIK_F5, [this]() {
         imGuiManager_->GetIsShowMainUI() = !imGuiManager_->GetIsShowMainUI();
     });
+    // コピー
+    shortcutManager_->RegisterShortcut("Copy", {DIK_LCONTROL, DIK_C}, [this]() {
+        imGuizmoManager_->CopySelectedObjects();
+    });
+    // ペースト
+    shortcutManager_->RegisterShortcut("Paste", {DIK_LCONTROL, DIK_V}, [this]() {
+        imGuizmoManager_->PasteObjects();
+    });
+    // デリート
+    shortcutManager_->RegisterShortcut("Delete", DIK_DELETE, [this]() {
+        imGuizmoManager_->DeleteSelectedObjects();
+    });
+
 #endif // _DEBUG
 }
 
@@ -284,6 +321,8 @@ void Framework::Update() {
     sceneManager_->Update();
 
     baseObjectManager_->Update();
+
+    spriteManager_->UpdateAll(Frame::DeltaTime());
 
     collisionManager_->Update();
 
@@ -297,11 +336,6 @@ void Framework::Update() {
 }
 
 void Framework::LoadResource() {
-    particleEditor_->AddParticleEmitter("fire");
-    particleEditor_->AddParticleEmitter("hitEmitter");
-    particleEditor_->AddParticleEmitter("chageEmitter");
-    particleEditor_->AddParticleEmitter("bulletEmitter");
-    particleEditor_->AddParticleEmitter("chageBullet");
 }
 
 void Framework::PlaySounds() {

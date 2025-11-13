@@ -13,6 +13,8 @@ struct Particle
     float3 velocity;
     float currentTime;
     float4 color;
+    float3 initialScale;
+    float padding;
 };
 
 struct PerView
@@ -21,14 +23,24 @@ struct PerView
     float4x4 billboardMatrix;
 };
 
-struct EmitterSphere
+struct EmitterMesh
 {
     float3 translate;
-    float radius;
-    int count;
+    uint triangleCount;
+    float4 rotation;
+    uint emitFromSurface;
+    float3 scale;
     float frequency;
     float frequencyTime;
-    int emit;
+    uint emit;
+    uint edgeCount;
+};
+
+struct Triangle
+{
+    float3 v0;
+    float3 v1;
+    float3 v2;
 };
 
 struct PerFrame
@@ -38,4 +50,50 @@ struct PerFrame
     int groupId;
 };
 
-static const int kMaxParticles = 1024;
+struct EdgeInfo
+{
+    float3 v0;
+    float padding0;
+    float3 v1;
+    float padding1;
+};
+
+struct ParticleCSSettings
+{
+    float lifeTimeMin;
+    float lifeTimeMax;
+    float scaleMin;
+    float scaleMax;
+    float3 velocityMin;
+    float padding1;
+    float3 velocityMax;
+    float padding2;
+    float4 startColor;
+    float4 endColor;
+    int enableLifetimeScale;
+    int enableRandomColor;
+    int enableSinScale;
+    int emitCount;
+    int maxParticleCount;
+    float sinScaleFrequency;
+    float sinScaleAmplitude;
+    int enableGravity;
+    float3 gravity;
+    float padding3;
+};
+
+struct SurfacePoint
+{
+    float3 position;
+    float padding;
+};
+
+struct TriangleInfo
+{
+    float3 v0;
+    float padding0;
+    float3 v1;
+    float padding1;
+    float3 v2;
+    float padding2;
+};

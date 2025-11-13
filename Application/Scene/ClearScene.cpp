@@ -1,5 +1,5 @@
 #include "ClearScene.h"
-
+#include "Engine/Utility/Scene/SceneManager.h"
 void ClearScene::Initialize() {
     audio_ = Audio::GetInstance();
     spCommon_ = SpriteCommon::GetInstance();
@@ -22,28 +22,17 @@ void ClearScene::Update() {
 
     // シーン切り替え
     ChangeScene();
+
 }
 
 void ClearScene::Draw() {
     /// -------描画処理開始-------
-
-    /// Spriteの描画準備
-    spCommon_->DrawCommonSetting();
-    //-----Spriteの描画開始-----
-
-    //------------------------
-
+    BaseObjectManager::GetInstance()->Draw(vp_);
     /// -------描画処理終了-------
 }
 
 void ClearScene::DrawForOffScreen() {
     /// -------描画処理開始-------
-
-    /// Spriteの描画準備
-    spCommon_->DrawCommonSetting();
-    //-----Spriteの描画開始-----
-
-    //------------------------
 
     /// -------描画処理終了-------
 }
@@ -67,4 +56,8 @@ void ClearScene::CameraUpdate() {
 }
 
 void ClearScene::ChangeScene() {
+    if (input_->TriggerKey(DIK_SPACE)) {
+        // シーンを変更
+        sceneManager_->NextSceneReservation("TITLE");
+    }
 }

@@ -17,6 +17,8 @@
 #include "Input.h"
 #include "Model/ModelCommon.h"
 #include "Object/Base/BaseObjectManager.h"
+#include "Particle/CSParticle/ParticleCSEditor.h"
+#include "Particle/CSParticle/ParticleCSGroupManager.h"
 #include "Particle/ParticleCommon.h"
 #include "Particle/ParticleEditor.h"
 #include "Particle/ParticleGroupManager.h"
@@ -24,8 +26,10 @@
 #include "Scene/SceneManager.h"
 #include "SkyBox/SkyBox.h"
 #include "SpriteCommon.h"
+#include "SpriteManager.h"
 #include "line/DrawLine3D.h"
 #include <Application/Utility/MotionEditor/MotionEditor.h>
+#include"Scene/SceneTransition.h"
 
 class Framework {
   public: // メンバ関数
@@ -85,6 +89,7 @@ class Framework {
 
     // シーンファクトリー
     AbstractSceneFactory *sceneFactory_ = nullptr;
+    SceneTransition *sceneTransition_ = nullptr;
 
     SceneManager *sceneManager_ = nullptr;
     SrvManager *srvManager_ = nullptr;
@@ -94,10 +99,12 @@ class Framework {
     ImGuizmoManager *imGuizmoManager_ = nullptr;
     BaseObjectManager *baseObjectManager_ = nullptr;
     ParticleGroupManager *particleGroupManager_ = nullptr;
+    ParticleCSGroupManager *particleCSGroupManager_ = nullptr;
     PipeLineManager *pipeLineManager_ = nullptr;
     MotionEditor *motionEditor_ = nullptr;
     ComputePipeLineManager *computePipeLineManager_ = nullptr;
     ShortcutManager *shortcutManager_ = nullptr;
+    SpriteManager *spriteManager_ = nullptr;
 
     SpriteCommon *spriteCommon_ = nullptr;
     ParticleCommon *particleCommon_ = nullptr;
@@ -106,6 +113,7 @@ class Framework {
     LightGroup *lightGroup_ = nullptr;
 
     ParticleEditor *particleEditor_ = nullptr;
+    ParticleCSEditor *particleCSEditor_ = nullptr;
 
     PrimitiveModel *primitiveModel_ = nullptr;
 

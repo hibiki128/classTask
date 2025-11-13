@@ -6,28 +6,37 @@
 #include <Graphics/Srv/SrvManager.h>
 
 class SpriteCommon;
+
+/// <summary>
+/// スプライト描画を管理するクラス
+/// 2D画像の描画、トランスフォーム、UV変換などを制御
+/// </summary>
 class Sprite {
-  public: // メンバ関数
+  public:
+    /// ===================================================
+    /// public method
+    /// ===================================================
+
     /// <summary>
-    ///
+    /// 初期化
     /// </summary>
-    /// <param name="textureFilePath">テクスチャハンドル</param>
+    /// <param name="textureFilePath">テクスチャファイルパス</param>
     /// <param name="position">座標</param>
     /// <param name="color">色</param>
     /// <param name="anchorpoint">アンカーポイント</param>
-    /// <param name="isFlipX">左右反転</param>
-    /// <param name="isFlipY">上下反転</param>
+    /// <param name="isFlipX">左右反転フラグ</param>
+    /// <param name="isFlipY">上下反転フラグ</param>
     void Initialize(const std::string &textureFilePath, Vector2 position, Vector4 color = {1, 1, 1, 1}, Vector2 anchorpoint = {0.0f, 0.0f}, bool isFlipX = false, bool isFlipY = false);
 
     /// <summary>
-    /// 描画
+    /// 描画処理
     /// </summary>
+    /// <param name="isBackMost">背面フラグ</param>
     void Draw(bool isBackMost = false);
 
     /// <summary>
-    /// getter
+    /// Getter
     /// </summary>
-    /// <returns></returns>
     const Vector2 &GetPosition() const { return position_; }
     float GetRotation() const { return rotation; }
     const Vector2 &GetSize() const { return size; }
@@ -38,11 +47,14 @@ class Sprite {
     const Vector2 &GetTexLeftTop() const { return textureLeftTop; }
     const Vector2 &GetTexSize() const { return textureSize; }
     uint32_t &GetInstanceCount() { return instanceCount; }
+    Matrix4x4 GetUVTransform() { return materialData->uvTransform; }
+    Vector2 GetUVPosition() { return uvPosition_; }
+    Vector2 GetUVSize() { return uvSize_; }
+    float GetUVRotate() { return uvRotate_; }
 
     /// <summary>
-    /// setter
+    /// Setter
     /// </summary>
-    /// <param name="position"></param>
     void SetPosition(const Vector2 &position) { this->position_ = position; }
     void SetRotation(float rotation) { this->rotation = rotation; }
     void SetSize(const Vector2 &size) { this->size = size; }
@@ -54,82 +66,90 @@ class Sprite {
     void SetFlipY(bool isFlipY) { isFlipY_ = isFlipY; }
     void SetTexLeftTop(const Vector2 &textureLeftTop) { this->textureLeftTop = textureLeftTop; }
     void SetTexSize(const Vector2 &textureSize) { this->textureSize = textureSize; }
-    void SetUVTransform(const Matrix4x4 &uvTransform) { materialData->uvTransform = uvTransform; }
+    void SetUVTransform(const Matrix4x4 &uvTransform) {
+        materialData->uvTransform = uvTransform;
+        uvSize_.x = sqrt(uvTransform.m[0][0] * uvTransform.m[0][0] + uvTransform.m[1][0] * uvTransform.m[1][0]);
+        uvSize_.y = sqrt(uvTransform.m[0][1] * uvTransform.m[0][1] + uvTransform.m[1][1] * uvTransform.m[1][1]);
+        uvRotate_ = atan2(uvTransform.m[1][0], uvTransform.m[0][0]);
+        uvPosition_.x = uvTransform.m[3][0];
+        uvPosition_.y = uvTransform.m[3][1];
+    }
+    void SetUVPosition(const Vector2 &position) { uvPosition_ = position; }
+    void SetUVSize(const Vector2 &size) { uvSize_ = size; }
+    void SetUVRotate(const float &rotate) { uvRotate_ = rotate; }
     void SetInstanceCount(uint32_t count);
     void SetInstanceTransform(uint32_t index, const TransformationMatrix &transform);
 
-  private: // メンバ関数
+  private:
+    /// ===================================================
+    /// private method
+    /// ===================================================
+
     /// <summary>
-    /// 更新
+    /// 更新処理
     /// </summary>
+    /// <param name="isbackmost_">背面フラグ</param>
     void Update(bool isbackmost_);
 
     /// <summary>
-    /// 頂点データ作成
+    /// 頂点データを作成
     /// </summary>
     void CreateVartexData();
 
     /// <summary>
-    /// マテリアルデータ作成
+    /// マテリアルデータを作成
     /// </summary>
     void CreateMaterial();
 
     /// <summary>
-    /// 座標変換行列データ作成
+    /// 座標変換行列データを作成
     /// </summary>
     void CreateTransformationMatrix();
 
     /// <summary>
-    /// テクスチャサイズをイメージに合わせる
+    /// テクスチャサイズを画像に合わせる
     /// </summary>
     void AdjustTextureSize();
 
   private:
+    /// ===================================================
+    /// private varians
+    /// ===================================================
+
     SpriteCommon *spriteCommon_ = nullptr;
     SrvManager *srvManager_ = nullptr;
 
-    // バッファリソース
     Microsoft::WRL::ComPtr<ID3D12Resource> vertexResource = nullptr;
     Microsoft::WRL::ComPtr<ID3D12Resource> indexResource = nullptr;
-    // バッファリソース内のデータを指すポインタ
     SpriteVertexData *vertexData = nullptr;
     uint32_t *indexData = nullptr;
-    // バッファリソースの使い道を補足するバッファビュー
     D3D12_VERTEX_BUFFER_VIEW vertexBufferView{};
     D3D12_INDEX_BUFFER_VIEW indexBufferView{};
 
-    // バッファリソース
     Microsoft::WRL::ComPtr<ID3D12Resource> materialResource = nullptr;
-    // バッファリソース内のデータを指すポインタ
     SpriteMaterial *materialData = nullptr;
 
-    // バッファリソース
     Microsoft::WRL::ComPtr<ID3D12Resource> transformationMatrixResource;
-    // バッファリソース内のデータを指すポインタ
     TransformationMatrix *transformationMatrixData = nullptr;
 
-    // 移動させる用各SRT
-    Vector2 position_ = {0.0f, 0.0f};
-    float rotation = 0.0f;
-    Vector2 size = {640.0f, 360.0f};
+    Vector2 position_ = {0.0f, 0.0f}; // 座標
+    float rotation = 0.0f;            // 回転角度
+    Vector2 size = {640.0f, 360.0f};  // サイズ
 
-    // std::string directoryPath_ = "resources/images";
     std::string fullpath;
-    Vector2 anchorPoint_ = {0.0f, 0.0f};
+    Vector2 anchorPoint_ = {0.0f, 0.0f}; // アンカーポイント
 
-    // 左右フリップ
-    bool isFlipX_ = false;
+    bool isFlipX_ = false;    // 左右反転フラグ
+    bool isFlipY_ = false;    // 上下反転フラグ
+    bool isbackmost_ = false; // 背面フラグ
 
-    // 上下フリップ
-    bool isFlipY_ = false;
+    Vector2 textureLeftTop = {0.0f, 0.0f};  // テクスチャ左上座標
+    Vector2 textureSize = {512.0f, 512.0f}; // テクスチャサイズ
 
-    bool isbackmost_ = false;
-
-    // テクスチャ左上座標
-    Vector2 textureLeftTop = {0.0f, 0.0f};
-    // テクスチャ切り出しサイズ
-    Vector2 textureSize = {512.0f, 512.0f};
-
-    uint32_t instanceCount = 1; // デフォルトは1個
+    uint32_t instanceCount = 1; // インスタンス数
     uint32_t transformationMatrixSrvIndex = 0;
+
+    float uvRotate_ = 0.0f;             // UV回転角度
+    Vector2 uvSize_ = {1.0f, 1.0f};     // UVサイズ
+    Vector2 uvPosition_ = {0.0f, 0.0f}; // UV座標
 };

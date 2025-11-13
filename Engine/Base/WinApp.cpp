@@ -1,8 +1,8 @@
 #include "WinApp.h"
-#ifdef _DEBUG
+#ifdef USE_IMGUI
 #include "imgui_impl_win32.h"
 extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam);
-#endif // _DEBUG
+#endif // USE_IMGUI
 
 #pragma comment(lib, "winmm.lib")
 
@@ -62,7 +62,7 @@ void WinApp::Initialize() {
     // ウィンドウの生成
     hwnd = CreateWindow(
         wc.lpszClassName,     // 利用するクラス名
-        L"Hagine",            // タイトルバーの文字
+        L"LE3B_24_ハギワラ_ヒビキ_スパーキングファイト",            // タイトルバーの文字
         WS_OVERLAPPEDWINDOW,  // よく見るウィンドウスタイル
         CW_USEDEFAULT,        // 表示X座標
         CW_USEDEFAULT,        // 表示Y座標

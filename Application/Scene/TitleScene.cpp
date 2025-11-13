@@ -1,13 +1,14 @@
 #include "TitleScene.h"
+#include "Engine/Utility/Scene/SceneManager.h"
+#include "myMath.h"
 #include <Frame.h>
-
 void TitleScene::Initialize() {
     audio_ = Audio::GetInstance();
     spCommon_ = SpriteCommon::GetInstance();
     ptCommon_ = ParticleCommon::GetInstance();
     input_ = Input::GetInstance();
     vp_.Initialize();
-    vp_.translation_ = {0.0f, 0.0f, -30.0f};
+    vp_.translation_ = {12.0f, -4.0f, -30.0f};
 
     debugCamera_ = std::make_unique<DebugCamera>();
     debugCamera_->Initialize(&vp_);
@@ -27,28 +28,12 @@ void TitleScene::Update() {
 
 void TitleScene::Draw() {
     /// -------描画処理開始-------
-
-    BaseObjectManager::GetInstance()->Draw(vp_);
-
-    /// Spriteの描画準備
-    spCommon_->DrawCommonSetting();
-    //-----Spriteの描画開始-----
-
-    //-------------------------
-
-    particleEmitter_->Draw(vp_);
-
+  
     /// -------描画処理終了-------
 }
 
 void TitleScene::DrawForOffScreen() {
     /// -------描画処理開始-------
-
-    /// Spriteの描画準備
-    spCommon_->DrawCommonSetting();
-    //-----Spriteの描画開始-----
-
-    //------------------------
 
     /// -------描画処理終了-------
 }
@@ -61,7 +46,6 @@ void TitleScene::AddObjectSetting() {
 }
 
 void TitleScene::AddParticleSetting() {
-    particleEmitter_->DrawImGui();
 }
 
 void TitleScene::CameraUpdate() {
@@ -73,4 +57,5 @@ void TitleScene::CameraUpdate() {
 }
 
 void TitleScene::ChangeScene() {
+
 }

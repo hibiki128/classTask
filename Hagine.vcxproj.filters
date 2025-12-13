@@ -126,6 +126,7 @@
     <ClCompile Include="Engine\3d\Particle\CSParticle\ParticleCSGroupManager.cpp" />
     <ClCompile Include="Engine\3d\Particle\CSParticle\ParticleCSEditor.cpp" />
     <ClCompile Include="Engine\2d\SpriteManager.cpp" />
+    <ClCompile Include="Engine\Utility\Graphics\Texture\TextureConverter.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Application\Scene\ClearScene.h" />
@@ -229,6 +230,7 @@
     <ClInclude Include="resource.h" />
     <ClInclude Include="Engine\Utility\Edit\ShortcutManager\ShortcutManager.h" />
     <ClInclude Include="Engine\2d\SpriteManager.h" />
+    <ClInclude Include="Engine\Utility\Graphics\Texture\TextureConverter.h" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="Hagine.rc" />
